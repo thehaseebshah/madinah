@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Madinah — Ten Stations</title>
+<meta name="description" content="An immersive, interactive journey through Madinah al-Munawwarah in ten stations: sound, light and touch.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Marcellus&family=Reem+Kufi:wght@400;600&family=Spectral:ital,wght@0,300;0,400;1,300&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<!--BODY-->
+<div id="host" aria-hidden="true"></div>
+<canvas id="veil" aria-hidden="true"></canvas>
+
+<div id="intro" class="intro">
+  <canvas id="intro-sky" aria-hidden="true"></canvas>
+  <div class="intro-inner">
+    <p class="eyebrow">A journey in ten stations</p>
+    <h1 class="intro-ar" lang="ar" dir="rtl">المدينة المنوّرة</h1>
+    <p class="intro-en">Madinah <span>al-Munawwarah</span></p>
+    <p class="intro-sub">The Illuminated City. Walk the night road of the Hijrah, raise the first stones, turn with the qibla, and stand beneath a sky that opens. Every sound you hear is made live, as you move.</p>
+    <button id="begin" class="begin" type="button">
+      <span class="begin-star" aria-hidden="true"></span>
+      <span>Begin the journey</span>
+    </button>
+    <p class="intro-note">Best with headphones · Sound on · Use mouse, touch or keyboard (← →)</p>
+  </div>
+</div>
+
+<div id="hud" class="hud" hidden>
+  <div class="hud-top">
+    <div class="station-id">
+      <span id="sid-num" class="sid-num">Station I</span>
+      <span id="sid-ar" class="sid-ar" lang="ar" dir="rtl"></span>
+    </div>
+    <ol id="progress" class="progress" aria-label="Stations"></ol>
+    <div class="hud-tools">
+      <button id="btn-sound" class="tool" type="button" aria-pressed="true" aria-label="Mute sound" title="Sound (M)">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path class="ico-on" d="M4 9v6h4l5 4V5L8 9H4zm12.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z" fill="currentColor"/><path class="ico-off" d="M4 9v6h4l5 4V5L8 9H4zm12.6 3 2.7-2.7-1.1-1.1-2.7 2.7-2.7-2.7-1.1 1.1 2.7 2.7-2.7 2.7 1.1 1.1 2.7-2.7 2.7 2.7 1.1-1.1z" fill="currentColor"/></svg>
+      </button>
+      <button id="btn-full" class="tool" type="button" aria-label="Toggle fullscreen" title="Fullscreen (F)">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 9V4h5v2H6v3H4zm10-5h6v5h-2V6h-3V4zM4 15h2v3h3v2H4v-5zm14 3v-3h2v5h-6v-2h3z" fill="currentColor"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div id="titlecard" class="titlecard" aria-live="polite">
+    <p id="tc-num" class="tc-num"></p>
+    <p id="tc-ar" class="tc-ar" lang="ar" dir="rtl"></p>
+    <h2 id="tc-title" class="tc-title"></h2>
+    <p id="tc-era" class="tc-era"></p>
+  </div>
+
+  <div class="hud-bottom">
+    <section id="story" class="story">
+      <button id="story-toggle" class="story-head" type="button" aria-expanded="true">
+        <span id="story-title" class="story-title"></span>
+        <span id="story-era" class="story-era"></span>
+      </button>
+      <div id="story-body" class="story-body"></div>
+    </section>
+    <p id="hint" class="hint"></p>
+    <div class="nav">
+      <button id="btn-prev" class="navbtn" type="button" aria-label="Previous station">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M15 5 8 12l7 7" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+      </button>
+      <button id="btn-next" class="navbtn next" type="button" aria-label="Next station">
+        <span class="next-label">Continue</span>
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="finale" class="finale" hidden>
+  <div class="finale-inner">
+    <p class="eyebrow">The journey is complete</p>
+    <p class="finale-ar" lang="ar" dir="rtl">السَّلامُ عَلَيْكُم</p>
+    <p class="finale-en">Peace be upon you</p>
+    <p class="finale-sub">From a night road in the desert to a city of light that welcomes millions each year, Madinah has been a place of arrival for fourteen centuries.</p>
+    <div class="finale-actions">
+      <button id="btn-again" class="begin" type="button"><span class="begin-star" aria-hidden="true"></span><span>Walk it again</span></button>
+      <button id="btn-stay" class="ghost" type="button">Stay a while</button>
+    </div>
+  </div>
+</div>
+<!--/BODY-->
+
+<script src="js/core/audio.js"></script>
+<script src="js/core/util.js"></script>
+<script src="js/core/engine.js"></script>
+<script src="js/stages/01-hijrah.js"></script>
+<script src="js/stages/02-quba.js"></script>
+<script src="js/stages/03-badr.js"></script>
+<script src="js/stages/04-domes.js"></script>
+<script src="js/stages/05-qiblatayn.js"></script>
+<script src="js/stages/06-uhud.js"></script>
+<script src="js/stages/07-well.js"></script>
+<script src="js/stages/08-palms.js"></script>
+<script src="js/stages/09-rawdah.js"></script>
+<script src="js/stages/10-umbrellas.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
