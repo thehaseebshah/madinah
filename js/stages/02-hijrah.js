@@ -33,6 +33,7 @@
 
   ENGINE.register({
     key: 'hijrah',
+    id: 'hijrah',
     arabic: 'الهجرة',
     title: 'The Night Road',
     era: '622 CE · the year 1 of the Hijrah',
@@ -181,7 +182,8 @@
 
       // dunes
       DUNES.forEach((L, li) => {
-        const off = this.cam * L.p;
+        const off = this.cam * L.p + env.tilt.x * 70 * L.p;
+        ctx.save(); ctx.translate(0, -env.tilt.y * 14 * L.p);
         const col = U.mix(U.hex(L.night), U.hex(L.dawn), dawn * (0.4 + li * 0.1));
         ctx.beginPath(); ctx.moveTo(0, h);
         for (let x = 0; x <= w + 8; x += 8) ctx.lineTo(x, duneY(L, x + off, h));
@@ -195,6 +197,7 @@
         for (let x = 0; x <= w + 8; x += 8) { const y = duneY(L, x + off, h); x ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
         ctx.strokeStyle = dawn > 0.5 ? `rgba(255,200,150,${0.08 + 0.2 * dawn})` : `rgba(190,200,255,${0.06 + li * 0.015})`;
         ctx.lineWidth = 1; ctx.stroke();
+        ctx.restore();
         // sand haze between layers
         ctx.fillStyle = U.rgb(U.ramp(SKY.hor, dawn), 0.06);
         ctx.fillRect(0, 0, w, h);

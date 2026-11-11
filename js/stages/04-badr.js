@@ -12,6 +12,7 @@
 
   ENGINE.register({
     key: 'badr',
+    id: 'badr',
     arabic: 'طَلَعَ البَدْر',
     title: 'The Full Moon Rises',
     era: 'Arrival in Yathrib, 1 AH',
@@ -41,8 +42,8 @@
       this.horizon = h * 0.74;
       this.rows = [0, 1, 2].map(row => {
         const houses = [], base = this.horizon + row * h * 0.07 + h * 0.02;
-        let x = -20;
-        while (x < w + 20) {
+        let x = -110;
+        while (x < w + 110) {
           const hw = (40 + r() * 70) * (1 + row * 0.35), hh = (26 + r() * 46) * (1 + row * 0.3);
           const windows = [];
           const nwin = Math.floor(r() * 3);
@@ -173,7 +174,7 @@
 
       // lanterns behind the nearest row
       this.drawLanterns(ctx, t, 0);
-      this.rows.forEach((row, ri) => this.drawRow(ctx, env, row, ri, m, t, mx));
+      this.rows.forEach((row, ri) => { ctx.save(); ctx.translate(-env.tilt.x * (12 + ri * 26), -env.tilt.y * (3 + ri * 7)); this.drawRow(ctx, env, row, ri, m, t, mx); ctx.restore(); });
       this.drawLanterns(ctx, t, 1);
 
       this.drawSong(ctx, w, h);

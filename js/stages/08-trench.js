@@ -140,6 +140,7 @@
       // blowing dust
       this.dust = KIT.dust(w, 900, [-60, 0.1, -20, 60, 3, 25], 0xc8b8a0, 0.06); this.dust.material.blending = T.NormalBlending; this.dust.material.opacity = 0.35; S.add(this.dust);
 
+      w.followShadow(sunL, 28); w.receiveAll();
       this.baked = w.bake();
 
       /* ---------- interactions ---------- */

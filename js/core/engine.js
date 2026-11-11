@@ -8,7 +8,7 @@
     stages: [], index: -1, cur: null, env: null,
     w: innerWidth, h: innerHeight, dpr: Math.min(devicePixelRatio || 1, 2),
     pointer: { x: innerWidth / 2, y: innerHeight / 2, down: false, vx: 0, vy: 0, inside: false },
-    completed: new Set(), busy: false, t: 0,
+    completed: new Set(), busy: false, t: 0, tilt: { x: 0, y: 0 },
   };
 
   E.register = s => E.stages.push(s);
@@ -17,7 +17,7 @@
   function makeEnv(stage) {
     const canvases = [];
     const env = {
-      stage, w: E.w, h: E.h, dpr: E.dpr, pointer: E.pointer, time: 0, done: false,
+      stage, w: E.w, h: E.h, dpr: E.dpr, pointer: E.pointer, tilt: E.tilt, time: 0, done: false,
       bus: SND.bus(stage.sound || {}),
       canvas2d(opts) {
         opts = opts || {};
@@ -105,7 +105,7 @@
   }
 
   /* ---------- HUD ---------- */
-  let tcTimer = 0, hintTimer = 0, storyTimer = 0, storyPinned = false;
+  let tcTimer = 0, hintTimer = 0, storyTimer = 0, storyPinned = false, voiceTimer = 0;
   function populateHud(s, i) {
     $('sid-num').textContent = `Station ${ROMAN[i]} / ${ROMAN[E.stages.length - 1]}`;
     $('sid-ar').textContent = s.arabic;
@@ -126,6 +126,7 @@
     tc.classList.remove('show'); void tc.offsetWidth; tc.classList.add('show');
     clearTimeout(tcTimer); clearTimeout(hintTimer);
     tcTimer = setTimeout(() => { tc.classList.remove('show'); $('story').style.opacity = 1; }, 4200);
+    if (window.NARRATOR) { NARRATOR.stop(); clearTimeout(voiceTimer); voiceTimer = setTimeout(() => { if (E.cur !== s) return; NARRATOR.play(s.id || s.key); if (NARRATOR.lang !== 'off' && !storyPinned) { $('story').classList.add('collapsed'); $('story-toggle').setAttribute('aria-expanded', 'false'); } }, 3600); }
     clearTimeout(storyTimer);
     if (!storyPinned) { $('story').classList.remove('collapsed'); $('story-toggle').setAttribute('aria-expanded', 'true'); }
     if (E.h < 640 || E.w < 520) { $('story').classList.add('collapsed'); $('story-toggle').setAttribute('aria-expanded', 'false'); }
@@ -198,6 +199,9 @@
       try { E.cur.update && E.cur.update(E.env, dt); E.cur.render && E.cur.render(E.env); } catch (e) { console.error(e); }
     }
     E.pointer.vx *= 0.85; E.pointer.vy *= 0.85;
+    // a gently lagging pointer offset in [-1, 1]: 2D stations use it for depth parallax
+    const tx = E.pointer.inside ? (E.pointer.x / E.w - 0.5) * 2 : 0, ty = E.pointer.inside ? (E.pointer.y / E.h - 0.5) * 2 : 0;
+    E.tilt.x = U.damp(E.tilt.x, tx, 2.2, dt); E.tilt.y = U.damp(E.tilt.y, ty, 2.2, dt);
     requestAnimationFrame(frame);
   }
 
@@ -224,6 +228,7 @@
       if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ']') E.next();
       else if (e.key === 'ArrowLeft' || e.key === 'PageUp' || e.key === '[') E.prev();
       else if (e.key === 'm' || e.key === 'M') toggleSound();
+      else if (e.key === 'n' || e.key === 'N') cycleVoice();
       else if (e.key === 'f' || e.key === 'F') toggleFull();
       else if (E.cur && E.cur.key) E.cur.key(E.env, e);
     });
@@ -248,6 +253,8 @@
     $('btn-next').addEventListener('click', () => { SND.init(); E.next(); });
     $('btn-prev').addEventListener('click', () => E.prev());
     $('btn-sound').addEventListener('click', toggleSound);
+    $('btn-voice').addEventListener('click', cycleVoice);
+    showVoice();
     $('btn-full').addEventListener('click', toggleFull);
     $('story-toggle').addEventListener('click', () => {
       const s = $('story'); const c = s.classList.toggle('collapsed'); storyPinned = !c; clearTimeout(storyTimer);
@@ -257,9 +264,24 @@
     $('btn-stay').addEventListener('click', () => { $('finale').hidden = true; });
   }
 
+  function showVoice() {
+    if (!window.NARRATOR) { $('btn-voice').hidden = true; return; }
+    const l = NARRATOR.lang;
+    $('voice-label').textContent = l === 'en' ? 'EN' : l === 'ar' ? '\u0639' : '\u2014';
+    $('btn-voice').setAttribute('aria-label', `Narration: ${l === 'en' ? 'English' : l === 'ar' ? 'Arabic' : 'off'}`);
+    $('btn-voice').classList.toggle('off', l === 'off');
+  }
+  function cycleVoice() {
+    if (!window.NARRATOR) return;
+    SND.init();
+    NARRATOR.cycle(); showVoice();
+    if (NARRATOR.lang === 'off') NARRATOR.stop(); else if (E.cur) NARRATOR.play(E.cur.id || E.cur.key);
+  }
+
   function toggleSound() {
     SND.init();
     const m = !SND.muted; SND.setMuted(m);
+    if (m && window.NARRATOR) NARRATOR.stop();
     $('btn-sound').setAttribute('aria-pressed', String(!m));
     $('btn-sound').setAttribute('aria-label', m ? 'Unmute sound' : 'Mute sound');
   }

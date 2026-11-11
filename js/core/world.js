@@ -242,6 +242,29 @@ void main(){
       });
       return { merged: victims.length, calls };
     };
+    /* A sun or moon whose shadow camera travels with the walker: crisp shadows nearby at any scene size. */
+    w.followShadow = (light, size, mapSize) => {
+      light.castShadow = true; renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap;
+      light.shadow.mapSize.set(mapSize || 2048, mapSize || 2048);
+      const c = light.shadow.camera; c.left = c.bottom = -size; c.right = c.top = size; c.near = 0.5; c.far = size * 6; c.updateProjectionMatrix();
+      light.shadow.bias = -0.0006; light.shadow.normalBias = 0.04;
+      const off = light.position.clone().normalize().multiplyScalar(size * 2.5);
+      if (!light.target.parent) scene.add(light.target);
+      w._shadow = { light, off };
+      return light;
+    };
+    /* Image-based light from the sky dome: glossy marble, brass and glass reflect the real sky. */
+    w.envFromSky = () => {
+      if (!w.skyMesh) return;
+      const pm = w._pmrem || (w._pmrem = new T.PMREMGenerator(renderer));
+      const tmp = new T.Scene(), m = new T.Mesh(new T.SphereGeometry(100, 32, 16), w.skyMesh.material);
+      tmp.add(m);
+      const rt = pm.fromScene(tmp, 0);
+      if (w._envRT) w._envRT.dispose();
+      w._envRT = rt; scene.environment = rt.texture;
+      m.geometry.dispose();
+    };
+    w.receiveAll = () => scene.traverse(o => { if (o.isMesh && !o.material.isShaderMaterial) { o.receiveShadow = true; if (!o.userData.noCast) o.castShadow = true; } });
     w.forward = () => new T.Vector3(-Math.sin(w.yaw) * Math.cos(w.pitch), Math.sin(w.pitch), -Math.cos(w.yaw) * Math.cos(w.pitch));
     w.resize = () => { renderer.setSize(env.w, env.h, false); camera.aspect = env.w / env.h; camera.updateProjectionMatrix(); };
 
@@ -282,6 +305,11 @@ void main(){
         w.onStep && w.onStep(surf);
       }
       const amp = U.clamp(w.moving / w.speed) * 0.045;
+      if (w._shadow) {
+        const L = w._shadow.light, snap = 1.5; // snap to stop shadow edges shimmering as you walk
+        const px = Math.round(w.pos.x / snap) * snap, pz = Math.round(w.pos.z / snap) * snap;
+        L.target.position.set(px, 0, pz); L.position.set(px + w._shadow.off.x, w._shadow.off.y, pz + w._shadow.off.z);
+      }
       camera.position.set(w.pos.x, w.y + w.eye + Math.abs(Math.sin(w.bob)) * amp - amp * 0.5, w.pos.z);
       camera.rotation.set(w.pitch, w.yaw, Math.sin(w.bob) * amp * 0.12);
 
@@ -335,6 +363,7 @@ void main(){
         const mats = obj.material ? (Array.isArray(obj.material) ? obj.material : [obj.material]) : [];
         mats.forEach(m => { for (const key in m) { const v = m[key]; if (v && v.isTexture) v.dispose(); } m.dispose(); });
       });
+      if (w._envRT) w._envRT.dispose(); if (w._pmrem) w._pmrem.dispose();
       renderer.dispose();
       try { renderer.forceContextLoss(); } catch (_) {}
     };

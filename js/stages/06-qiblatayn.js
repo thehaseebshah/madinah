@@ -10,6 +10,7 @@
 
   ENGINE.register({
     key: 'qiblatayn',
+    id: 'qiblatayn',
     arabic: 'القِبْلَتَيْن',
     title: 'The Two Qiblas',
     era: 'Rajab or Sha‘ban, 2 AH · 624 CE',

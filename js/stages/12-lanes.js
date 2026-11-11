@@ -218,6 +218,7 @@
       this.domeLight = domeLight;
       w.addBox(-80, LANE_END - 70, 80, LANE_END - 61);
 
+      w.followShadow(moon, 26); w.receiveAll();
       this.baked = w.bake();
 
       /* ---------- sound ---------- */

@@ -120,6 +120,7 @@ void main(){
 
   ENGINE.register({
     key: 'domes',
+    id: 'domes',
     arabic: 'المسجد النبوي',
     title: 'The Sky Beneath the Domes',
     era: 'The Prophet’s Mosque · founded 1 AH',

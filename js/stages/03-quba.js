@@ -6,6 +6,7 @@
 
   ENGINE.register({
     key: 'quba',
+    id: 'quba',
     arabic: 'قُباء',
     title: 'Quba, the First Stones',
     era: 'Rabi‘ al-Awwal, 1 AH',

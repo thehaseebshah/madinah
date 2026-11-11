@@ -23,6 +23,7 @@
 
   ENGINE.register({
     key: 'uhud',
+    id: 'uhud',
     arabic: 'أُحُد',
     title: 'The Mountain That Loves Us',
     era: 'Jabal Uhud · 3 AH · 625 CE',
@@ -120,7 +121,8 @@
         const base = U.hex(L.col);
         const col = U.mix(U.mix(base, top, 0.08), hor, depth * 0.55);
         const pts = [];
-        for (let x = -8; x <= w + 8; x += 6) pts.push([x, ridge(L, x, w, h)]);
+        const sh = env.tilt.x * 46 * (li + 1) / LAYERS.length, sv = -env.tilt.y * 10 * (li + 1) / LAYERS.length;
+        for (let x = -8; x <= w + 8; x += 6) pts.push([x, ridge(L, x + sh, w, h) + sv]);
         ctx.beginPath(); ctx.moveTo(-8, h);
         pts.forEach(([x, y]) => ctx.lineTo(x, y));
         ctx.lineTo(w + 8, h); ctx.closePath();

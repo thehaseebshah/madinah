@@ -7,6 +7,7 @@
 
   ENGINE.register({
     key: 'well',
+    id: 'well',
     arabic: 'بئر رومة',
     title: 'The Well of Rumah',
     era: 'An endowment of ‘Uthman ibn ‘Affan',

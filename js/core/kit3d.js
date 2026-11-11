@@ -161,7 +161,15 @@
       }, rep || [2, 3]);
     },
 
-    std(o) { return new T.MeshStandardMaterial(Object.assign({ roughness: 0.95, metalness: 0 }, o)); },
+    // Standard material; textured opaque surfaces also use their own texture as a bump map,
+    // so mortar joints, pits in the basalt and ripples in the sand catch the light.
+    std(o) {
+      o = Object.assign({ roughness: 0.95, metalness: 0 }, o);
+      const relief = o.relief; delete o.relief;
+      const m = new T.MeshStandardMaterial(o);
+      if (o.map && !o.alphaTest && relief !== 0) { m.bumpMap = o.map; m.bumpScale = relief == null ? 0.045 : relief; }
+      return m;
+    },
 
     /* A date palm: a curved, textured trunk and a crown of drooping alpha-cut fronds. */
     palmParts(w) {

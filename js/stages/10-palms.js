@@ -6,6 +6,7 @@
 
   ENGINE.register({
     key: 'palms',
+    id: 'palms',
     arabic: 'نخيل العالية',
     title: 'The Palm Groves',
     era: 'Ajwa dates of al-‘Aliyah',
@@ -53,7 +54,8 @@
     },
 
     crown(p) {
-      const tx = p.x + Math.sin(p.lean + p.sway) * p.H, ty = p.base - p.H * Math.cos(p.lean + p.sway * 0.5);
+      const sh = this.shift ? this.shift[p.row] : [0, 0];
+      const tx = p.x + Math.sin(p.lean + p.sway) * p.H + sh[0], ty = p.base - p.H * Math.cos(p.lean + p.sway * 0.5) + sh[1];
       return [tx, ty];
     },
 
@@ -80,6 +82,7 @@
     },
 
     update(env, dt) {
+      this.shift = [0, 1, 2].map(r => [-env.tilt.x * [10, 24, 46][r], -env.tilt.y * [2, 6, 12][r]]);
       const p = env.pointer, t = env.time;
       const speed = Math.min(1.5, Math.hypot(p.vx, p.vy) / 40);
       this.wind = U.damp(this.wind, 0, 0.8, dt) + speed * dt * 2;
@@ -191,9 +194,16 @@
     },
 
     drawPalm(ctx, p, t, sunX, sunY) {
+      const sh = this.shift ? this.shift[p.row] : [0, 0];
+      ctx.save(); ctx.translate(sh[0], sh[1]);
+      this.drawPalmAt(ctx, p, t, sunX, sunY, sh);
+      ctx.restore();
+    },
+
+    drawPalmAt(ctx, p, t, sunX, sunY, sh) {
       const dark = [U.hex('#a07a6a'), U.hex('#4a3230'), U.hex('#160d0a')][p.row];
       const rim = [0.1, 0.22, 0.4][p.row];
-      const [tx, ty] = this.crown(p);
+      let [tx, ty] = this.crown(p); tx -= sh[0]; ty -= sh[1];
       const shakeX = Math.sin(t * 40) * p.shake * 3;
       // trunk with leaf-base scars
       ctx.strokeStyle = U.rgb(dark); ctx.lineCap = 'round';

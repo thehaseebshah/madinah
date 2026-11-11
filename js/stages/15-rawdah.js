@@ -8,6 +8,7 @@
 
   ENGINE.register({
     key: 'rawdah',
+    id: 'rawdah',
     arabic: 'الرَّوْضَة',
     title: 'A Garden of Paradise',
     era: 'Ar-Rawdah ash-Sharifah',

@@ -173,6 +173,7 @@ void main(){
       this.stoneGeo = new T.SphereGeometry(0.07, 8, 6); this.stoneMat = KIT.std({ color: 0x555050 });
       this.skips = 0; this.best = 0;
 
+      w.followShadow(moon, 30); w.receiveAll();
       this.baked = w.bake();
 
       /* ---------- interactions ---------- */
