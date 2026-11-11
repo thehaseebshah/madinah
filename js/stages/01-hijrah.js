@@ -104,7 +104,7 @@
           const wx = this.cam + env.w * 0.36;
           this.steps.push({ x: wx + (this.foot ? 3 : -3), side: this.foot, age: 0 });
           SND.step(env.bus, { gain: 0.12 + this.speed * 0.12, pan: -0.25 + (this.foot ? 0.08 : -0.08) });
-          if (Math.random() < 0.06) SND.bell(env.bus, 2100 + Math.random() * 300, { gain: 0.006, dur: 1.4, pan: -0.3 });
+          if (Math.random() < 0.06) SND.bell(env.bus, 2100 + Math.random() * 300, { gain: 0.006, dur: 1.4, pan: -0.3, metal: true });
         }
       }
       for (const s of this.steps) s.age += dt;

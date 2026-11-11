@@ -39,7 +39,7 @@
   requestAnimationFrame(draw);
 
   const m = /station-(\d+)/.exec(location.hash);
-  const startAt = m ? Math.max(0, Math.min(9, parseInt(m[1], 10) - 1)) : 0;
+  const startAt = m ? Math.max(0, Math.min(ENGINE.stages.length - 1, parseInt(m[1], 10) - 1)) : 0;
 
   document.getElementById('begin').addEventListener('click', () => {
     SND.init();

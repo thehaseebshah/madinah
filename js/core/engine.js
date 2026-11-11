@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   const $ = id => document.getElementById(id);
-  const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+  const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI'];
 
   const E = {
     stages: [], index: -1, cur: null, env: null,
@@ -27,6 +27,14 @@
         const ctx = c.getContext('2d', { alpha: !!opts.alpha });
         canvases.push(c); sizeCanvas(c);
         return { canvas: c, ctx };
+      },
+      // a bare canvas for a renderer that makes its own context (Three.js)
+      canvas3d() {
+        const c = document.createElement('canvas');
+        c.dataset.scale = 1;
+        $('host').appendChild(c);
+        canvases.push(c); sizeCanvas(c);
+        return c;
       },
       webgl(opts) {
         const c = document.createElement('canvas');
@@ -67,6 +75,7 @@
     const swap = () => {
       if (E.cur) {
         try { E.cur.leave && E.cur.leave(E.env); } catch (e) { console.error(e); }
+        try { if (document.pointerLockElement) document.exitPointerLock(); } catch (e) {}
         E.env.bus.dispose();
         E.env.canvases.forEach(c => c.remove());
       }
@@ -98,7 +107,7 @@
   /* ---------- HUD ---------- */
   let tcTimer = 0, hintTimer = 0, storyTimer = 0, storyPinned = false;
   function populateHud(s, i) {
-    $('sid-num').textContent = `Station ${ROMAN[i]} / X`;
+    $('sid-num').textContent = `Station ${ROMAN[i]} / ${ROMAN[E.stages.length - 1]}`;
     $('sid-ar').textContent = s.arabic;
     $('tc-num').textContent = `Station ${ROMAN[i]}`;
     $('tc-ar').textContent = s.arabic;
@@ -121,7 +130,8 @@
     if (!storyPinned) { $('story').classList.remove('collapsed'); $('story-toggle').setAttribute('aria-expanded', 'true'); }
     if (E.h < 640 || E.w < 520) { $('story').classList.add('collapsed'); $('story-toggle').setAttribute('aria-expanded', 'false'); }
     storyTimer = setTimeout(() => { if (!storyPinned) { $('story').classList.add('collapsed'); $('story-toggle').setAttribute('aria-expanded', 'false'); } }, 22000);
-    hintTimer = setTimeout(() => { if (E.env && E.env.stage === s) E.env.hint(s.hint); }, 4800);
+    const coarse = matchMedia('(pointer: coarse)').matches;
+    hintTimer = setTimeout(() => { if (E.env && E.env.stage === s) E.env.hint((coarse && s.hintTouch) || s.hint); }, 4800);
   }
 
   function updateProgress() {
@@ -209,12 +219,17 @@
 
     addEventListener('keydown', e => {
       if ($('hud').hidden) return;
-      if (e.key === 'ArrowRight' || e.key === 'PageDown') E.next();
-      else if (e.key === 'ArrowLeft' || e.key === 'PageUp') E.prev();
+      const cap = E.cur && E.cur.captureKeys;
+      if (cap && /^(Arrow|w$|a$|s$|d$|W$|A$|S$|D$| $|Shift)/.test(e.key)) { e.preventDefault(); E.cur.key && E.cur.key(E.env, e); return; }
+      if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ']') E.next();
+      else if (e.key === 'ArrowLeft' || e.key === 'PageUp' || e.key === '[') E.prev();
       else if (e.key === 'm' || e.key === 'M') toggleSound();
       else if (e.key === 'f' || e.key === 'F') toggleFull();
       else if (E.cur && E.cur.key) E.cur.key(E.env, e);
     });
+
+    addEventListener('keyup', e => { if (E.cur && E.cur.keyup) E.cur.keyup(E.env, e); });
+    addEventListener('blur', () => { if (E.cur && E.cur.blur) E.cur.blur(E.env); });
 
     addEventListener('resize', () => {
       E.w = innerWidth; E.h = innerHeight; E.dpr = Math.min(devicePixelRatio || 1, 2);

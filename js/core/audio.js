@@ -147,7 +147,7 @@
   };
 
   /* A continuous tone (for drones that respond to the hand). */
-  A.drone = function (bus, freq, o) {
+  A.droneTone = function (bus, freq, o) {
     if (!bus.input) return { set() {}, setGain() {} };
     o = o || {};
     const ctx = A.ctx;
@@ -171,7 +171,7 @@
   }
 
   /* Struck metal / glass: inharmonic partials with long decay. */
-  A.bell = function (bus, f, o) {
+  A.bellTone = function (bus, f, o) {
     if (!bus.input) return;
     o = o || {};
     const ctx = A.ctx, t = A.now() + (o.delay || 0), dest = panNode(bus.input, o.pan);
@@ -312,7 +312,7 @@
   };
 
   /* A soft, slowly blooming sine pad tone (used sparingly as light, not melody). */
-  A.glow = function (bus, f, o) {
+  A.glowTone = function (bus, f, o) {
     if (!bus.input) return;
     o = o || {};
     const ctx = A.ctx, t = A.now() + (o.delay || 0), dest = panNode(bus.input, o.pan);
@@ -325,6 +325,129 @@
       g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
       osc.connect(g); g.connect(dest); osc.start(t); osc.stop(t + dur + 0.1);
     });
+  };
+
+
+  /* ---------------------------------------------------------------------------------------
+     VOICES. Every melodic sound in the journey is sung rather than played: a small formant
+     synthesiser shapes a glottal buzz and a little breath through the resonances of the
+     human vocal tract, so that what would have been a bell or a pad becomes a hum, an "ooh"
+     or an "aah", alone or as a soft choir. Wind, water, birds and stone stay as they are.
+     --------------------------------------------------------------------------------------- */
+  A.vocal = true;
+  const VOWELS = {
+    a: [[800, 1, 80], [1150, 0.5, 90], [2900, 0.12, 120], [3900, 0.05, 130]],
+    o: [[450, 1, 70], [800, 0.36, 80], [2830, 0.06, 100], [3500, 0.03, 130]],
+    u: [[325, 1, 50], [700, 0.18, 60], [2530, 0.03, 170], [3500, 0.015, 180]],
+    e: [[400, 1, 60], [1700, 0.3, 80], [2600, 0.14, 120], [3300, 0.06, 150]],
+    m: [[250, 1, 60], [1700, 0.05, 100], [2500, 0.02, 120]],
+  };
+  let activeVoices = 0;
+  function foldPitch(f, lo, hi) { while (f > hi) f /= 2; while (f < lo) f *= 2; return f; }
+
+  // one sung note: glottal source -> parallel formant band-passes -> envelope
+  function singOne(bus, f, o, t, dest) {
+    const ctx = A.ctx;
+    const vowel = VOWELS[o.vowel || 'o'];
+    const src = ctx.createOscillator(); src.type = 'sawtooth'; src.frequency.value = f;
+    const src2 = ctx.createOscillator(); src2.type = 'triangle'; src2.frequency.value = f; // rounder fundamental
+    const vib = ctx.createOscillator(); vib.frequency.value = (o.vibRate || 5.2) + rnd(-0.4, 0.4);
+    const vibG = ctx.createGain(); vibG.gain.setValueAtTime(0, t);
+    vibG.gain.linearRampToValueAtTime(f * (o.vib == null ? 0.007 : o.vib), t + Math.min(0.9, (o.dur || 2) * 0.4));
+    vib.connect(vibG); vibG.connect(src.frequency); vibG.connect(src2.frequency);
+    if (o.glide) { src.frequency.setValueAtTime(f * o.glide, t); src.frequency.exponentialRampToValueAtTime(f, t + 0.25); src2.frequency.setValueAtTime(f * o.glide, t); src2.frequency.exponentialRampToValueAtTime(f, t + 0.25); }
+    const pre = ctx.createGain(); pre.gain.value = 0.5;
+    src.connect(pre);
+    const s2g = ctx.createGain(); s2g.gain.value = 0.6; src2.connect(s2g);
+    // breath
+    const br = ctx.createBufferSource(); br.buffer = A.buf.white; br.loop = true;
+    const brG = ctx.createGain(); brG.gain.value = o.breath == null ? 0.05 : o.breath;
+    br.connect(brG);
+    const sum = ctx.createGain(); sum.gain.value = 1;
+    vowel.forEach(([ff, amp, bw]) => {
+      const bp = ctx.createBiquadFilter(); bp.type = 'bandpass';
+      bp.frequency.value = ff * (o.formantShift || 1); bp.Q.value = (ff / bw) * 0.9;
+      const g = ctx.createGain(); g.gain.value = amp * 2.2;
+      pre.connect(bp); brG.connect(bp); bp.connect(g); g.connect(sum);
+    });
+    const low = ctx.createBiquadFilter(); low.type = 'lowpass'; low.frequency.value = f * 2.2; s2g.connect(low); low.connect(sum);
+    const env = ctx.createGain(); const peak = o.gain == null ? 0.05 : o.gain, dur = o.dur || 2;
+    const atk = o.attack == null ? Math.min(0.5, dur * 0.3) : o.attack;
+    env.gain.setValueAtTime(0.0001, t);
+    env.gain.linearRampToValueAtTime(peak, t + atk);
+    env.gain.setValueAtTime(peak, t + Math.max(atk, dur * (o.hold == null ? 0.45 : o.hold)));
+    env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    sum.connect(env); env.connect(dest);
+    const end = t + dur + 0.1;
+    src.start(t); src2.start(t); vib.start(t); br.start(t, rnd(0, 4));
+    src.stop(end); src2.stop(end); vib.stop(end); br.stop(end);
+    activeVoices++; src.onended = () => { activeVoices--; };
+  }
+
+  /* A single sung note, or a small choir of slightly detuned voices. */
+  A.sing = function (bus, f, o) {
+    if (!bus.input) return;
+    o = o || {};
+    if (activeVoices > (o.voices || 1) * 3 + 26) return; // keep busy moments airy
+    const t = A.now() + (o.delay || 0);
+    const n = o.voices || 1;
+    for (let i = 0; i < n; i++) {
+      const pan = (o.pan || 0) + (n > 1 ? (i / (n - 1) - 0.5) * (o.spread == null ? 0.9 : o.spread) : 0);
+      const dest = panNode(bus.input, Math.max(-1, Math.min(1, pan)));
+      const det = n > 1 ? Math.pow(2, ((i - (n - 1) / 2) * (o.detune || 7)) / 1200) : 1;
+      singOne(bus, f * det, Object.assign({}, o, { gain: (o.gain == null ? 0.05 : o.gain) / Math.sqrt(n), vibRate: 4.6 + i * 0.37 }), t + i * 0.03, dest);
+    }
+  };
+
+  /* Former bells: a short, gently attacked sung note ("ooh", or "mm" for small sounds). */
+  A.bell = function (bus, f, o) {
+    o = o || {};
+    if (!A.vocal || o.metal) return A.bellTone(bus, f, o);
+    const pf = foldPitch(f, o.glass ? 196 : 130, o.glass ? 660 : 520);
+    const dur = Math.min(3.2, Math.max(1.1, (o.dur || 3) * 0.55));
+    A.sing(bus, pf, {
+      vowel: o.vowel || (o.glass ? 'u' : 'o'), dur, delay: o.delay, pan: o.pan,
+      gain: (o.gain == null ? 0.08 : o.gain) * 1.25, attack: o.glass ? 0.06 : 0.1, hold: 0.25,
+      voices: o.voices || (o.glass ? 1 : 2), vib: 0.006, breath: 0.07,
+    });
+  };
+
+  /* Former pads: a slow, sustained choir on "aah" with an octave and fifth above. */
+  A.glow = function (bus, f, o) {
+    o = o || {};
+    if (!A.vocal) return A.glowTone(bus, f, o);
+    const root = foldPitch(f, 110, 260), dur = o.dur || 4;
+    const g = (o.gain || 0.04) * 1.6;
+    A.sing(bus, root, { vowel: o.vowel || 'a', dur, delay: o.delay, pan: o.pan, gain: g, attack: dur * 0.35, hold: 0.55, voices: 3, detune: 9, breath: 0.06 });
+    A.sing(bus, root * 2, { vowel: 'o', dur: dur * 0.95, delay: (o.delay || 0) + 0.15, pan: o.pan, gain: g * 0.45, attack: dur * 0.4, hold: 0.5, voices: 2, detune: 8, formantShift: 1.15, breath: 0.08 });
+  };
+
+  /* Former drones: a sustained hummed or sung voice whose pitch and level can be steered. */
+  A.drone = function (bus, freq, o) {
+    o = o || {};
+    if (!A.vocal || !bus.input) return A.droneTone(bus, freq, o);
+    const ctx = A.ctx, vowel = VOWELS[o.vowel || 'u'];
+    const src = ctx.createOscillator(); src.type = 'sawtooth'; src.frequency.value = freq;
+    const vib = ctx.createOscillator(); vib.frequency.value = 4.8 + rnd(-0.3, 0.3);
+    const vg = ctx.createGain(); vg.gain.value = freq * 0.005; vib.connect(vg); vg.connect(src.frequency);
+    const br = ctx.createBufferSource(); br.buffer = A.buf.white; br.loop = true;
+    const brG = ctx.createGain(); brG.gain.value = 0.04; br.connect(brG);
+    const sum = ctx.createGain();
+    vowel.forEach(([ff, amp, bw]) => {
+      const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = ff; bp.Q.value = (ff / bw) * 0.9;
+      const gg = ctx.createGain(); gg.gain.value = amp * 1.6; src.connect(bp); brG.connect(bp); bp.connect(gg); gg.connect(sum);
+    });
+    const g = ctx.createGain(); g.gain.value = 0;
+    sum.connect(g); g.connect(panNode(bus.input, o.pan));
+    src.start(); vib.start(); br.start(0, rnd(0, 4));
+    bus.keep(src); bus.keep(vib); bus.keep(br);
+    const level = (o.gain == null ? 0.05 : o.gain) * 1.5;
+    g.gain.setTargetAtTime(level, A.now(), 1.2);
+    return {
+      osc: src, gain: g,
+      set(fr, tc = 0.1) { src.frequency.setTargetAtTime(fr, A.now(), tc); vg.gain.setTargetAtTime(fr * 0.005, A.now(), tc); },
+      setGain(v, tc = 0.3) { g.gain.setTargetAtTime(v * 1.5, A.now(), tc); },
+    };
   };
 
   window.SND = A;

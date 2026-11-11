@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Madinah — Ten Stations</title>
-<meta name="description" content="An immersive, interactive journey through Madinah al-Munawwarah in ten stations: sound, light and touch.">
+<title>Madinah — Fourteen Stations</title>
+<meta name="description" content="An immersive, interactive journey through Madinah al-Munawwarah in fourteen stations: sound, light, touch and walkable 3D scenes.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Marcellus&family=Reem+Kufi:wght@400;600&family=Spectral:ital,wght@0,300;0,400;1,300&display=swap">
@@ -18,7 +18,7 @@
 <div id="intro" class="intro">
   <canvas id="intro-sky" aria-hidden="true"></canvas>
   <div class="intro-inner">
-    <p class="eyebrow">A journey in ten stations</p>
+    <p class="eyebrow">A journey in fourteen stations</p>
     <h1 class="intro-ar" lang="ar" dir="rtl">المدينة المنوّرة</h1>
     <p class="intro-en">Madinah <span>al-Munawwarah</span></p>
     <p class="intro-sub">The Illuminated City. Walk the night road of the Hijrah, raise the first stones, turn with the qibla, and stand beneath a sky that opens. Every sound you hear is made live, as you move.</p>
@@ -26,7 +26,7 @@
       <span class="begin-star" aria-hidden="true"></span>
       <span>Begin the journey</span>
     </button>
-    <p class="intro-note">Best with headphones · Sound on · Use mouse, touch or keyboard (← →)</p>
+    <p class="intro-note">Best with headphones · Sound on · Mouse, touch or keyboard · Walk the 3D scenes with WASD and E</p>
   </div>
 </div>
 
@@ -89,19 +89,26 @@
 </div>
 <!--/BODY-->
 
+<script src="js/vendor/three.min.js"></script>
 <script src="js/core/audio.js"></script>
 <script src="js/core/util.js"></script>
 <script src="js/core/engine.js"></script>
+<script src="js/core/world.js"></script>
+<script src="js/core/kit3d.js"></script>
 <script src="js/stages/01-hijrah.js"></script>
 <script src="js/stages/02-quba.js"></script>
 <script src="js/stages/03-badr.js"></script>
-<script src="js/stages/04-domes.js"></script>
+<script src="js/stages/04-palm-mosque.js"></script>
 <script src="js/stages/05-qiblatayn.js"></script>
 <script src="js/stages/06-uhud.js"></script>
-<script src="js/stages/07-well.js"></script>
-<script src="js/stages/08-palms.js"></script>
-<script src="js/stages/09-rawdah.js"></script>
-<script src="js/stages/10-umbrellas.js"></script>
+<script src="js/stages/07-trench.js"></script>
+<script src="js/stages/08-well.js"></script>
+<script src="js/stages/09-palms.js"></script>
+<script src="js/stages/10-aqiq.js"></script>
+<script src="js/stages/11-lanes.js"></script>
+<script src="js/stages/12-domes.js"></script>
+<script src="js/stages/13-rawdah.js"></script>
+<script src="js/stages/14-umbrellas.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>
