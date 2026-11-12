@@ -34,6 +34,10 @@
     story: `<p>In the years before revelation he would leave Makkah for nights at a time to worship alone in a small cave on a mountain north-east of the city, taking provisions with him. There, in the month of Ramadan, when he was about forty, the angel came to him and said: <i>Read.</i></p>
             <p class="q"><span class="ar">اقْرَأْ بِاسْمِ رَبِّكَ الَّذِي خَلَقَ</span>“Read, in the name of your Lord who created.” (Qur’an 96:1)</p>`,
 
+    shotDur: 11,
+    // rising from the night valley up the mountain face to the cleft, then down the path to you
+    shots() { return [[[70, -70, 30], [0, 0, -10]], [[30, -20, 0], [0, 6, -14]], [[9, 9, -12], [-0.6, 7.5, -16]], [[3, 9, 6], [0, 5, -4]], [[0, 0, 0], [0, 0, 0]]]; },
+
     enter(env) {
       const T = THREE, self = this;
       const w = this.w = WORLD.create(env, {
@@ -114,7 +118,21 @@
         SND.glow(env.bus, 110, { gain: 0.04, dur: 8, vowel: 'o' });
         w.say('Far from the City', 'Hira lies on Jabal an-Nur, a steep peak about five kilometres north-east of the Ka‘bah. He would retreat here for nights at a time, then return to Khadijah for provisions and come back. (Sahih al-Bukhari)', { ms: 11000 });
       } });
-      w.interact({ key: 'cave', pos: [CAVE.x, cy + 1.2, CAVE.z], r: 3.4, once: true, label: 'Come to the mouth of the cave', onUse: () => { self.phase = 'revelation'; self.revT = 0; } });
+      // provisions left along the path: he would take provisions for his nights of worship (Sahih al-Bukhari)
+      this.supplies = 0;
+      const supplyMat = KIT.std({ color: 0x8a6440, roughness: 0.9 });
+      [[1.4, 7, 'A waterskin'], [-1.2, -1, 'A bundle of dates'], [1.6, -9, 'A folded cloak']].forEach(([x, z, name], i) => {
+        const y = ground(x, z);
+        const m = new T.Mesh(i === 0 ? new T.SphereGeometry(0.22, 12, 8) : new T.BoxGeometry(0.42, 0.22, 0.32), supplyMat); m.position.set(x, y + 0.2, z); m.userData.dynamic = true; S.add(m);
+        const g = KIT.glow(w, 0xffe0a0, 1.2, 0.5); g.position.set(x, y + 0.4, z); S.add(g);
+        w.interact({ key: 'sup' + i, pos: [x, y + 0.3, z], r: 2.2, once: true, label: `Take up ${name.toLowerCase()}`, onUse: () => {
+          m.visible = false; g.visible = false; self.supplies++;
+          SND.step(env.bus, { gain: 0.15, f: 1200 }); SND.bell(env.bus, 440 + i * 60, { gain: 0.04, glass: true });
+          w.progress(self.supplies, self.supplies < 3 ? 'Gather the provisions on the path' : 'Climb to the mouth of the cave');
+        } });
+      });
+      w.activity('Provisions for the night', 4, 'Gather the provisions on the path up the mountain');
+      w.interact({ key: 'cave', pos: [CAVE.x, cy + 1.2, CAVE.z], r: 3.4, once: true, label: 'Come to the mouth of the cave', enabled: () => self.supplies >= 3, onUse: () => { self.phase = 'revelation'; self.revT = 0; w.progress(3, 'Listen'); } });
 
       const b = env.bus;
       this.wind = SND.noise(b, { color: 'pink', type: 'bandpass', freq: 320, q: 0.6, gain: 0.09 });
@@ -157,7 +175,7 @@
         if (cross(25)) w.say('Cover Me', 'He returned to Khadijah with his heart trembling and said, <span class="q">“Cover me, cover me.”</span> She said: <span class="q">“Never. By God, God will never disgrace you. You keep the ties of kinship, you bear the burden of the weak, you give to those who have nothing, you honour your guest, and you help those struck by misfortune.”</span> (Sahih al-Bukhari)', { ar: 'كَلَّا وَاللَّهِ مَا يُخْزِيكَ اللَّهُ أَبَدًا', ms: 17000 });
         if (cross(42)) {
           w.say('Waraqah', 'Khadijah took him to her cousin Waraqah ibn Nawfal, an old man who knew the earlier scriptures. When he heard what had happened, he said: <span class="q">“This is the same keeper of secrets whom God sent to Moses.”</span> (Sahih al-Bukhari)', { ms: 14000 });
-          env.complete(); this.unlockSoon();
+          w.finish('The first revelation');
         }
       }
     },

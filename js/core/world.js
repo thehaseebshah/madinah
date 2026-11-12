@@ -461,7 +461,11 @@ void main(){
     const enter = def.enter;
     def.enter = function (env) {
       enter.call(this, env);
-      if (this.w && !this.w.cine && this.cinematic !== false) this.w.autoCinematic(this.intro || {});
+      if (this.w && !this.w.cine && this.cinematic !== false) {
+        // a station may script its own entrance as a list of camera shots
+        if (this.shots) this.w.cinematic(this.shots(env, this.w).map(([p, l]) => ({ p, l })), this.shotDur || 9.5);
+        else this.w.autoCinematic(this.intro || {});
+      }
     };
     // stations name themselves with a string `key`; here that name must not shadow the key handler
     const id = def.key; delete def.key;

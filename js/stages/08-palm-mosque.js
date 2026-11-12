@@ -17,6 +17,10 @@
     story: `<p>On the ground where his camel knelt, the Prophet ﷺ and his companions built the first mosque of Madinah: walls of sun-dried brick on stone footings, palm trunks for pillars and palm fronds for a roof.</p>
             <p>Walk through it. Four places hold a story: the old palm trunk, the minbar, the Suffah and the roof. Look for the light, and press <b>E</b> when you are close.</p>`,
 
+    shotDur: 11,
+    // straight down through the gaps of the frond roof, along the hall, and out to the door
+    shots() { return [[[-6, 34, -14], [-6, 0, -12.5]], [[-6, 6.5, -13], [0, 1.2, -6]], [[0, 3.2, 6], [0, 1.6, -12]], [[0, 2.4, 19], [0, 1.6, 0]], [[0, 0, 0], [0, 0, 0]]]; },
+
     enter(env) {
       const T = THREE;
       const w = this.w = WORLD.create(env, {
@@ -153,8 +157,8 @@
 
       /* ---------- the four places ---------- */
       const self = this;
-      const mark = key => { self.found.add(key); w.count(`${self.found.size} / 4 found`); if (self.found.size === 4) { env.complete(); self.unlockSoon(); } };
-      w.count('0 / 4 found');
+      const mark = key => { self.found.add(key); w.progress(self.found.size, 'Find the places that hold a story'); if (self.found.size === 4) w.finish('Four stories of the first mosque'); };
+      w.activity('Four places', 4, 'Find the old palm trunk, the minbar, the Suffah, and look up at the roof');
       w.interact({
         key: 'trunk', pos: [-0.9, 1.3, -15.6], r: 2.8, once: true, label: 'Place your hand on the trunk',
         onUse: () => {

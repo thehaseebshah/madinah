@@ -17,6 +17,10 @@
     story: `<p>Between 1900 and 1908 the Ottoman state built a railway of some 1,300 kilometres from Damascus to Madinah, paid for largely by donations, most from within the Ottoman Empire and some from Muslims as far away as India and Morocco. A pilgrimage that took forty days by caravan now took a few days by train.</p>
             <p>The line ran for only about a decade before it was wrecked in the First World War. The station in Madinah still stands, now a museum. Ring the bell and wait for the train.</p>`,
 
+    shotDur: 10,
+    // along the rails from the direction of the coming train, to the platform
+    shots() { return [[[210, 2.2, 1.2], [0, 1, 1.2]], [[90, 3.4, 1.6], [0, 2, -4]], [[18, 4.4, 0.2], [-14, 2, -6]], [[-6, 2.4, -3], [-14, 1.8, -5]], [[0, 0, 0], [0, 0, 0]]]; },
+
     enter(env) {
       const T = THREE, self = this;
       const w = this.w = WORLD.create(env, {
@@ -161,13 +165,13 @@
       this.baked = w.bake();
 
       /* ---------- interactions ---------- */
-      w.count('');
+      w.activity('Meet the train', 3, 'Ring the station bell beside the door (E)');
       w.interact({
         key: 'bell', pos: [4.2, 2.4, FACE_Z + 0.75], r: 3, label: () => (self.phase === 'waiting' ? 'Ring the station bell' : 'Ring the bell'),
         onUse: () => {
           self.bellSwing = 1;
           [0, 0.35, 0.7].forEach(d => SND.bell(env.bus, 1320, { gain: 0.08, dur: 2.2, metal: true, delay: d, pan: 0.3 }));
-          if (self.phase === 'waiting') { self.phase = 'arriving'; self.trainV = 15; self.whistleSoon = 1.5; w.say('Here She Comes', 'From the north, over the lava fields, the daily train from Damascus. Stand back from the edge.', { ms: 7000 }); }
+          if (self.phase === 'waiting') { w.progress(1, 'Wait for the train on the platform'); self.phase = 'arriving'; self.trainV = 15; self.whistleSoon = 1.5; w.say('Here She Comes', 'From the north, over the lava fields, the daily train from Damascus. Stand back from the edge.', { ms: 7000 }); }
         },
       });
       w.interact({
@@ -182,7 +186,7 @@
           SND.knock(env.bus, { f: 200, gain: 0.3, click: 900 });
           SND.glow(env.bus, 146.83, { gain: 0.06, dur: 9 });
           w.say('Forty Days into Five', 'For a pilgrim from Damascus the journey had taken some forty days by caravan, through heat and danger. By train it took about five. In its few years the railway carried many thousands of pilgrims to the Prophet’s city.', { ms: 13000 });
-          env.complete(); self.unlockSoon();
+          w.finish('The pilgrims have arrived');
         },
       });
       this.doorItem = w.items[w.items.length - 1];
@@ -278,6 +282,7 @@
           for (let i = 0; i < 18; i++) this.puff(new THREE.Vector3(STOP_X + U.rnd(-2, 6), RAIL_Y + 0.6, U.rnd(-0.5, 2)), true);
           SND.swell(env.bus, { color: 'white', type: 'bandpass', f0: 1800, f1: 4200, dur: 3.5, gain: 0.12, q: 0.8 });
           SND.thump(env.bus, { f: 50, gain: 0.25 });
+          w.progress(2, 'Walk along the platform to the first carriage');
           w.say('Madinah', 'The train from Damascus is in. Walk along the platform to the first carriage.', { ms: 7000 });
         }
       }

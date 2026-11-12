@@ -18,6 +18,10 @@
     story: `<p>The Prophet ﷺ and Abu Bakr left Makkah by night, going south when the search expected them to go north, and climbed Mount Thawr. For three nights they hid in a small cave near its summit, while Abu Bakr’s son brought them news and his shepherd brought milk and covered their tracks with his flock.</p>
             <p class="q"><span class="ar">ثَانِيَ اثْنَيْنِ إِذْ هُمَا فِي الْغَارِ</span>“The second of two, when they were in the cave…” (Qur’an 9:40)</p>`,
 
+    shotDur: 10,
+    // from the moonlit mountainside, pushing in through the mouth of the cave
+    shots() { return [[[4, 5, -24], [0, 1.2, -4]], [[0.8, 2.2, -10], [0, 1.1, -3]], [[0.2, 1.3, -3.4], [0.2, 1.1, 1]], [[0.3, 1.2, 0.6], [0.3, 1.1, -3]], [[0, 0, 0], [0, 0, 0]]]; },
+
     enter(env) {
       const T = THREE, self = this;
       const w = this.w = WORLD.create(env, {
@@ -125,8 +129,8 @@
 
       /* ---------- the moments ---------- */
       this.found = new Set(); this.pass = -1;
-      const progress = () => { w.count(`${self.found.size} / 3`); if (self.found.size >= 2 && self.pass < 0) self.pass = 0; };
-      w.count('0 / 3');
+      const progress = () => { w.progress(Math.min(3, self.found.size), self.found.size < 3 ? 'Look at the mouth, the web and the nest' : 'Footsteps outside. Keep still until they pass'); if (self.found.size >= 3 && self.pass < 0) self.pass = 0; };
+      w.activity('Hidden in the cave', 4, 'Look out of the cave, and find the web and the nest at its mouth');
       w.interact({
         key: 'mouth', pos: [0, CAVE.cy + 0.4, -CAVE.rz], r: 2.4, once: true, label: 'Look out from the cave',
         onUse: () => {
@@ -172,7 +176,12 @@
 
       // the search party passes the mouth of the cave
       if (this.pass >= 0 && this.pass < 1) {
-        this.passT += dt;
+        // keep still: while the torches are near, moving holds them at the mouth of the cave
+        const nearNow = Math.sin(Math.min(1, this.passT / 26) * Math.PI);
+        if (w.moving > 0.3 && nearNow > 0.35) {
+          if (!this.warned) { this.warned = true; w.say('Keep Still', 'The searchers are at the mouth of the cave. Do not move until they have gone.', { ms: 6000 }); }
+          SND.knock(env.bus, { f: U.rnd(500, 900), gain: 0.02 * dt * 60, click: 5000 });
+        } else this.passT += dt;
         const k = this.passT / 26; this.pass = k;
         const near = Math.sin(Math.min(1, k) * Math.PI);
         const x = U.lerp(9, -9, k), z = -CAVE.rz - 2.2 - (1 - near) * 4;
@@ -193,7 +202,7 @@
           this.torch.intensity = 0; this.torchGlow.material.opacity = 0;
           SND.glow(env.bus, 130.81, { gain: 0.05, dur: 9 });
           SND.coo(env.bus, { gain: 0.04, delay: 2 });
-          env.complete(); this.unlockSoon();
+          w.finish('The search has passed');
         }
       }
     },

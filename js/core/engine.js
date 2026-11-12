@@ -142,11 +142,11 @@
 
   function showFinale() {
     const mk = E.world === 'makkah';
-    $('finale-eyebrow').textContent = mk ? 'The Makkan years are complete' : 'The journey is complete';
+    $('finale-eyebrow').textContent = mk ? 'The stations of Makkah are complete' : 'The journey is complete';
     $('finale-ar').textContent = mk ? '\u0625\u0650\u0644\u064e\u0649 \u0627\u0644\u0645\u064e\u062f\u0650\u064a\u0646\u0629' : '\u0627\u0644\u0633\u0651\u064e\u0644\u0627\u0645\u064f \u0639\u064e\u0644\u064e\u064a\u0652\u0643\u064f\u0645';
     $('finale-en').textContent = mk ? 'On to Madinah' : 'Peace be upon you';
     $('finale-sub').textContent = mk
-      ? 'Thirteen years of revelation in Makkah end on a night road north. Ahead lie Quba, the welcome of Yathrib, and the founding of a community.'
+      ? 'From the Ka\u2018bah rebuilt to the plain of Arafat, the story of Makkah is told. Madinah holds the years between: Quba, the first mosque, the Trench, and the Illuminated City.'
       : 'From a night road in the desert to a city of light that welcomes millions each year, Madinah has been a place of arrival for fourteen centuries.';
     $('btn-again').querySelector('span:last-child').textContent = mk ? 'Continue to Madinah' : 'Return to the map';
     $('finale').hidden = false;

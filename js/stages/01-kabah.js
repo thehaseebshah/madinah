@@ -20,6 +20,10 @@
     story: `<p>When Muhammad was about thirty-five, Quraysh pulled down the flood-damaged Ka‘bah and rebuilt it in courses of stone and timber. He carried stones for it alongside his uncle al-‘Abbas.</p>
             <p>When the walls reached the place of the Black Stone, each clan wanted the honour of setting it, and the quarrel came close to bloodshed. They agreed that the next man to enter would judge. It was Muhammad, whom they already called <i>al-Amin</i>, the trustworthy.</p>`,
 
+    shotDur: 10.5,
+    // a high crane over the valley, spiralling down onto the scaffolding
+    shots() { return [[[0, 95, 130], [0, 4, 0]], [[-90, 55, 45], [0, 4, 0]], [[-38, 22, -34], [0, 5, 0]], [[26, 9, 6], [0, 3.5, 0]], [[20, 2, 20], [0, 2, 0]]]; },
+
     enter(env) {
       const T = THREE, self = this;
       const w = this.w = WORLD.create(env, {
@@ -94,7 +98,7 @@
       this.carrying = false; this.placed = 0; this.phase = 'build'; this.flying = [];
 
       /* ---------- the moments ---------- */
-      w.count('Stones set 0 / 3');
+      w.activity('Rebuild the House', 5, 'Carry a stone from the pile to the glowing place by the wall');
       w.interact({ key: 'pile', pos: [PILE.x, 0.8, PILE.z], r: 3.6, label: 'Lift a stone', enabled: () => !self.carrying && self.phase === 'build', onUse: () => {
         self.carrying = true; self.carried.visible = true; w.speed = 2.2; w.run = 3;
         SND.knock(env.bus, { f: 110, gain: 0.3, click: 1600 }); SND.step(env.bus, { gain: 0.2, f: 900 });
@@ -106,12 +110,12 @@
         const from = w.camera.localToWorld(new T.Vector3(0.15, -0.55, -0.9));
         m.position.copy(from); S.add(m);
         self.flying.push({ m, from, to: new T.Vector3(W / 2 - 0.3, H * self.built + 0.2, (self.placed - 1) * 1.6), t: 0 });
-        self.placed++; w.count(`Stones set ${self.placed} / 3`);
+        self.placed++; w.progress(self.placed, self.placed < 3 ? 'Carry another stone to the wall' : 'The clans are quarrelling over the Black Stone');
         if (self.placed >= 3) {
           self.phase = 'dispute';
           setTimeout(() => {
             w.say('The Black Stone', 'The walls have reached the place of the Black Stone, and every clan wants the honour of setting it. Some swear on blood. At last they agree: the next man to come through the gate of Banu Shaybah will decide between them.', { ms: 12000 });
-            env.hint('Walk through the gate of Banu Shaybah');
+            env.hint('Walk through the gate of Banu Shaybah'); w.step('Walk through the gate of Banu Shaybah, to the north');
           }, 1600);
         }
       } });
@@ -171,7 +175,7 @@
         this.phase = 'judged';
         SND.glow(env.bus, 196, { gain: 0.06, dur: 7 });
         w.say('Al-Amin', 'The next man through the gate was Muhammad. <span class="q">“This is al-Amin; we accept him,”</span> they said. He asked for a cloak, laid the Black Stone on it, and asked each clan to take hold of an edge. (Musnad Ahmad; Ibn Ishaq)', { ms: 14000 });
-        env.hint('Go to the cloak and take an edge with the clans');
+        env.hint('Go to the cloak and take an edge with the clans'); w.progress(4, 'Take an edge of the cloak with the clans');
       }
 
       // the stone rises on the cloak, is carried to its corner, and is set in place
@@ -196,7 +200,7 @@
           SND.knock(env.bus, { f: 90, gain: 0.5, click: 1500 }); SND.glow(env.bus, 130.81, { gain: 0.07, dur: 10 });
           this.cloakRig.position.y = 0.06;
           w.say('Set in Its Place', 'Together the clans raised the cloak, and when it reached the corner he set the Black Stone in its place with his own hand. The quarrel was over. Five years later, the man they trusted would be called to prophethood. (Musnad Ahmad; Ibn Ishaq)', { ms: 15000 });
-          env.complete(); this.unlockSoon();
+          w.finish('The Black Stone is set in its place');
         }
       }
       this.birdClock -= dt;

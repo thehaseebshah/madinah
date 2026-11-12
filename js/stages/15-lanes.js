@@ -19,6 +19,10 @@
     story: `<p>For centuries the Prophet’s Mosque stood at the heart of a dense old city: narrow lanes shaded by houses of four and five storeys, built of stone and coral-white plaster, with projecting wooden windows called <i>roshan</i> that let the breeze in and kept the family out of view.</p>
             <p>Most of these quarters were cleared in the great expansions of the twentieth century. Walk one of them as it was, by lamplight.</p>`,
 
+    shotDur: 11,
+    // from the Green Dome, travelling backward down the lane to you
+    shots() { return [[[-8, 44, -150], [-8, 22, -178]], [[0, 7, -98], [0, 8, -150]], [[0, 4.5, -44], [0, 4, -120]], [[0, 3, -6], [0, 2.6, -60]], [[0, 0, 0], [0, 0, 0]]]; },
+
     enter(env) {
       const T = THREE;
       const self = this;
@@ -164,12 +168,12 @@
             SND.swell(env.bus, { color: 'white', type: 'bandpass', f0: 1800, f1: 600, dur: 0.6, gain: 0.05 });
             SND.bell(env.bus, [392, 440, 493.88, 523.25, 587.33, 659.25, 739.99, 783.99][self.lit], { gain: 0.06, glass: true, pan: side * 0.4 });
             self.lit++;
-            w.count(`Lanterns lit ${self.lit} / 8`);
+            w.progress(self.lit, self.lit < 8 ? 'Light the lanterns along the lane' : 'Walk to the end of the lane');
             if (self.lit === 1) w.say('Lamps of the Lane', 'Before electricity, the lanes around the mosque were lit by oil lamps that the lamplighters tended at dusk. Light the rest as you walk.', { ms: 8000 });
           },
         });
       });
-      this.lit = 0; w.count('Lanterns lit 0 / 8');
+      this.lit = 0; w.activity('Light the lane', 9, 'Light the eight lanterns along the lane (E)');
 
       // one door that answers a knock
       const kd = this.doors.find(d => d.z < -16 && d.z > -40) || this.doors[2];
@@ -254,12 +258,14 @@
       this.cooClock -= dt;
       if (this.cooClock < 0) { this.cooClock = 4 + Math.random() * 6; SND.coo(env.bus, { gain: 0.03 }); }
 
-      if (!this.reached && w.pos.z < LANE_END + 2) {
+      if (this.wait > 0) this.wait -= dt;
+      if (!this.reached && !(this.wait > 0) && w.pos.z < LANE_END + 2 && (this.lit >= 8 || !this.toldOnce)) {
+        this.toldOnce = true;
         this.reached = true;
         SND.glow(env.bus, 146.83, { gain: 0.07, dur: 10 });
         SND.glow(env.bus, 220, { gain: 0.05, dur: 10, delay: 0.8 });
         w.say('The Green Dome', 'At the end of the lane the city opens onto the mosque. The dome over the resting place of the Prophet ﷺ was first built in 1279 and has been painted green since the nineteenth century.', { ms: 13000 });
-        env.complete(); this.unlockSoon();
+        if (this.lit >= 8) w.finish('The lane is lit to the mosque'); else { w.step(`Light the ${8 - this.lit} remaining lanterns, then return here`); this.reached = false; this.wait = 3; }
       }
       if (this.reached) this.domeLight.intensity = U.damp(this.domeLight.intensity, 4, 0.8, dt);
     },

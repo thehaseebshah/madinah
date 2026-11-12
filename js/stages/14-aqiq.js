@@ -62,6 +62,10 @@ void main(){
             <p class="q"><span class="ar">صَلِّ فِي هَذَا الْوَادِي الْمُبَارَكِ</span>“Pray in this blessed valley.” (Sahih al-Bukhari)</p>
             <p>Wade in the water, skip a stone, rest under the acacia, and follow the stream to the rise at its end.</p>`,
 
+    shotDur: 11,
+    // low over the moonlit water upstream, rising to the bank where you stand
+    shots() { return [[[cx(-46), 0.9, -46], [cx(-12), 0.2, -12]], [[cx(-16), 1.1, -16], [cx(6), 0.3, 6]], [[cx(4) + 3, 2.8, 4], [cx(10) + 7, 1.5, 10]], [[cx(10) + 7, 3, 14], [cx(10) + 7, 1.5, 4]], [[0, 0, 0], [0, 0, 0]]]; },
+
     enter(env) {
       const T = THREE;
       const self = this;
@@ -191,6 +195,7 @@ void main(){
         },
       });
       this.reached = false;
+      w.activity('Stones on the water', 2, 'At the water\u2019s edge, skip a stone four times (E)');
 
       /* ---------- sound ---------- */
       const b = env.bus;
@@ -245,7 +250,8 @@ void main(){
             SND.drop(env.bus, { f: 340, gain: 0.12 * sp.gain + 0.04, pan: sp.pan, dur: 0.25 });
             SND.thump(env.bus, { f: 90, gain: 0.06 * sp.gain });
             this.skips = s.skips; this.best = Math.max(this.best, s.skips);
-            w.count(`Last throw: ${s.skips} skip${s.skips === 1 ? '' : 's'} · best ${this.best}`);
+            w.step(`Last throw: ${s.skips} skip${s.skips === 1 ? '' : 's'} · best ${this.best}` + (this.best >= 4 ? '. Now follow the stream to the lights' : '. Try for four'));
+            if (this.best >= 4 && !this.skipped) { this.skipped = true; w.progress(1); }
             if (s.skips >= 4) SND.bell(env.bus, 392 + s.skips * 40, { gain: 0.05, glass: true });
           }
         }
@@ -289,7 +295,7 @@ void main(){
         SND.glow(env.bus, 130.81, { gain: 0.06, dur: 9 });
         SND.glow(env.bus, 196, { gain: 0.04, dur: 9, delay: 1.2 });
         w.say('The Lights of the City', 'From the rise at the end of the valley the city comes into view, gathered around the green dome of the Prophet’s Mosque, a few kilometres to the east.', { ms: 12000 });
-        env.complete(); this.unlockSoon();
+        w.finish('The lights of the city');
       }
     },
   }));

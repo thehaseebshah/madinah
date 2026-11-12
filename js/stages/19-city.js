@@ -22,6 +22,10 @@
     story: `<p>Around the Prophet’s Mosque, 250 giant umbrellas stand in the marble courtyards. Each opens to about 25 metres across, and together they shade the worshippers through the heat of the day. At evening they fold away and the courtyards are lit for the night.</p>
             <p>Millions come each year. The village oasis of Yathrib has become <i>al-Madinah al-Munawwarah</i>: the Illuminated City.</p>`,
 
+    shotDur: 12,
+    // from the sky above the minarets, down between the furled umbrellas
+    shots() { return [[[0, 150, -230], [-22, 30, -156]], [[44, 64, -110], [0, 10, -60]], [[22, 20, -24], [13, 6, 10]], [[15, 4, 24], [13, 2, 0]], [[0, 0, 0], [0, 0, 0]]]; },
+
     enter(env) {
       const T = THREE, self = this;
       const w = this.w = WORLD.create(env, {
@@ -127,10 +131,12 @@
       this.baked = w.bake();
       this.setSky(true);
 
+      w.activity('A day in the courtyard', 3, 'Open the umbrellas: press E at any column');
       w.interact({
         key: 'gate', pos: [-22, 3, WALL_Z], r: 9, once: true, label: 'Stand before Bab as-Salam',
         enabled: () => self.phase === 'night',
         onUse: () => {
+          w.finish('Peace be upon you');
           SND.glow(env.bus, 130.81, { gain: 0.07, dur: 10 }); SND.glow(env.bus, 196, { gain: 0.05, dur: 10, delay: 1 });
           w.say('Bab as-Salam', 'Visitors enter the mosque by Bab as-Salam, the Gate of Peace, and walk to the place where the Prophet ﷺ is buried to send him their greeting of peace, as believers have done for fourteen centuries.', { ar: 'السَّلامُ عَلَيْكَ يَا رَسُولَ اللَّه', ms: 14000 });
         },
@@ -167,7 +173,7 @@
 
     openFrom(env, from) {
       for (const u of this.umbrellas) { u.target = 1; u.delay = Math.hypot(u.x - from.x, u.z - from.z) / 14; }
-      this.phase = 'opening'; this.phaseT = 0;
+      this.phase = 'opening'; this.phaseT = 0; this.w.progress(1, 'Walk in the shade as the day passes');
       SND.glow(env.bus, 146.83, { gain: 0.05, dur: 8 });
       this.w.say('Opening to the Morning', 'Each umbrella unfolds its arms in about three minutes in life, its canopy rising like a flower. Together they shade more than 140,000 square metres of courtyard.', { ms: 10000 });
     },
@@ -211,7 +217,7 @@
       if (this.phase === 'dawn') this.tau = U.damp(this.tau, 0.09, 0.5, dt);
       else if (this.phase === 'opening') { this.tau = U.damp(this.tau, 0.12 + frac * 0.3, 0.8, dt); if (frac > 0.99 && this.phaseT > 6) { this.phase = 'day'; this.phaseT = 0; } }
       else if (this.phase === 'day') { this.tau = Math.min(1, this.tau + dt / 40); if (this.tau > 0.77) { this.phase = 'dusk'; for (const u of this.umbrellas) { u.target = 0; u.delay = Math.hypot(u.x - w.pos.x, u.z - w.pos.z) / 18; } w.say('Evening', 'At sunset the umbrellas fold away, the lamps come on, and the courtyard fills for the evening prayers.', { ms: 9000 }); } }
-      else if (this.phase === 'dusk') { this.tau = Math.min(1, this.tau + dt / 18); if (this.tau >= 1) { this.phase = 'night'; env.complete(); env.hint('Walk to the mosque and stand before Bab as-Salam'); SND.glow(env.bus, 110, { gain: 0.06, dur: 10 }); } }
+      else if (this.phase === 'dusk') { this.tau = Math.min(1, this.tau + dt / 18); if (this.tau >= 1) { this.phase = 'night'; this.w.progress(2, 'Walk to the mosque and stand before Bab as-Salam'); env.hint('Walk to the mosque and stand before Bab as-Salam'); SND.glow(env.bus, 110, { gain: 0.06, dur: 10 }); } }
       if (this.phase !== 'night' || this.tauLast !== this.tau) { this.setSky(false); this.tauLast = this.tau; }
 
       const N = this.night;

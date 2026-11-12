@@ -17,6 +17,10 @@
     story: `<p>For about three years the message was shared quietly. Then came the verse <i>“And warn your nearest kin”</i> (Qur’an 26:214). He climbed the hill of as-Safa, beside the Ka‘bah, and gave the cry used to warn of a dawn raid, until the clans of Quraysh gathered below.</p>
             <p>This station follows the account of Ibn ‘Abbas in Sahih al-Bukhari.</p>`,
 
+    shotDur: 10,
+    // a low dawn glide from the Ka'bah across the roofs of Makkah to the rock of as-Safa
+    shots() { return [[[-70, 34, -40], [-70, 6, -75]], [[-62, 15, -50], [-70, 5, -75]], [[-32, 13, -24], [0, 7, 0]], [[-8, 10, -6], [0, 7, 0]], [[0, 0, 0], [0, 0, 0]]]; },
+
     enter(env) {
       const T = THREE, self = this;
       const w = this.w = WORLD.create(env, {
@@ -67,8 +71,9 @@
 
       /* ---------- the moment ---------- */
       this.phase = 'wait'; this.t = 0;
+      w.activity('The call from as-Safa', 3, 'Stand on the summit of as-Safa');
       w.interact({ key: 'call', pos: [0, ground(0, 0) + 1.2, 0], r: 3.6, once: true, label: 'Raise the morning call', onUse: () => {
-        self.phase = 'call'; self.t = 0;
+        self.phase = 'call'; self.t = 0; w.progress(2, 'Wait as the clans of Quraysh gather below');
         // the old alarm of the dawn raid, sung wide over the valley and echoing from the mountains
         SND.sing(env.bus, 196, { vowel: 'a', dur: 2.6, gain: 0.09, voices: 3, attack: 0.15, hold: 0.6, breath: 0.12, glide: 0.92 });
         for (let k = 1; k <= 4; k++) SND.sing(env.bus, 196, { vowel: 'a', dur: 2.4, gain: 0.05 * Math.pow(0.55, k), delay: k * 0.7, voices: 2, attack: 0.2, hold: 0.5, pan: k % 2 ? -0.6 : 0.6 });
@@ -85,6 +90,7 @@
     update(env, dt) {
       const w = this.w; if (!w) return;
       w.update(dt);
+      if (this.phase === 'wait' && !this.onTop && Math.hypot(w.pos.x, w.pos.z) < 3.5) { this.onTop = true; w.progress(1, 'Raise the morning call (E)'); }
       const T0 = this.t, T1 = (this.t += dt), cross = s => T0 < s && T1 >= s;
       if (this.phase === 'call' || this.phase === 'done') {
         // lights leave the houses and climb toward the foot of the hill
@@ -108,7 +114,7 @@
         if (cross(46)) {
           this.phase = 'done';
           w.say('Perish the Hands of Abu Lahab', 'His uncle Abu Lahab said, <span class="q">“May you perish! Is this what you gathered us for?”</span> Then Surat al-Masad was revealed: <span class="q">“Perish the hands of Abu Lahab, and perish he.”</span> (Qur’an 111:1; Sahih al-Bukhari)', { ar: 'تَبَّتْ يَدَا أَبِي لَهَبٍ وَتَبَّ', ms: 15000 });
-          env.complete(); this.unlockSoon();
+          w.finish('The message is spoken openly');
         }
       }
       this.birdClock -= dt;

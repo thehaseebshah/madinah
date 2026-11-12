@@ -28,6 +28,10 @@
     story: `<p>In the winter of 627 an alliance of tribes, some ten thousand strong, marched on Madinah. Salman al-Farisi, who knew the warfare of Persia, advised a trench across the open northern approach. The whole community dug it, the Prophet ﷺ among them, carrying earth in the cold.</p>
             <p>Three sections are still unfinished. Hold <b>E</b> to dig them out, then find the great rock in the trench that no pick could break.</p>`,
 
+    shotDur: 10,
+    // a long tracking shot along the trench at dusk
+    shots() { return [[[70, 4.5, -1], [10, -0.5, 0]], [[34, 2.4, 0.4], [0, -1.2, 0]], [[2, 3.4, 4.5], [-16, 1, 6]], [[-10, 4, 13], [-16, 1, 6]], [[0, 0, 0], [0, 0, 0]]]; },
+
     enter(env) {
       const T = THREE;
       const self = this;
@@ -146,9 +150,10 @@
       /* ---------- interactions ---------- */
       const counter = () => {
         const dug = self.plugs.filter(p => p.fill <= 0).length;
-        w.count(`Dug ${dug} / 3 · Rock ${self.strikes} / 3`);
-        if (dug === 3 && self.strikes >= 3) { env.complete(); self.unlockSoon(); }
+        w.progress(dug + self.strikes, dug < 3 ? 'Hold E to dig out the unfinished sections' : self.strikes < 3 ? 'Strike the great rock in the trench' : '');
+        if (dug === 3 && self.strikes >= 3) w.finish('The trench is finished');
       };
+      w.activity('Dig the trench', 6, 'Hold E to dig out the three unfinished sections');
       counter();
       this.plugs.forEach((p, i) => {
         w.interact({
