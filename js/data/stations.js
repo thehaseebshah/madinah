@@ -6,7 +6,7 @@
     worlds: {
       makkah: {
         name: 'Makkah al-Mukarramah', ar: 'مَكّة المُكَرَّمة',
-        span: 'c. 605 – 622 CE', blurb: 'The valley of the Ka‘bah: the trustworthy young man, the first revelation, the first public call, and the night he left.',
+        span: 'c. 605 – 632 CE', blurb: 'The valley of the Ka‘bah: the trustworthy young man, the first revelation, the years of trial, the night he left, the return, and the farewell.',
         // map extent: [south, west, north, east]
         extent: [21.345, 39.735, 21.495, 39.995],
         landmarks: [

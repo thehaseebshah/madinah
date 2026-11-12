@@ -1,6 +1,6 @@
 # Sirah in Light and Sound
 
-An interactive 3D Sirah: the life of the Prophet Muhammad ﷺ told through the places where it happened, in **two worlds**, **Makkah** and **Madinah**. Choose a city, explore its 3D relief map, and enter any station. Ten stations are walkable 3D scenes (WASD and E); the others are hand-drawn interactive scenes. A guide narrates every station in **English or Arabic**, and every story carries its **sources, graded for authenticity**.
+An interactive 3D Sirah: the life of the Prophet Muhammad ﷺ told through the places where it happened, in **two worlds**, **Makkah** and **Madinah**. Choose a city, explore its 3D relief map, and enter any station. All 24 stations are walkable 3D scenes (WASD and E), each with a cinematic entrance and its own game-like activity. A guide narrates every station in **English or Arabic**, and every story carries its **sources, graded for authenticity**.
 
 Open `index.html` in a modern browser (double-clicking it works), choose **Makkah** or **Madinah**, and use headphones.
 
@@ -8,34 +8,41 @@ Open `index.html` in a modern browser (double-clicking it works), choose **Makka
 
 On the start screen, choose a city. Each opens a 3D relief model of the city with its stations pinned where they happened: drag to turn it, scroll or pinch to zoom, right-drag to pan, and use the arrow keys or the station list to move between pins. Select a pin to see its date, its sources, and **Enter the station**. The **Map** button returns to the map from any station. Visited stations are marked on the map and remembered on the device.
 
-### Makkah al-Mukarramah · c. 605 – 622 CE
+### Makkah al-Mukarramah · c. 605 – 632 CE
 
-| # | Station | You… |
-|---|---------|------|
-| I | **The Ka‘bah Rebuilt** · c. 605 · 3D | carry stones for the rising walls; when the clans quarrel over the Black Stone, walk through the gate of Banu Shaybah, and the stone is raised on a cloak by every clan together |
-| II | **The Cave of Hira** · 610 · 3D | climb Jabal an-Nur on a Ramadan night; at the cave the first verses of Surat al-‘Alaq are written in light over the valley |
-| III | **The Call from as-Safa** · c. 613 · 3D | raise the morning call from the rock of as-Safa and watch the lights of Quraysh gather below |
-| IV | **The Cave of Thawr** · 622 · 3D | hide in the cave as the search party passes its mouth |
-| V | **The Night Road** · 622 · 2D | walk the Hijrah route north as night turns to dawn |
+| # | Station | You… | Entrance |
+|---|---------|------|----------|
+| I | **The Ka‘bah Rebuilt** · c. 605 | carry stones for the rising walls, then lift the Black Stone on a cloak with every clan | crane down over the valley |
+| II | **The Cave of Hira** · 610 | climb Jabal an-Nur with provisions; the first verses of Surat al-‘Alaq are written in light | rising up the night mountain face |
+| III | **The Call from as-Safa** · c. 613 | raise the morning call and watch the lights of Quraysh gather | dawn glide across the roofs |
+| IV | **The Boycott in the Ravine** · c. 616–619 | stealth: carry food by night past sweeping torchlight | down from the rim into the ravine |
+| V | **The Night Journey** · c. 620 | fly through seven turning rings of light (an abstract meditation) | from the turning stars down to the courtyard |
+| VI | **The Pledges of al-‘Aqabah** · 621–622 | escort a line of lanterns through shadow to the meeting place | over the sleeping camps of Mina |
+| VII | **The Cave of Thawr** · 622 | find the cave, then keep perfectly still while the search passes | pushing in through the cave mouth |
+| VIII | **The Night Road** · 622 | navigate north by the stars from cairn to cairn | from the Milky Way to the guide's footprints |
+| IX | **The Return to Makkah** · 630 | go round the Ka‘bah and topple the 36 stelae of the idols | from the northern heights, circling the House |
+| X | **The Farewell Sermon** · 632 | courier: carry each line of the sermon to those absent | across the golden plain of Arafat |
 
 ### al-Madinah al-Munawwarah · 622 CE – today
 
-| # | Station | You… |
-|---|---------|------|
-| I | **Quba, the First Stones** · 2D | lay the stones of the first mosque |
-| II | **The Full Moon Rises** · 2D | raise the moon over Yathrib as the city welcomes him |
-| III | **The Mosque of Palm Trunks** · 3D | walk the first Prophet’s Mosque: the weeping trunk, the minbar, the Suffah, the frond roof |
-| IV | **The Two Qiblas** · 2D | turn the qibla from Jerusalem to Makkah |
-| V | **The Mountain That Loves Us** · 2D | move the sun over Uhud and call to the mountain |
-| VI | **The Trench** · 3D | dig out the trench and strike the great rock |
-| VII | **The Well of Rumah** · 2D | stir the water of ‘Uthman’s endowment |
-| VIII | **The Palm Groves** · 2D | gather seven Ajwa dates |
-| IX | **The Blessed Valley** · 3D | wade Wadi al-‘Aqiq and follow it to the city lights |
-| X | **The Lanes of Old Madinah** · 3D | light the lanterns of the old city |
-| XI | **The Hejaz Railway** · 3D | meet the train from Damascus, 1908 |
-| XII | **The Sky Beneath the Domes** · 2D | roll open the domes of the Prophet’s Mosque |
-| XIII | **A Garden of Paradise** · 2D | grow a garden in ar-Rawdah |
-| XIV | **The City of Light** · 3D | open the courtyard umbrellas at dawn and stay until the lamps are lit |
+| # | Station | You… | Entrance |
+|---|---------|------|----------|
+| I | **Quba, the First Stones** | shape-matching: fit stones into the foundation | down through the palm crowns |
+| II | **The Full Moon Rises** | rhythm (2D overlay): the welcome, line by line | from the rising moon over the roofs |
+| III | **The Mosque of Palm Trunks** | explore the first mosque and find four places | down through the frond roof |
+| IV | **The Two Qiblas** | tune a dial by ear until two voices become one | top-down above the rows, then into the hall |
+| V | **The Mountain That Loves Us** | restraint: hold the archers' hill, then call to the mountain | along the red ridges of Uhud |
+| VI | **The Trench** | hold to dig, then strike the great rock | along the trench line at dusk |
+| VII | **The Well of Rumah** | haul the bucket hand over hand, then give water | up out of the well shaft |
+| VIII | **The Palm Groves** | shake laden palms and catch seven Ajwa dates | down through backlit fronds |
+| IX | **The Blessed Valley** | skip stones on Wadi al-‘Aqiq, then follow it to the lights | low over the moonlit water |
+| X | **The Lanes of Old Madinah** | light the lanterns of the lane | backward down the lane from the Green Dome |
+| XI | **The Hejaz Railway** · 1908 | ring the bell and meet the train from Damascus | along the rails |
+| XII | **The Sky Beneath the Domes** | light puzzle: roll the domes open to complete a golden star | from the roof through an opening dome |
+| XIII | **A Garden of Paradise** | trace the arabesque (2D drawing) at six named columns | down a gilded column to the green carpet |
+| XIV | **The City of Light** | open the umbrellas and live through a day in the courtyard | from above the minarets |
+
+Every station opens with its own cinematic shot (press any key or tap to skip) and has one activity: no score, no failure, and a quiet moment when it is complete. The art direction behind them is written up in [`docs/DESIGN.md`](docs/DESIGN.md).
 
 ## Sources and authenticity
 
@@ -56,6 +63,10 @@ Hadith numbers follow sunnah.com numbering. Each was checked against the text an
 - **Masjid al-Qiblatayn:** the sahih reports do not name the mosque. The Banu Salimah attribution is marked as later tradition.
 - **The three strikes at the Trench:** the rock itself is sahih (al-Bukhari). The three-strike visions survive in two versions with disputed chains, and both are named.
 - **The spider and the doves at Thawr:** the report is weak and is presented as tradition.
+- **The Farewell Sermon:** “Have I conveyed?” and “let those present tell those absent” are attributed to the sermon at Mina; the scene says so.
+- **The conquest:** “Go, you are free” has a weak chain and is labelled as tradition.
+
+There are 91 graded claims across the 24 stations.
 
 The data lives in `js/data/sources.verified.json`. After editing it, run `node tools/build-sources.js`.
 
@@ -65,6 +76,10 @@ Each station has a short spoken guide in English and Arabic, with captions. The 
 
 ```bash
 pip install kokoro-onnx piper-tts soundfile numpy
+```
+
+```bash
+node tools/tts/merge-drafts.js
 ```
 
 ```bash
