@@ -94,6 +94,10 @@ void main(){
       <div class="w-prompt" aria-live="polite"><span class="w-key"><i></i>E</span><span class="w-label"></span></div>
       <div class="w-card" aria-live="polite"><p class="w-card-ar" lang="ar" dir="rtl"></p><h3 class="w-card-title"></h3><p class="w-card-text"></p></div>
       <div class="w-count"></div>
+      <div class="w-quest" aria-live="polite"><p class="wq-kicker">Activity</p><p class="wq-title"></p><p class="wq-step"></p><div class="wq-bar"><i></i></div></div>
+      <div class="w-done" aria-live="assertive"><p class="wd-kicker">Activity complete</p><p class="wd-title"></p></div>
+      <div class="w-bars" aria-hidden="true"><i></i><i></i></div>
+      <p class="w-skip">Press any key to skip</p>
       <div class="w-joy" aria-hidden="true"><div class="w-joy-knob"></div></div>
       <button class="w-ebtn" type="button" aria-label="Interact">E</button>`;
     document.body.appendChild(layer);
@@ -111,6 +115,60 @@ void main(){
       cardTimer = setTimeout(() => w.ui.card.classList.remove('show'), opt.ms || 9000);
     };
     w.count = text => { w.ui.count.textContent = text || ''; w.ui.count.classList.toggle('show', !!text); };
+
+    /* ---------- the station's activity: one game-like goal, tracked on screen ---------- */
+    const Q = { title: '', total: 0, n: 0, done: false };
+    w.activity = (title, total, step) => {
+      Object.assign(Q, { title, total: total || 0, n: 0, done: false });
+      layer.querySelector('.wq-title').textContent = title;
+      w.step(step || '');
+      layer.querySelector('.w-quest').classList.add('show');
+      w.progress(0);
+    };
+    w.step = text => { layer.querySelector('.wq-step').textContent = text || ''; };
+    w.progress = (n, step) => {
+      Q.n = n; if (step != null) w.step(step);
+      const k = Q.total ? U.clamp(n / Q.total) : 0;
+      layer.querySelector('.wq-bar i').style.width = `${k * 100}%`;
+      if (Q.total) layer.querySelector('.wq-title').textContent = `${Q.title}  \u00b7  ${Math.min(n, Q.total)} / ${Q.total}`;
+    };
+    w.finish = (message) => {
+      if (Q.done) return; Q.done = true;
+      w.progress(Q.total || 1);
+      const d = layer.querySelector('.w-done');
+      layer.querySelector('.wd-title').textContent = message || Q.title;
+      d.classList.add('show'); setTimeout(() => d.classList.remove('show'), 5200);
+      layer.querySelector('.w-quest').classList.add('complete');
+      SND.glow(env.bus, 196, { gain: 0.06, dur: 6 }); SND.bell(env.bus, 587.33, { gain: 0.05, delay: 0.3 }); SND.bell(env.bus, 783.99, { gain: 0.05, delay: 0.6 });
+      env.complete();
+      setTimeout(() => { try { if (document.pointerLockElement) document.exitPointerLock(); } catch (_) {} }, 3500);
+    };
+    w.activityDone = () => Q.done;
+
+    /* ---------- cinematic entrance: a camera flight that ends at the walker's eyes ----------
+       shots: [{ p: [x,y,z], l: [x,y,z] }, ...] in world space; the last shot is replaced by the
+       player's own view so control is handed over without a jump. */
+    w.cinematic = (shots, dur) => {
+      const P = shots.map(s => new T.Vector3(...s.p)), L = shots.map(s => new T.Vector3(...s.l));
+      w.cine = { P, L, t: 0, dur: dur || 7.5 };
+      w.enabled = false; layer.classList.add('cine');
+    };
+    w.skipCinematic = () => { if (w.cine) w.cine.t = w.cine.dur; };
+    function endCinematic() { w.cine = null; w.enabled = true; layer.classList.remove('cine'); }
+    // A default flight: from high and far behind the start, swinging round and down to the eyes.
+    w.autoCinematic = (o) => {
+      o = o || {};
+      const f = new T.Vector3(-Math.sin(w.yaw), 0, -Math.cos(w.yaw)), side = new T.Vector3(-f.z, 0, f.x);
+      const eye = new T.Vector3(w.pos.x, w.ground(w.pos.x, w.pos.z) + w.eye, w.pos.z);
+      const focus = o.focus ? new T.Vector3(...o.focus) : eye.clone().addScaledVector(f, 18);
+      const R = o.radius || 46, H = o.height || 30;
+      w.cinematic([
+        { p: focus.clone().addScaledVector(f, R * 0.6).addScaledVector(side, -R).add(new T.Vector3(0, H * 1.2, 0)).toArray(), l: focus.toArray() },
+        { p: focus.clone().addScaledVector(f, -R * 0.2).addScaledVector(side, -R * 0.9).add(new T.Vector3(0, H * 0.7, 0)).toArray(), l: focus.toArray() },
+        { p: eye.clone().addScaledVector(f, -R * 0.55).addScaledVector(side, R * 0.25).add(new T.Vector3(0, H * 0.3, 0)).toArray(), l: focus.toArray() },
+        { p: eye.toArray(), l: eye.clone().addScaledVector(f, 10).toArray() },
+      ], o.dur || 7.5);
+    };
     const touchy = matchMedia('(pointer: coarse)').matches;
     if (touchy) layer.classList.add('touch');
     w.ui.ebtn.addEventListener('pointerdown', e => { e.stopPropagation(); w.keys.add('e'); press(); });
@@ -131,6 +189,7 @@ void main(){
 
     /* ---------- input (wired by the stage) ---------- */
     w.key = e => {
+      if (w.cine) { w.skipCinematic(); return; }
       const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
       if (k === 'e' && !w.keys.has('e')) { w.keys.add('e'); press(); return; }
       w.keys.add(k);
@@ -138,6 +197,7 @@ void main(){
     w.keyup = e => { const k = e.key.length === 1 ? e.key.toLowerCase() : e.key; w.keys.delete(k); };
     w.blur = () => w.keys.clear();
     w.down = (p, e) => {
+      if (w.cine) { w.skipCinematic(); return; }
       if (e.pointerType === 'mouse' || !e.pointerType) {
         if (!w.locked && o.pointerLock !== false && host.requestPointerLock) {
           try { const r = host.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (_) {}
@@ -270,8 +330,32 @@ void main(){
 
     /* ---------- the step ---------- */
     const fwd = new T.Vector3(), right = new T.Vector3(), want = new T.Vector3(), next = new T.Vector3();
+    const cA = new T.Vector3(), cB = new T.Vector3();
+    const spline = (arr, t, out) => {
+      const n = arr.length - 1, x = U.clamp(t) * n, i = Math.min(n - 1, Math.floor(x)), u = x - i;
+      const p0 = arr[Math.max(0, i - 1)], p1 = arr[i], p2 = arr[i + 1], p3 = arr[Math.min(n, i + 2)];
+      const u2 = u * u, u3 = u2 * u;
+      return out.set(
+        0.5 * (2 * p1.x + (-p0.x + p2.x) * u + (2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * u2 + (-p0.x + 3 * p1.x - 3 * p2.x + p3.x) * u3),
+        0.5 * (2 * p1.y + (-p0.y + p2.y) * u + (2 * p0.y - 5 * p1.y + 4 * p2.y - p3.y) * u2 + (-p0.y + 3 * p1.y - 3 * p2.y + p3.y) * u3),
+        0.5 * (2 * p1.z + (-p0.z + p2.z) * u + (2 * p0.z - 5 * p1.z + 4 * p2.z - p3.z) * u2 + (-p0.z + 3 * p1.z - 3 * p2.z + p3.z) * u3));
+    };
     w.update = dt => {
       w.time += dt;
+      if (w.cine) {
+        const c = w.cine; c.t += dt;
+        const k = U.ease(U.clamp(c.t / c.dur));
+        // the last key is always the walker's present view
+        c.P[c.P.length - 1].set(w.pos.x, w.y + w.eye, w.pos.z);
+        c.L[c.L.length - 1].set(w.pos.x - Math.sin(w.yaw) * 10 * Math.cos(w.pitch), w.y + w.eye + Math.sin(w.pitch) * 10, w.pos.z - Math.cos(w.yaw) * 10 * Math.cos(w.pitch));
+        camera.position.copy(spline(c.P, k, cA));
+        camera.lookAt(spline(c.L, k, cB));
+        w.y = w.ground(w.pos.x, w.pos.z);
+        if (w.skyMesh) w.skyMesh.material.uniforms.uTime.value = w.time;
+        w.ui.prompt.classList.remove('show');
+        if (c.t >= c.dur) { endCinematic(); camera.rotation.order = 'YXZ'; }
+        return;
+      }
       if (w.skyMesh) w.skyMesh.material.uniforms.uTime.value = w.time;
       const k = w.keys;
       let mx = 0, mz = 0;
@@ -374,6 +458,11 @@ void main(){
 
   /* A stage built on WORLD gets the standard input wiring and lifecycle for free. */
   function stage(def) {
+    const enter = def.enter;
+    def.enter = function (env) {
+      enter.call(this, env);
+      if (this.w && !this.w.cine && this.cinematic !== false) this.w.autoCinematic(this.intro || {});
+    };
     // stations name themselves with a string `key`; here that name must not shadow the key handler
     const id = def.key; delete def.key;
     def.id = id;

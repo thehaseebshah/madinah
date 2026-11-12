@@ -259,6 +259,17 @@
     S.renderer.render(S.scene, S.camera);
   }
 
+  /* The camera dives toward a station's pin before the scene opens. */
+  A.dive = function (id, done) {
+    if (!S) { done(); return; }
+    const pin = S.pins.find(p => p.s.id === id);
+    if (!pin) { done(); return; }
+    cam.ttx = pin.base.x; cam.ttz = pin.base.z; cam.tdist = 16; cam.tpol = 0.62; cam.taz += 0.5; cam.idle = 0;
+    if (bus) SND.swell(bus, { f0: 300, f1: 1400, dur: 1.6, gain: 0.06 });
+    document.getElementById('atlas').classList.add('diving');
+    setTimeout(() => { document.getElementById('atlas').classList.remove('diving'); done(); }, 1250);
+  };
+
   A.hide = function (instant) {
     A.open = false; cancelAnimationFrame(raf);
     if (bus) { bus.dispose(); bus = null; }

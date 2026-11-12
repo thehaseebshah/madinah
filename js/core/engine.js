@@ -130,7 +130,7 @@
       $('hud').hidden = true;
       ATLAS.show(world, {
         completed: E.completed, focus,
-        onEnter: id => { const i = E.indexOf(id); if (i >= 0) E.go(i); },
+        onEnter: id => { const i = E.indexOf(id); if (i >= 0) ATLAS.dive(id, () => E.go(i)); },
         onSwitch: w => { E.busy = false; E.showMap(w); },
         onHome: () => { if (E.onHome) E.onHome(); },
       });
