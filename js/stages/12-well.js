@@ -119,7 +119,7 @@ void main(){
         const body = new T.Mesh(new T.CylinderGeometry(0.17, 0.13, 0.28, 14, 1, true), new T.MeshStandardMaterial({ color: 0x5a3a22, roughness: 0.75, side: T.DoubleSide })); g.add(body);
         const bot = new T.Mesh(new T.CircleGeometry(0.13, 14), leather); bot.rotation.x = -Math.PI / 2; bot.position.y = -0.14; g.add(bot);
         const bar = new T.Mesh(new T.BoxGeometry(0.36, 0.025, 0.025), woodM); bar.position.y = 0.16; g.add(bar);
-        const water = new T.Mesh(new T.CircleGeometry(0.155, 14), new T.MeshBasicMaterial({ color: 0x3e5478 })); water.rotation.x = -Math.PI / 2; water.position.y = 0.08; water.visible = false; g.add(water);
+        const water = new T.Mesh(new T.CircleGeometry(0.155, 14), new T.MeshBasicMaterial({ color: 0x16223a })); water.rotation.x = -Math.PI / 2; water.position.y = 0.08; water.visible = false; g.add(water);
         g.userData.water = water;
         return g;
       };

@@ -114,7 +114,7 @@ void main(){
       const parts = KIT.palmParts(w);
       swayify(parts.trunkMat); swayify(parts.frondMat);
       // light through the leaves: fronds glow a little warm, as if backlit by the low sun
-      parts.frondMat.emissive = new T.Color(0x5a4210); parts.frondMat.emissiveIntensity = 0.45;
+      parts.frondMat.emissive = new T.Color(0x4a3a10); parts.frondMat.emissiveIntensity = 0.22;
       const r = U.seeded(1447);
       this.palms = [];
       const ladenAt = [[7.6, 9], [-6.2, 3], [7.6, -4], [-12.8, -10], [3.6, -15], [-4, -21]];
@@ -497,7 +497,7 @@ void main(){
             d.pos.y = 0.05; d.vel.y *= -0.3; d.vel.x *= 0.6; d.vel.z *= 0.6; d.bounces = (d.bounces || 0) + 1;
             const sp = w.spatial(d.pos, 5);
             SND.knock(env.bus, { f: 150 + Math.random() * 40, gain: 0.12 * sp.gain / d.bounces, click: 600, pan: sp.pan });
-            if (d.bounces === 1) { this.freeRing(d); w.step('It rolled away into the grass. Shake the palm again (E)'); }
+            if (d.bounces === 1) { this.freeRing(d); if (this.reveal < 0) w.step('It rolled away across the earth. Shake the palm again (E)'); }
             if (d.bounces >= 2) { d.state = 'roll'; d.rollT = 0; d.vel.y = 0; const a = Math.random() * 6.28; d.vel.x += Math.cos(a) * 0.8; d.vel.z += Math.sin(a) * 0.8; }
           }
         } else if (d.state === 'roll') {
