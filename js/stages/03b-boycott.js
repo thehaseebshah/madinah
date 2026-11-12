@@ -158,8 +158,8 @@
 
       /* the shelters of hide and cloth */
       const hideTex = w.tex(512, (g, s) => {
-        g.fillStyle = '#6a4a32'; g.fillRect(0, 0, s, s);
-        const cols = ['#6e4e36', '#5e432e', '#74583e', '#665040', '#6c5a48'];
+        g.fillStyle = '#5a4030'; g.fillRect(0, 0, s, s);
+        const cols = ['#5e4432', '#523a2a', '#644c38', '#5a4636', '#5e4e40'];
         for (let i = 0; i < 16; i++) { const x = Math.random() * s, y = Math.random() * s, pw = 80 + Math.random() * 160, ph = 70 + Math.random() * 140; g.fillStyle = cols[i % cols.length]; g.fillRect(x, y, pw, ph); g.strokeStyle = 'rgba(30,20,12,0.65)'; g.setLineDash([5, 6]); g.lineWidth = 2; g.strokeRect(x + 3, y + 3, pw - 6, ph - 6); }
         g.setLineDash([]);
         for (let i = 0; i < 5000; i++) { g.fillStyle = Math.random() < 0.5 ? 'rgba(30,20,12,0.25)' : 'rgba(200,170,130,0.12)'; g.fillRect(Math.random() * s, Math.random() * s, 2, 2); }
@@ -190,8 +190,8 @@
         const door = new T.Vector3(0, 0, L / 2 + 1.3).applyMatrix4(g.matrixWorld);
         h.door = door; h.inner = new T.Vector3(0, 0.75, L * 0.1).applyMatrix4(g.matrixWorld);
         // a hint of ember inside; becomes warm light once food arrives
-        h.glow = KIT.glow(w, GOLD, 2.2, 0.08); h.glow.position.copy(h.inner); S.add(h.glow);
-        h.pool = decal(w, 4.2, GOLD, 0); placeDecal(h.pool, door.x, door.z, 0.06); S.add(h.pool);
+        h.glow = KIT.glow(w, GOLD, 2.2, 0.08); h.glow.position.lerpVectors(h.inner, door, 0.4); h.glow.position.y = ground(h.glow.position.x, h.glow.position.z) + 0.55; S.add(h.glow);
+        h.pool = decal(w, 4.2, 0xffb060, 0); placeDecal(h.pool, door.x, door.z, 0.06); S.add(h.pool);
         const cWorld = new T.Vector3(0, 0, 0).applyMatrix4(g.matrixWorld);
         w.addCircle(cWorld.x, cWorld.z, 1.25);
       });
@@ -204,6 +204,8 @@
       this.ember = new T.PointLight(0xff7a30, 1.6, 16, 1.6); this.ember.position.set(FIRE.x, ground(FIRE.x, FIRE.z) + 0.6, FIRE.z); S.add(this.ember);
       this.emberGlow = KIT.glow(w, 0xff5a20, 1.6, 0.7); this.emberGlow.position.set(FIRE.x, ground(FIRE.x, FIRE.z) + 0.25, FIRE.z); S.add(this.emberGlow);
       this.FIRE = FIRE;
+      // two warm lights move to the fed shelters nearest you
+      this.shelterLights = [0, 1].map(() => { const L = new T.PointLight(0xffa452, 0, 9, 1.5); S.add(L); return L; });
 
       /* Makkah beyond the mouth: a scatter of house lights, and the city's faint glow */
       const lp = [], rr = U.seeded(619);
@@ -220,11 +222,17 @@
       for (let i = 0; i < 12; i++) { const a = -2.4 + i * 0.4, d = 420 + (i % 3) * 90; const c = new T.Mesh(new T.ConeGeometry(80 + (i % 4) * 30, 60 + (i % 5) * 26, 6), rangeMat); c.position.set(Math.sin(a) * d, -10, -Math.cos(a) * d - 120); S.add(c); }
 
       /* the bundles: cloth bundles knotted at the top, each marked by a faint glint */
-      const linen = w.tex(128, (g, s) => { g.fillStyle = '#d8c8a4'; g.fillRect(0, 0, s, s); for (let i = 0; i < s; i += 2) { g.fillStyle = `rgba(90,70,40,${0.08 + Math.random() * 0.1})`; g.fillRect(i, 0, 1, s); g.fillRect(0, i, s, 1); } g.fillStyle = 'rgba(120,60,30,0.45)'; g.fillRect(0, s * 0.42, s, s * 0.08); }, [2, 1]);
+      const linen = w.tex(128, (g, s) => {
+        g.fillStyle = '#cbb894'; g.fillRect(0, 0, s, s);
+        for (let i = 0; i < s; i += 2) { g.fillStyle = `rgba(90,70,40,${0.06 + Math.random() * 0.08})`; g.fillRect(i, 0, 1, s); g.fillRect(0, i, s, 1); }
+        g.strokeStyle = 'rgba(70,50,30,0.35)'; g.lineWidth = 3;
+        for (let i = 0; i < 9; i++) { g.beginPath(); const x = Math.random() * s; g.moveTo(x, s); g.quadraticCurveTo(x + 20 - Math.random() * 40, s / 2, s / 2 + (x - s / 2) * 0.2, 0); g.stroke(); } // folds gathered to the knot
+      }, [2, 1]);
       this.bundleMat = KIT.std({ map: linen, color: 0xcdbb98, roughness: 1, relief: 0.02 });
-      const bg = new T.SphereGeometry(0.3, 18, 12); bg.scale(1.1, 0.7, 0.95);
-      { const p = bg.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i), z = p.getZ(i), k = 1 + U.noise2(x * 14 + z * 9, y * 14) * 0.12 + Math.max(0, y) * 0.4; p.setXYZ(i, x * (y > 0 ? 1 - y * 1.1 : 1) * k, y * (y > 0 ? 1.25 : 0.8), z * (y > 0 ? 1 - y * 1.1 : 1) * k); } bg.computeVertexNormals(); }
-      const kg = new T.SphereGeometry(0.11, 10, 8); kg.translate(0, 0.24, 0); kg.scale(1, 1.2, 1);
+      const bg = new T.SphereGeometry(0.3, 18, 12); bg.scale(1.15, 0.62, 1);
+      { const p = bg.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i), z = p.getZ(i), k = 1 + U.noise2(x * 16 + z * 11, y * 16) * 0.14; p.setXYZ(i, x * k, y * (y < 0 ? 0.7 : 1), z * k); } bg.computeVertexNormals(); }
+      const kg = new T.ConeGeometry(0.09, 0.2, 7); kg.translate(0, 0.25, 0);
+      { const p = kg.attributes.position; for (let i = 0; i < p.count; i++) p.setX(i, p.getX(i) + Math.sin(p.getY(i) * 30) * 0.02); kg.computeVertexNormals(); }
       this.bundleGeo = bg; this.knotGeo = kg;
       const makeBundle = () => { const g = new T.Group(); g.add(new T.Mesh(bg, this.bundleMat), new T.Mesh(kg, this.bundleMat)); g.userData.dynamic = true; return g; };
       BUNDLES.forEach(bd => {
@@ -237,7 +245,7 @@
 
       /* the patrol torches on the rim: a flame, a cone of light and the pool it throws */
       const beamMat = new T.ShaderMaterial({
-        uniforms: { uColor: { value: new T.Color(TORCH) }, uOp: { value: 0.16 } },
+        uniforms: { uColor: { value: new T.Color(TORCH) }, uOp: { value: 0.11 } },
         vertexShader: 'varying float vA; varying vec3 vN; varying vec3 vV; void main(){ vA = position.z; vec4 mv = modelViewMatrix*vec4(position,1.); vN = normalize(normalMatrix*normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix*mv; }',
         fragmentShader: 'uniform vec3 uColor; uniform float uOp; varying float vA; varying vec3 vN; varying vec3 vV; void main(){ float rim = abs(dot(normalize(vN), normalize(vV))); float a = uOp * pow(rim, 3.2) * (1.0 - 0.35*vA) * smoothstep(0.0, 0.05, vA); gl_FragColor = vec4(uColor, a); }',
         transparent: true, depthWrite: false, blending: T.AdditiveBlending, side: T.DoubleSide,
@@ -389,8 +397,8 @@
         if (h.fed) {
           h.lit = Math.min(1, h.lit + dt * 0.6);
           const k = U.easeOut(h.lit), f = 0.9 + 0.1 * Math.sin(t * 5 + h.z) * Math.sin(t * 2.3 + h.x);
-          h.mat.emissiveIntensity = (0.03 + 0.2 * k) * f;
-          h.glow.material.opacity = (0.15 + 0.75 * k) * f; h.glow.scale.setScalar(2.2 + k * 3.2 + Math.sin(h.lit * Math.PI) * 2);
+          h.mat.emissiveIntensity = (0.02 + 0.08 * k) * f;
+          h.glow.material.opacity = (0.15 + 0.6 * k) * f; h.glow.scale.setScalar(1.8 + k * 1.6 + Math.sin(h.lit * Math.PI) * 1.6);
           h.pool.material.opacity = 0.4 * k * f;
         } else {
           const want = this.carrying ? 0.12 + 0.08 * Math.sin(t * 2 + h.z) : 0.05;
@@ -400,6 +408,8 @@
         }
       }
 
+      { const fed = SHELTERS.filter(h => h.fed).sort((a, c) => Math.hypot(a.door.x - w.pos.x, a.door.z - w.pos.z) - Math.hypot(c.door.x - w.pos.x, c.door.z - w.pos.z));
+        this.shelterLights.forEach((L, i) => { const h = fed[i]; if (!h) { L.intensity = 0; return; } L.position.set(h.glow.position.x, h.glow.position.y + 0.3, h.glow.position.z); L.intensity = 1.8 * U.easeOut(h.lit) * (0.9 + 0.1 * Math.sin(t * 6 + h.z)); }); }
       // the patrols walk the rim, sweeping the lower ravine
       const fade = this.phase === 'carry' ? 1 : Math.max(0, 1 - this.endT / 3);
       let lit = false, near = 0;
@@ -422,7 +432,7 @@
         const sp = w.spatial(P.pos, 14); near = Math.max(near, sp.gain);
         P.crackle.set('gain', 0.035 * sp.gain * fade, 0.1);
       }
-      this.beamMat.uniforms.uOp.value = 0.16 * fade;
+      this.beamMat.uniforms.uOp.value = 0.11 * fade;
 
       // being seen while carrying: a warm vignette fills, the heart quickens, and then the night takes you back
       if (this.returnT < 0) {

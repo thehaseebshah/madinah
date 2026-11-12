@@ -25,14 +25,15 @@
     let y = U.noise2(x * 0.05, z * 0.05) * 0.55 + U.noise2(x * 0.22, z * 0.22) * 0.08;
     const d = Math.abs(x - VCX(z)) - VHALF(z);
     let m = 0;
-    if (d > 0) m += Math.pow(d, 1.2) * 1.1 + U.noise2(x * 0.06 + 3, z * 0.06) * 7 * U.smooth(0, 14, d);
+    if (d > 0) m += Math.pow(d, 1.12) * 0.62 * (0.75 + 0.5 * (U.noise2(x * 0.012, z * 0.012 + 7) * 0.5 + 0.5)) + U.noise2(x * 0.06 + 3, z * 0.06) * 6 * U.smooth(0, 14, d);
+    if (z > 70) m = Math.max(m, Math.pow(z - 70, 1.1) * 0.45 + U.noise2(x * 0.05, z * 0.05) * 4 * U.smooth(70, 90, z));
     const e = -62 - z;
-    if (e > 0) m = Math.max(m, Math.pow(e, 1.15) * 1.6 + U.noise2(x * 0.08, z * 0.08 + 4) * 6 * U.smooth(0, 10, e));
+    if (e > 0) m = Math.max(m, Math.pow(e, 1.1) * 0.85 + U.noise2(x * 0.08, z * 0.08 + 4) * 6 * U.smooth(0, 10, e));
     m += (U.noise2(x * 0.35, z * 0.35) * 0.9 + Math.abs(U.noise2(x * 0.9, z * 0.9)) * 0.5) * U.smooth(0, 3, m);
     const c = carve(x, z), floor = Math.max(0, -60 - z) * 0.06 + U.noise2(x * 0.3, z * 0.3) * 0.15;
     return U.lerp(y + m, floor, c);
   }
-  const walk = (x, z) => (z > -61 && Math.abs(x - VCX(z)) < VHALF(z) - 2 && z < 48) || carve(x, z) > 0.72;
+  const walk = (x, z) => (z > -61 && Math.abs(x - VCX(z)) < VHALF(z) - 2 && z < 48) || carve(x, z) > 0.6;
 
   const START = { x: -6, z: -54 };
   const R_FIRE = 6.5;
@@ -56,6 +57,26 @@
     const g = new T.BufferGeometry();
     g.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new T.Float32BufferAttribute(uv, 2));
     g.computeVertexNormals(); return g;
+  }
+
+  // one mesh from several parts, each part flat-coloured (a lantern in one draw call)
+  function mergeColored(parts) {
+    const gs = parts.map(([g, c]) => [g.index ? g.toNonIndexed() : g, new T.Color(c)]);
+    let n = 0; gs.forEach(([g]) => { n += g.attributes.position.count; });
+    const P = new Float32Array(n * 3), C = new Float32Array(n * 3); let o = 0;
+    gs.forEach(([g, c]) => { const a = g.attributes.position; P.set(a.array, o * 3); for (let i = 0; i < a.count; i++) C.set([c.r, c.g, c.b], (o + i) * 3); o += a.count; });
+    const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.BufferAttribute(P, 3)); geo.setAttribute('color', new T.BufferAttribute(C, 3));
+    return geo;
+  }
+  // a lantern's light: a bright core inside a wide, soft halo
+  function lanternTex(w) {
+    const t = w.tex(128, (g, s) => {
+      const gr = g.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
+      gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.07, 'rgba(255,255,255,0.9)'); gr.addColorStop(0.16, 'rgba(255,255,255,0.32)');
+      gr.addColorStop(0.42, 'rgba(255,255,255,0.08)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = gr; g.fillRect(0, 0, s, s);
+    });
+    t.wrapS = t.wrapT = T.ClampToEdgeWrapping; return t;
   }
 
   ENGINE.register(WORLD.stage({
@@ -88,32 +109,41 @@
       /* terrain: dense near the valley and the ravine, coarse beyond */
       const sandTex = w.tex(512, (g, s) => {
         g.fillStyle = '#7a6a5a'; g.fillRect(0, 0, s, s);
-        for (let i = 0; i < 40; i++) { const x = Math.random() * s, y = Math.random() * s, r = 30 + Math.random() * 90, gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, Math.random() < 0.5 ? 'rgba(150,130,108,0.4)' : 'rgba(40,32,28,0.45)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2); }
-        for (let i = 0; i < 8000; i++) { const c = Math.random(); g.fillStyle = c < 0.5 ? 'rgba(40,32,28,0.55)' : c < 0.93 ? 'rgba(140,124,108,0.5)' : 'rgba(200,190,170,0.4)'; g.fillRect(Math.random() * s, Math.random() * s, 1 + Math.random() * 2, 1 + Math.random() * 2); }
+        for (let i = 0; i < 12000; i++) { const c = Math.random(); g.fillStyle = c < 0.5 ? 'rgba(60,50,42,0.3)' : c < 0.94 ? 'rgba(140,124,108,0.35)' : 'rgba(200,190,170,0.3)'; g.fillRect(Math.random() * s, Math.random() * s, 1 + Math.random() * 1.6, 1 + Math.random() * 1.6); }
       });
       const tg = new T.PlaneGeometry(2, 2, 180, 220); tg.rotateX(-Math.PI / 2);
       const tp = tg.attributes.position, tuv = tg.attributes.uv, tcol = new Float32Array(tp.count * 3);
       const remap = (u, inner, span, far) => { const a = Math.abs(u); return Math.sign(u) * (a < 0.6 ? a / 0.6 * inner : inner + Math.pow((a - 0.6) / 0.4, 1.7) * far); };
       for (let i = 0; i < tp.count; i++) {
         const x = remap(tp.getX(i), 46, 0, 420), z = -24 + remap(tp.getZ(i), 76, 0, 520);
-        const y = ground(x, z); tp.setXYZ(i, x, y, z); tuv.setXY(i, x / 7, z / 7);
+        const y = ground(x, z), gx = ground(x + 0.5, z) - ground(x - 0.5, z), gz = ground(x, z + 0.5) - ground(x, z - 0.5);
+        tp.setXYZ(i, x, y, z); tuv.setXY(i, (x + y * gx / (1 + Math.abs(gx))) / 5, (z + y * gz / (1 + Math.abs(gz))) / 5); // wrap the texture up steep walls
         const rock = U.smooth(1.5, 8, y - Math.max(0, -60 - z) * 0.06);
-        const c = U.mix([0.86, 0.76, 0.64], [0.6, 0.55, 0.55], rock), sh = 0.85 + 0.15 * U.noise2(x * 0.3, z * 0.3);
+        const c = U.mix([0.86, 0.76, 0.64], [0.6, 0.55, 0.55], rock), sh = 0.8 + 0.12 * U.noise2(x * 0.08, z * 0.08) + 0.08 * U.noise2(x * 0.4, z * 0.4);
         tcol.set([c[0] * sh, c[1] * sh, c[2] * sh], i * 3);
       }
       tg.setAttribute('color', new T.BufferAttribute(tcol, 3)); tg.computeVertexNormals();
-      S.add(new T.Mesh(tg, KIT.std({ map: sandTex, vertexColors: true, relief: 0.05 })));
+      S.add(new T.Mesh(tg, KIT.std({ map: sandTex, vertexColors: true, relief: 0.025 })));
 
       // the crag of al-'Aqabah: a great broken rock framing the ravine's mouth against the sky
       const rockMat = KIT.std({ map: sandTex, color: 0x8a7e78, flatShading: true, relief: 0.06 });
-      const crag = [[-20, -66, 9, 1.9], [-21, -71, 7, 2.6], [-1, -66, 7, 1.6], [0, -72, 8, 2.2], [-19, -62, 4, 1.2], [1, -62, 3.5, 1.1]];
-      crag.forEach(([x, z, s, h], i) => { const m = new T.Mesh(new T.DodecahedronGeometry(s, 1), rockMat); m.position.set(x, ground(x, z) + s * h * 0.45, z); m.scale.set(1, h, 1); m.rotation.set(i * 0.7, i * 1.3, i * 0.4); S.add(m); });
       const r = U.seeded(621);
-      for (let i = 0; i < 70; i++) {
-        const z = -96 + r() * 36, side = r() < 0.5 ? -1 : 1, s = 0.4 + Math.pow(r(), 2) * 2;
-        const x = RAV(z) + side * (4 + r() * 3);
-        if (Math.hypot(x - MEET.x, z - MEET.z) < 6.5) continue;
-        const m = new T.Mesh(new T.DodecahedronGeometry(s, 1), rockMat); m.position.set(x, ground(x, z) + s * 0.2, z); m.rotation.set(r() * 3, r() * 3, 0); S.add(m);
+      const spire = (h, rad, seed) => {
+        const g = new T.CylinderGeometry(rad * 0.18, rad, h, 7, 8).toNonIndexed(), p = g.attributes.position;
+        for (let i = 0; i < p.count; i++) {
+          const x = p.getX(i), y = p.getY(i), z = p.getZ(i), k = 1 + U.noise2(x * 0.6 + seed, y * 0.35) * 0.35 + U.noise2(z * 1.4 + y * 0.8, seed) * 0.15;
+          p.setXYZ(i, x * k + Math.sin(y * 0.15 + seed) * rad * 0.15, y, z * k);
+        }
+        g.translate(0, h / 2 - 1.5, 0); g.computeVertexNormals(); return g;
+      };
+      [[-19, -64, 20, 5], [-23, -70, 30, 7], [-16, -60, 9, 3], [-2, -64, 16, 4.5], [2, -71, 26, 6.5], [-4, -60, 7, 2.5], [-27, -64, 14, 5], [7, -66, 12, 5]].forEach(([x, z, h, rad], i) => {
+        const m = new T.Mesh(spire(h, rad, i * 3.7), rockMat); m.position.set(x, ground(x, z), z); m.rotation.y = i * 1.3; S.add(m); w.addCircle(x, z, rad * 0.85);
+      });
+      for (let i = 0; i < 40; i++) {
+        const z = -96 + r() * 36, side = r() < 0.5 ? -1 : 1, s = 0.3 + Math.pow(r(), 2) * 1.2;
+        const x = RAV(z) + side * (3.2 + r() * 1.6);
+        if (Math.hypot(x - MEET.x, z - MEET.z) < 6.5 || Math.abs(ground(x + 0.6, z) - ground(x - 0.6, z)) > 0.9) continue;
+        const m = new T.Mesh(new T.DodecahedronGeometry(s, 0), rockMat); m.position.set(x, ground(x, z) - s * 0.15, z); m.scale.y = 0.6 + r() * 0.3; m.rotation.set(r() * 3, r() * 3, 0); S.add(m);
       }
       for (let i = 0; i < 70; i++) { // stones scattered on the valley floor
         const x = (r() - 0.5) * 66, z = -60 + r() * 106, s = 0.15 + r() * 0.45;
@@ -125,7 +155,7 @@
       for (let i = 0; i < 14; i++) { const a = (i / 14) * 6.283, d = 520 + (i % 3) * 110; const c = new T.Mesh(new T.ConeGeometry(110 + (i % 4) * 30, 90 + (i % 5) * 34, 7), rangeMat); c.position.set(Math.cos(a) * d, -10, Math.sin(a) * d - 20); c.rotation.y = i; S.add(c); }
 
       /* the sleeping camps: low tents of goat hair round small fires */
-      const hair = [['#2a2420', '#4a3a2c', '#c8b898'], ['#3a2c22', '#1e1a18', '#8a5a3a'], ['#2e2a26', '#5a4632', '#b0a080']].map(([a, bb, c]) => w.tex(256, (g, s) => {
+      const hair = [['#2a2420', '#3e3228', '#7a6a54'], ['#3a2c22', '#241e1a', '#6a4a32'], ['#2e2a26', '#4a3a2c', '#6e6250']].map(([a, bb, c]) => w.tex(256, (g, s) => {
         g.fillStyle = a; g.fillRect(0, 0, s, s);
         for (let y = 0; y < s; y += 32) { g.fillStyle = (y / 32) % 3 === 2 ? c : bb; g.fillRect(0, y + 22, s, (y / 32) % 3 === 2 ? 4 : 8); }
         for (let i = 0; i < 4000; i++) { g.fillStyle = Math.random() < 0.5 ? 'rgba(0,0,0,0.25)' : 'rgba(255,240,220,0.06)'; g.fillRect(Math.random() * s, Math.random() * s, 1, 3); }
@@ -135,6 +165,7 @@
       const sackMat = KIT.std({ color: 0x8a7458, roughness: 1 });
       const ringMat = KIT.std({ map: sandTex, color: 0x6a605a, flatShading: true });
       const sg = new T.DodecahedronGeometry(0.2, 0);
+      const coalPos = [];
       this.fires = CAMPS.map(([fx, fz], ci) => {
         const fy = ground(fx, fz);
         for (let k = 0; k < 8; k++) { const a = k / 8 * 6.283, st = new T.Mesh(sg, ringMat); st.position.set(fx + Math.cos(a) * 0.7, fy + 0.08, fz + Math.sin(a) * 0.7); st.rotation.set(a, k, 0); S.add(st); }
@@ -150,23 +181,27 @@
           const sack = new T.Mesh(new T.SphereGeometry(0.3, 8, 6), sackMat); sack.scale.set(1.2, 0.7, 0.9); sack.position.set(-L / 2 - 0.4, 0.2, Wd * 0.3); g.add(sack);
           S.add(g); w.addCircle(tx, tz, 1.6);
         }
-        S.add(decal(w, R_FIRE, FIRE, 0.2, fx, fz, 0.06));
-        const flame = KIT.glow(w, 0xff7a30, 1.8, 0.9); flame.position.set(fx, fy + 0.45, fz); S.add(flame);
-        const coal = KIT.glow(w, 0xff4a18, 1.2, 0.8); coal.position.set(fx, fy + 0.15, fz); S.add(coal);
-        return { x: fx, z: fz, y: fy, flame, coal, ph: Math.random() * 6 };
+        S.add(decal(w, R_FIRE, FIRE, 0.3, fx, fz, 0.06));
+        const flame = KIT.glow(w, 0xff7a30, 2.2, 0.9); flame.position.set(fx, fy + 0.45, fz); S.add(flame);
+        coalPos.push(fx, fy + 0.15, fz);
+        return { x: fx, z: fz, y: fy, flame, ph: Math.random() * 6 };
       });
+      { const cg = new T.BufferGeometry(); cg.setAttribute('position', new T.Float32BufferAttribute(coalPos, 3));
+        this.coals = new T.Points(cg, new T.PointsMaterial({ map: KIT.glowTex(w), color: 0xff4a18, size: 1.3, transparent: true, opacity: 0.8, depthWrite: false, blending: T.AdditiveBlending })); S.add(this.coals); }
       // a few real lights travel to the fires nearest you
-      this.fireLights = [0, 1, 2, 3].map(() => { const L = new T.PointLight(0xff7a34, 0, 13, 1.5); S.add(L); return L; });
+      this.fireLights = [0, 1, 2].map(() => { const L = new T.PointLight(0xff7a34, 0, 14, 1.4); S.add(L); return L; });
 
       /* the meeting place: a ring of twelve low stones in the ravine */
-      this.slots = [];
+      this.slots = []; const markPos = [];
       const ringStone = KIT.std({ map: sandTex, color: 0x9a8e86, flatShading: true });
       for (let i = 0; i < 12; i++) {
         const a = i / 12 * 6.283 + 0.26, x = MEET.x + Math.cos(a) * 3.6, z = MEET.z + Math.sin(a) * 3.6;
         const st = new T.Mesh(new T.DodecahedronGeometry(0.28, 0), ringStone); st.position.set(x, ground(x, z) + 0.1, z); st.scale.y = 0.6; S.add(st);
-        const mark = KIT.glow(w, GOLD, 1.2, 0.12); mark.position.set(x, ground(x, z) + 0.25, z); S.add(mark);
-        this.slots.push({ x, z, mark });
+        markPos.push(x, ground(x, z) + 0.25, z);
+        this.slots.push({ x, z, mark: i, k: 0.12 });
       }
+      { const mg = new T.BufferGeometry(); mg.setAttribute('position', new T.Float32BufferAttribute(markPos, 3)); mg.setAttribute('color', new T.BufferAttribute(new Float32Array(36), 3));
+        this.marks = new T.Points(mg, new T.PointsMaterial({ map: KIT.glowTex(w), size: 1.3, vertexColors: true, transparent: true, depthWrite: false, blending: T.AdditiveBlending })); S.add(this.marks); }
       this.meetPool = decal(w, 6, GOLD, 0.0, MEET.x, MEET.z, 0.06); this.meetPool.userData.dynamic = true; S.add(this.meetPool);
       this.beacon = KIT.glow(w, GOLD, 16, 0.0); this.beacon.position.set(MEET.x, ground(MEET.x, MEET.z) + 9, MEET.z); this.beacon.material.fog = false; S.add(this.beacon);
       this.pledgeLight = new T.PointLight(0xffe2b0, 0, 18, 1.4); this.pledgeLight.position.set(MEET.x, ground(MEET.x, MEET.z) + 1.5, MEET.z); S.add(this.pledgeLight);
@@ -176,16 +211,17 @@
       this.baked = w.bake();
 
       /* the twelve lanterns of the people of Yathrib */
-      const bodyGeo = new T.CylinderGeometry(0.09, 0.11, 0.24, 8), capGeo = new T.ConeGeometry(0.12, 0.12, 8);
-      capGeo.translate(0, 0.18, 0);
-      const bodyMat = new T.MeshBasicMaterial({ color: 0xffe6b0 }), capMat = KIT.std({ color: 0x3a2c20, roughness: 0.6, metalness: 0.4 });
+      const bodyGeo = new T.CylinderGeometry(0.075, 0.09, 0.2, 8), capGeo = new T.ConeGeometry(0.11, 0.1, 8), baseGeo = new T.CylinderGeometry(0.1, 0.1, 0.035, 8), handleGeo = new T.TorusGeometry(0.06, 0.008, 4, 12, Math.PI);
+      capGeo.translate(0, 0.15, 0); baseGeo.translate(0, -0.11, 0); handleGeo.translate(0, 0.2, 0);
+      const lanternGeo = mergeColored([[bodyGeo, 0xffd28a], [capGeo, 0x2a2018], [baseGeo, 0x2a2018], [handleGeo, 0x2a2018]]);
+      const lanternMat = new T.MeshBasicMaterial({ vertexColors: true }), lt = lanternTex(w);
       this.lanterns = WAIT.map(([x, z], i) => {
-        const g = new T.Group(); g.add(new T.Mesh(bodyGeo, bodyMat), new T.Mesh(capGeo, capMat));
+        const g = new T.Mesh(lanternGeo, lanternMat);
         const home = new T.Vector3(x, ground(x, z) + 0.95, z);
         g.position.copy(home); S.add(g);
-        const glow = KIT.glow(w, GOLD, 2.2, 0.75); glow.position.copy(home); S.add(glow);
-        const halo = KIT.glow(w, GOLD, 6, 0.12); halo.position.copy(home); S.add(halo);
-        return { i, g, glow, halo, home, pos: home.clone(), state: 'wait', ph: Math.random() * 6, flash: 0 };
+        const glow = new T.Sprite(new T.SpriteMaterial({ map: lt, color: GOLD, transparent: true, opacity: 0.75, depthWrite: false, blending: T.AdditiveBlending }));
+        glow.scale.setScalar(4.2); glow.position.copy(home); S.add(glow);
+        return { i, g, glow, home, pos: home.clone(), state: 'wait', ph: Math.random() * 6, flash: 0 };
       });
       this.followers = []; this.delivered = 0;
       // the line of light that binds the followers to you
@@ -193,6 +229,8 @@
       this.trailLine = new T.Line(this.trailGeo, new T.LineBasicMaterial({ color: GOLD, transparent: true, opacity: 0.35, blending: T.AdditiveBlending, depthWrite: false }));
       this.trailLine.frustumCulled = false; S.add(this.trailLine);
       this.crumbs = [];
+      this.followPool = decal(w, 1, GOLD, 0, 0, 0, 0.05); this.followPool.userData.off = this.followPool.geometry.attributes.position.array.slice(); this.followPool.frustumCulled = false; S.add(this.followPool);
+      this.followPool.userData.r = 0;
 
       /* a vignette of firelight when you linger with followers in a lit circle */
       const vig = document.createElement('div');
@@ -217,8 +255,8 @@
       /* ---------- arrival: over the sleeping camps toward the dark mouth of the ravine, then to you ---------- */
       const gy = ground(START.x, START.z);
       w.cinematic([
-        { p: [34, 72, 84], l: [0, 0, -6] },
-        { p: [12, 24, 26], l: [-4, 1, -36] },
+        { p: [14, 66, 52], l: [-6, 0, -36] },
+        { p: [6, 20, 12], l: [-6, 2, -44] },
         { p: [-1, 8, -26], l: [-9, 4, -70] },
         { p: [-9, 5, -58], l: [-11, 3, -86] },
         { p: [START.x, gy + 1.6, START.z], l: [START.x, gy + 1.6, START.z + 10] },
@@ -264,12 +302,12 @@
       // fires flicker; the nearest few cast real light
       for (const F of this.fires) {
         const f = 0.8 + 0.2 * Math.sin(t * 9 + F.ph) * Math.sin(t * 3.7 + F.ph * 2);
-        F.flame.material.opacity = 0.85 * f; F.flame.scale.setScalar(1.6 + 0.4 * f); F.coal.material.opacity = 0.7 * f;
+        F.flame.material.opacity = 0.85 * f; F.flame.scale.setScalar(1.9 + 0.5 * f);
         F.d = Math.hypot(F.x - w.pos.x, F.z - w.pos.z);
       }
       this.lightT -= dt;
-      if (this.lightT < 0) { this.lightT = 0.3; this.near = this.fires.slice().sort((a, c) => a.d - c.d).slice(0, 4); this.near.forEach((F, i) => this.fireLights[i].position.set(F.x, F.y + 1.1, F.z)); }
-      this.near && this.near.forEach((F, i) => { this.fireLights[i].intensity = 1.6 * (0.85 + 0.15 * Math.sin(t * 11 + F.ph) * Math.sin(t * 4.3 + i)); });
+      if (this.lightT < 0) { this.lightT = 0.3; this.near = this.fires.slice().sort((a, c) => a.d - c.d).slice(0, 3); this.near.forEach((F, i) => this.fireLights[i].position.set(F.x, F.y + 1.1, F.z)); }
+      this.near && this.near.forEach((F, i) => { this.fireLights[i].intensity = 2.2 * (0.85 + 0.15 * Math.sin(t * 11 + F.ph) * Math.sin(t * 4.3 + i)); });
 
       // which firelit circle are you in?
       let inside = null;
@@ -297,7 +335,7 @@
         w.step('A lantern slipped back to wait in the dark. Keep to the shadows, away from the fires');
         setTimeout(() => this.w && this.stepText(), 4500);
       }
-      this.vig.style.opacity = (this.heat * 0.9).toFixed(3);
+      this.vig.style.opacity = (this.heat * 0.7).toFixed(3);
 
       // the breadcrumb trail you leave, for the followers to walk in
       const last = this.crumbs[0];
@@ -340,38 +378,50 @@
         if (L.state === 'wait') {
           L.pos.copy(L.home); L.pos.y += Math.sin(t * 1.2 + L.ph) * 0.04;
           const pulse = 0.6 + 0.25 * Math.sin(t * 1.6 + L.ph);
-          L.glow.material.opacity = pulse; L.halo.material.opacity = 0.1 + 0.08 * pulse;
-          L.glow.scale.setScalar(2.2);
+          L.glow.material.opacity = pulse;
+          L.glow.scale.setScalar(4.2 + pulse * 0.6);
         } else if (L.state === 'follow') {
           const k = this.followers.indexOf(L), p = along((k + 1) * 1.6);
           const ty = ground(p.x, p.z) + 1.0 + Math.sin(t * 2.2 + L.ph) * 0.06;
           L.pos.x = U.damp(L.pos.x, p.x, 5, dt); L.pos.z = U.damp(L.pos.z, p.z, 5, dt); L.pos.y = U.damp(L.pos.y, ty, 6, dt);
-          L.glow.material.opacity = 0.9; L.halo.material.opacity = 0.16;
-          L.glow.scale.setScalar(1.8 + L.flash * 3);
+          L.glow.material.opacity = 0.9;
+          L.glow.scale.setScalar(3.6 + L.flash * 5);
         } else if (L.state === 'back') {
           L.bt = Math.min(1, L.bt + dt / 2.4);
           L.pos.lerpVectors(L.from, L.home, U.ease(L.bt)); L.pos.y += Math.sin(L.bt * Math.PI) * 0.6;
-          L.glow.material.opacity = 0.4 + 0.3 * L.bt; L.glow.scale.setScalar(1.6);
+          L.glow.material.opacity = 0.4 + 0.3 * L.bt; L.glow.scale.setScalar(3.2);
           if (L.bt >= 1) L.state = 'wait';
         } else if (L.state === 'circle') {
           L.bt = Math.min(1, L.bt + dt / 1.6);
           const to = new T.Vector3(L.slot.x, ground(L.slot.x, L.slot.z) + 1.0, L.slot.z);
           L.pos.lerpVectors(L.from, to, U.easeOut(L.bt)); L.pos.y += Math.sin(L.bt * Math.PI) * 0.4 + Math.sin(t * 1.3 + L.ph) * 0.03 * L.bt;
           const done = this.phase === 'reveal' ? U.smooth(6, 9, this.endT) : 0;
-          L.glow.material.opacity = 0.85 + 0.15 * done; L.halo.material.opacity = 0.16 + 0.2 * done;
-          L.glow.scale.setScalar(1.8 + L.flash * 2 + done * 1.2);
-          if (L.bt >= 1 && !L.placed) { L.placed = true; L.flash = 0.8; L.slot.mark.material.opacity = 0.0; }
+          L.glow.material.opacity = 0.75 + 0.15 * done;
+          L.glow.scale.setScalar(3.2 + L.flash * 3 + done * 0.8);
+          if (L.bt >= 1 && !L.placed) { L.placed = true; L.flash = 0.8; L.slot.k = 0; }
         }
-        L.g.position.copy(L.pos); L.glow.position.copy(L.pos); L.halo.position.copy(L.pos);
+        L.g.position.copy(L.pos); L.glow.position.copy(L.pos);
       }
       for (const L of this.followers) { tp.setXYZ(tn++, L.pos.x, L.pos.y, L.pos.z); }
       this.trailGeo.setDrawRange(0, tn > 1 ? tn : 0); tp.needsUpdate = true;
       this.trailLine.material.opacity = 0.28 + 0.1 * Math.sin(t * 2);
+      // a soft gold light on the ground among the followers
+      { const fp = this.followPool, n = this.followers.length;
+        fp.userData.r = U.damp(fp.userData.r, n ? 2.2 + n * 0.45 : 0.01, 3, dt);
+        fp.material.opacity = U.damp(fp.material.opacity, n ? 0.16 + 0.015 * n : 0, 3, dt);
+        if (fp.material.opacity > 0.002) {
+          let mx = 0, mz = 0; this.followers.forEach(L => { mx += L.pos.x; mz += L.pos.z; }); mx = n ? (mx + w.pos.x) / (n + 1) : w.pos.x; mz = n ? (mz + w.pos.z) / (n + 1) : w.pos.z;
+          const a = fp.geometry.attributes.position, o = fp.userData.off, R = fp.userData.r;
+          for (let i = 0; i < a.count; i++) { const ox = o[i * 3] * R, oz = o[i * 3 + 2] * R, x = mx + ox, z = mz + oz; a.setXYZ(i, x, ground(x, z) + 0.06, z); }
+          a.needsUpdate = true;
+        } }
 
       // the ravine calls when you carry lights: its empty places glow
       const want = this.followers.length ? 1 : 0.35;
-      this.slots.forEach((s, i) => { if (i >= this.delivered) s.mark.material.opacity = U.damp(s.mark.material.opacity, 0.12 + 0.18 * want * (0.7 + 0.3 * Math.sin(t * 2 + i)), 3, dt); });
-      this.meetPool.material.opacity = U.damp(this.meetPool.material.opacity, 0.05 * want + 0.02 * this.delivered + (this.phase === 'reveal' ? 0.25 * U.smooth(6, 10, this.endT) : 0), 2, dt);
+      { const mc = this.marks.geometry.attributes.color, gc = new T.Color(GOLD);
+        this.slots.forEach((s, i) => { if (i >= this.delivered) s.k = U.damp(s.k, 0.12 + 0.2 * want * (0.7 + 0.3 * Math.sin(t * 2 + i)), 3, dt); mc.setXYZ(i, gc.r * s.k, gc.g * s.k, gc.b * s.k); });
+        mc.needsUpdate = true; }
+      this.meetPool.material.opacity = U.damp(this.meetPool.material.opacity, 0.05 * want + 0.02 * this.delivered + (this.phase === 'reveal' ? 0.12 * U.smooth(6, 10, this.endT) : 0), 2, dt);
       this.beacon.material.opacity = U.damp(this.beacon.material.opacity, this.phase === 'gather' ? 0.05 + 0.08 * want : 0.04, 2, dt);
 
       // a quiet hum among your followers: more voices as more lanterns walk with you
@@ -401,8 +451,8 @@
           SND.sing(b, 110, { vowel: 'a', dur: 8, gain: 0.03, voices: 4, attack: 2.5, hold: 0.5 });
         }
         const k = U.smooth(6, 11, T1);
-        this.pledgeLight.intensity = 2.2 * k; this.pledgeGlow.material.opacity = 0.75 * k;
-        this.pledgeGlow.scale.setScalar(3 + k * 2 + Math.sin(t * 0.8) * 0.2);
+        this.pledgeLight.intensity = 1.2 * k; this.pledgeGlow.material.opacity = 0.45 * k;
+        this.pledgeGlow.scale.setScalar(2 + k * 1.5 + Math.sin(t * 0.8) * 0.15);
         this.pledgeGlow.position.y = ground(MEET.x, MEET.z) + 1.2 + k * 1.4;
       }
     },
