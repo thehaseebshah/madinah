@@ -273,8 +273,9 @@ void main(){
         if (!m.isMesh || m.isSkinnedMesh || Array.isArray(m.material) || m.material.isShaderMaterial) return;
         for (let p = m; p; p = p.parent) if (p.userData && p.userData.dynamic) return;
         const g0 = m.geometry;
-        if (!g0.attributes.position || g0.attributes.color || g0.groups.length > 1) return;
+        if (!g0.attributes.position || g0.attributes.color) return;
         const g = g0.index ? g0.toNonIndexed() : g0.clone();
+        g.clearGroups(); // one material, so per-face groups (boxes, capped cylinders) can merge too
         g.applyMatrix4(m.matrixWorld);
         if (!g.attributes.normal) g.computeVertexNormals();
         const k = m.material.uuid + (m.castShadow ? 'c' : '') + (m.receiveShadow ? 'r' : '');
@@ -424,7 +425,8 @@ void main(){
         } else w.ui.ring.style.setProperty('--p', '0deg');
       } else { w.ui.prompt.classList.remove('show'); w.ui.ebtn.classList.remove('show'); }
     };
-    w.render = () => renderer.render(scene, camera);
+    // the sky dome travels with the camera, so high cinematic shots never leave it
+    w.render = () => { if (w.skyMesh) w.skyMesh.position.copy(camera.position); renderer.render(scene, camera); };
 
     function footstep(surf, intensity) {
       const g = 0.06 + 0.06 * U.clamp(intensity, 0, 1.5);

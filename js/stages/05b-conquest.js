@@ -155,7 +155,7 @@
       this.pillars = new T.InstancedMesh(pillarGeo, stoneMat, N / 2);
       [this.steles, this.pillars].forEach(m => { m.userData.dynamic = true; m.castShadow = true; m.receiveShadow = true; m.instanceMatrix.setUsage(T.DynamicDrawUsage); S.add(m); });
       // where a stone stood, a pale scatter of dust remains
-      this.marks = new T.InstancedMesh(new T.CircleGeometry(1, 20).rotateX(-Math.PI / 2), KIT.std({ color: 0xeadcc4, roughness: 1, transparent: true, opacity: 0.75, polygonOffset: true, polygonOffsetFactor: -2, depthWrite: false }), N);
+      this.marks = new T.InstancedMesh(new T.CircleGeometry(1, 20).rotateX(-Math.PI / 2), KIT.std({ color: 0xd8c4a0, roughness: 1, transparent: true, opacity: 0.55, polygonOffset: true, polygonOffsetFactor: -2, depthWrite: false }), N);
       this.marks.userData.dynamic = true; this.marks.receiveShadow = true; this.marks.userData.noCast = true; S.add(this.marks);
       const r = U.seeded(8630);
       this.idols = [];
@@ -172,7 +172,7 @@
       }
       this.marks.instanceMatrix.needsUpdate = true;
       // the golden glint on the nearest standing stone
-      this.glint = KIT.glow(w, ACCENT, 2.6, 0); S.add(this.glint);
+      this.glint = KIT.glow(w, 0xffa630, 2.6, 0); S.add(this.glint);
       this.glintLight = new T.PointLight(0xffc870, 0, 7, 2); S.add(this.glintLight);
 
       /* ---------- dust bursts ---------- */

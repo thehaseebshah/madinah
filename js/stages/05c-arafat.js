@@ -36,12 +36,12 @@
     const dw = Math.abs(x - wadiX(z));
     y -= 1.3 * (1 - U.smooth(3, 15, dw));
     const dj = Math.hypot(x - J.x, (z - J.z) * 1.15);
-    y += 21 * Math.exp(-(dj * dj) / (2 * 13 * 13)) * (0.85 + 0.3 * U.noise2(x * 0.15, z * 0.15));
+    y += 25 * Math.exp(-(dj * dj) / (2 * 15 * 15)) * (0.85 + 0.3 * U.noise2(x * 0.15, z * 0.15));
     // the ring of granite mountains round the plain: ridges and peaks, not a wall
     const d = Math.hypot(x, z * 0.9), m = U.smooth(230, 430, d);
     if (m > 0) {
       const ridge = U.noise2(x * 0.011 + 3, z * 0.011) * 0.5 + 0.5, peak = Math.pow(Math.max(0, U.noise2(x * 0.024, z * 0.024 + 9)), 1.5);
-      y += m * (25 + 70 * ridge + 60 * peak) + m * U.noise2(x * 0.08, z * 0.08) * 4;
+      y += m * (25 + 70 * ridge + 60 * peak) + m * (U.noise2(x * 0.05, z * 0.05) * 9 + U.noise2(x * 0.13, z * 0.13) * 3);
     }
     return y;
   }
@@ -62,9 +62,9 @@
     g.shadowColor = 'rgba(255,214,150,0.95)'; g.shadowBlur = 26; g.fillStyle = '#fffaee';
     arL.forEach(l => { y += 80; g.fillText(l, 512, y); });
     g.direction = 'ltr'; g.shadowBlur = 8; g.shadowColor = 'rgba(80,40,0,0.6)';
-    g.font = 'italic 38px Spectral, Georgia, serif'; g.fillStyle = 'rgba(255,248,232,0.97)';
+    g.font = 'italic 44px Spectral, Georgia, serif'; g.fillStyle = 'rgba(255,248,232,0.97)';
     y += 22;
-    wrap(en, 900).forEach(l => { y += 48; g.fillText(l, 512, y); });
+    wrap(en, 920).forEach(l => { y += 54; g.fillText(l, 512, y); });
     const tex = new T.CanvasTexture(c); tex.encoding = T.sRGBEncoding;
     const sp = new T.Sprite(new T.SpriteMaterial({ map: tex, transparent: true, opacity: 0, depthWrite: false, fog: false }));
     sp.scale.set(16, 8, 1); sp.renderOrder = 6;
@@ -124,9 +124,9 @@
       geo.setAttribute('color', new T.BufferAttribute(col, 3)); geo.computeVertexNormals();
       S.add(new T.Mesh(geo, KIT.std({ map: KIT.sand(w, [110, 110]), vertexColors: true, relief: 0.03 })));
       const granite = w.tex(512, (g, s) => { g.fillStyle = '#6a5a50'; g.fillRect(0, 0, s, s); for (let i = 0; i < 7000; i++) { const c = Math.random(); g.fillStyle = c < 0.55 ? 'rgba(50,40,34,0.6)' : c < 0.92 ? 'rgba(150,130,116,0.5)' : 'rgba(220,206,190,0.45)'; g.fillRect(Math.random() * s, Math.random() * s, 1 + Math.random() * 2, 1 + Math.random() * 2); } }, [2, 2]);
-      const bmat = KIT.std({ map: granite, color: 0xe8d8c8, flatShading: true, relief: 0.06 });
+      const bmat = KIT.std({ map: granite, color: 0xfff2e4, emissive: 0x2a1c12, flatShading: true, relief: 0.06 });
       const r = U.seeded(632);
-      for (let i = 0; i < 150; i++) {
+      for (let i = 0; i < 110; i++) {
         const a = r() * 6.283, d = Math.pow(r(), 0.6) * 24, x = J.x + Math.cos(a) * d, z = J.z + Math.sin(a) * d / 1.15, s = 1.0 + r() * 3.2 * (1 - d / 30);
         const b = new T.Mesh(new T.DodecahedronGeometry(s, 0), bmat); b.position.set(x, ground(x, z) + s * 0.25, z); b.rotation.set(r() * 3, r() * 3, r() * 3); b.scale.y = 0.7; S.add(b);
         if (s > 1.8) w.addCircle(x, z, s * 0.8);

@@ -262,6 +262,7 @@
         const d = Math.hypot(x - kx, (z - kz) * 0.8);
         const rise = Math.max(0, d - floorR);
         let y = Math.pow(rise, 1.25) * 0.55 * (0.7 + 0.6 * (U.noise2(x * 0.004 + 3, z * 0.004) * 0.5 + 0.5));
+        if (y > 70) y = 70 + (y - 70) * 0.22; // the ring of mountains rises, then levels, so the sky stays open
         y += (U.noise2(x * 0.02, z * 0.02) * 6 + U.noise2(x * 0.06, z * 0.06) * 2) * U.smooth(floorR, floorR + 60, d);
         y += U.noise2(x * 0.15, z * 0.15) * 0.08;
         return y;

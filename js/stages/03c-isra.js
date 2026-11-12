@@ -443,7 +443,7 @@
       const top = this.skyBase.top.clone().lerp(hue.clone().multiplyScalar(0.07), open * 0.9);
       const mid = this.skyBase.mid.clone().lerp(hue.clone().multiplyScalar(0.2), open * 0.8);
       const heaven = this.phase === 'arrive' ? U.smooth(0, 8, this.phaseT) : this.phase === 'tree' ? 1 : 0;
-      top.lerp(new T.Color('#fff0d4'), heaven * 0.85); mid.lerp(new T.Color('#4a3c46'), heaven * 0.8);
+      top.lerp(new T.Color('#fff0d4'), heaven * 0.85); mid.lerp(new T.Color('#6a5238'), heaven * 0.8);
       this.skyU.uTop.value.copy(top); this.skyU.uMid.value.copy(mid); this.skyU.uBot.value.copy(mid.clone().multiplyScalar(0.4));
       this.skyU.uStars.value = 0.6 * (1 - heaven);
       this.skyU.uSun.value.setRGB(0.1, 0.13, 0.22).multiplyScalar(1 - U.smooth(30, 60, height));
