@@ -9,6 +9,8 @@
 (function () {
   'use strict';
   if (!window.WORLD) return;
+  // one material per mesh here, so geometry groups only stop the bake from merging
+  const ungroup = S => S.traverse(o => { if (o.isMesh && !Array.isArray(o.material) && o.geometry.groups.length > 1) o.geometry.clearGroups(); });
   const T = THREE;
   const SUN = new T.Vector3(-0.3, 0.25, -0.92).normalize();
   const G = 7.0, CATCH_Y = 1.05, CATCH_R = 0.72;
@@ -111,6 +113,8 @@ void main(){
       /* ---------- the grove ---------- */
       const parts = KIT.palmParts(w);
       swayify(parts.trunkMat); swayify(parts.frondMat);
+      // light through the leaves: fronds glow a little warm, as if backlit by the low sun
+      parts.frondMat.emissive = new T.Color(0x5a4210); parts.frondMat.emissiveIntensity = 0.45;
       const r = U.seeded(1447);
       this.palms = [];
       const ladenAt = [[7.6, 9], [-6.2, 3], [7.6, -4], [-12.8, -10], [3.6, -15], [-4, -21]];
@@ -172,7 +176,16 @@ void main(){
       });
 
       // fallen fronds and a green under-crop along the water
-      const dryMat = KIT.std({ map: KIT.frond(w), alphaTest: 0.45, side: T.DoubleSide, color: 0x8a6a40, roughness: 1 });
+      const dryTex = w.tex(256, (g, sz) => {
+        g.clearRect(0, 0, sz, sz); const mid = sz / 2;
+        g.strokeStyle = '#8a6a3c'; g.lineWidth = 3; g.beginPath(); g.moveTo(0, mid); g.lineTo(sz, mid); g.stroke();
+        for (let i = 4; i < 60; i++) {
+          const x = (i / 60) * sz, L = (Math.sin((i / 60) * Math.PI) * 0.85 + 0.15) * mid * 0.9, c = 150 + Math.random() * 60;
+          g.strokeStyle = `rgb(${c | 0},${c * 0.78 | 0},${c * 0.5 | 0})`; g.lineWidth = 2.4;
+          g.beginPath(); g.moveTo(x, mid); g.lineTo(x + L * 0.45, mid - L); g.stroke(); g.beginPath(); g.moveTo(x, mid); g.lineTo(x + L * 0.45, mid + L); g.stroke();
+        }
+      });
+      const dryMat = KIT.std({ map: dryTex, alphaTest: 0.45, side: T.DoubleSide, roughness: 1 });
       for (let i = 0; i < 60; i++) {
         const f = new T.Mesh(parts.fg, dryMat);
         f.position.set(U.rnd(-36, 36), 0.04, U.rnd(-44, 25)); f.rotation.set(-Math.PI / 2 + U.rnd(-0.08, 0.08), 0, r() * 6.28);
@@ -256,6 +269,7 @@ void main(){
 
       w.receiveAll();
       [this.dust].forEach(o => { o.castShadow = false; });
+      ungroup(S);
       this.baked = w.bake();
       // the fronds' shadows honour the gaps between leaflets and bend with them
       const frondDepth = swayify(new T.MeshDepthMaterial({ depthPacking: T.RGBADepthPacking, map: parts.frondMat.map, alphaTest: 0.45, side: T.DoubleSide }));
@@ -307,6 +321,7 @@ void main(){
       // the hadith written in light toward the sun, for the end
       const c = document.createElement('canvas'); c.width = 1600; c.height = 300;
       const g2 = c.getContext('2d'); g2.textAlign = 'center';
+      g2.save(); g2.translate(800, 150); g2.scale(1, 0.2); const bgr = g2.createRadialGradient(0, 0, 0, 0, 0, 760); bgr.addColorStop(0, 'rgba(70,34,10,0.5)'); bgr.addColorStop(0.7, 'rgba(70,34,10,0.3)'); bgr.addColorStop(1, 'rgba(70,34,10,0)'); g2.fillStyle = bgr; g2.fillRect(-800, -760, 1600, 1520); g2.restore();
       g2.direction = 'rtl'; g2.shadowColor = 'rgba(255,230,180,0.95)'; g2.shadowBlur = 30; g2.fillStyle = '#fffaf0'; g2.font = '76px Amiri, "Geeza Pro", serif';
       g2.fillText('مَنْ تَصَبَّحَ كُلَّ يَوْمٍ سَبْعَ تَمَرَاتٍ عَجْوَةً', 800, 110);
       g2.direction = 'ltr'; g2.shadowBlur = 12; g2.fillStyle = 'rgba(255,246,228,0.95)'; g2.font = 'italic 42px Spectral, Georgia, serif';
@@ -314,7 +329,7 @@ void main(){
       g2.font = '28px Marcellus, Georgia, serif'; g2.fillStyle = 'rgba(255,240,215,0.8)'; g2.fillText('SAHIH AL-BUKHARI 5445 · SAHIH MUSLIM 2047', 800, 262);
       const tt = new T.CanvasTexture(c); tt.encoding = T.sRGBEncoding;
       this.words = new T.Sprite(new T.SpriteMaterial({ map: tt, transparent: true, opacity: 0, depthWrite: false, fog: false }));
-      this.words.scale.set(26, 4.9, 1); S.add(this.words);
+      this.words.scale.set(22, 4.1, 1); S.add(this.words);
 
       /* ---------- interactions ---------- */
       w.activity('Seven Ajwa', 7, 'Find a palm heavy with dates (its crown glows) and shake it with E');
@@ -347,12 +362,14 @@ void main(){
       /* ---------- arrival: from high in a sunlit crown, down through the fronds ---------- */
       const host = this.palms.reduce((best, p) => (p.laden < 0 && Math.hypot(p.x - 2, p.z - 5) < Math.hypot(best.x - 2, best.z - 5) ? p : best), this.palms[0]);
       const ht = host.top;
-      const sunFar = ht.clone().addScaledVector(SUN, 60);
+      const back = new T.Vector3(-SUN.x, 0, -SUN.z).normalize(), side = new T.Vector3(-back.z, 0, back.x);
+      const sunFar = ht.clone().addScaledVector(SUN, 70);
       const L = this.laden[0];
+      const at = (v, b2, s2, u) => ht.clone().addScaledVector(back, b2).addScaledVector(side, s2).add(new T.Vector3(0, u, 0)).toArray();
       w.cinematic([
-        { p: [ht.x + 1.1, ht.y + 0.5, ht.z + 2.4], l: [sunFar.x, sunFar.y - 8, sunFar.z] },
-        { p: [ht.x + 1.6, ht.y - 0.4, ht.z + 2.2], l: [sunFar.x * 0.6 + L.top.x * 0.4, L.top.y + 4, sunFar.z * 0.6 + L.top.z * 0.4] },
-        { p: [ht.x + 2.6, ht.y - 2.6, ht.z + 4.2], l: [L.top.x, L.top.y - 0.6, L.top.z] },
+        { p: at(0, 6.2, 0.6, 1.0), l: [sunFar.x, sunFar.y - 12, sunFar.z] },
+        { p: at(0, 5.0, 1.8, -0.6), l: [sunFar.x * 0.7 + L.top.x * 0.3, ht.y + 2, sunFar.z * 0.7 + L.top.z * 0.3] },
+        { p: at(0, 3.6, 2.6, -2.8), l: [L.top.x, L.top.y - 0.6, L.top.z] },
         { p: [w.pos.x + 0.6, 3.2, w.pos.z + 2.2], l: [L.x, 3.0, L.z] },
         { p: [w.pos.x, 1.62, w.pos.z], l: [w.pos.x, 1.62, w.pos.z - 10] },
       ], 10);
@@ -512,6 +529,7 @@ void main(){
               }
 
       // the basket dips as a date lands in it, and settles
+      this.basket.visible = !w.cine;
       this.basketKick = U.damp(this.basketKick || 0, 0, 5, dt);
       const kb = this.basketKick;
       this.basket.position.y = -0.36 - Math.sin(kb * Math.PI) * 0.04;
@@ -539,7 +557,7 @@ void main(){
         if (cross(0.01)) {
           const f = w.forward(); const l = Math.hypot(f.x, f.z) || 1;
           const dir = new T.Vector3(f.x / l * 0.4 + SUN.x * 0.6, 0, f.z / l * 0.4 + SUN.z * 0.6).normalize();
-          this.words.position.set(w.pos.x + dir.x * 34, 9.5, w.pos.z + dir.z * 34);
+          this.words.position.set(w.pos.x + dir.x * 18, 7.4, w.pos.z + dir.z * 18);
           this.voices.forEach(v => v.setGain(0.003, 1));
         }
         if (cross(1.8)) {

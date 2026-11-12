@@ -33,13 +33,13 @@
     let r = 0, a = 1, f = 0.007, n = 0;
     for (let i = 0; i < 5; i++) {
       const v = 1 - Math.abs(U.noise2(x * f + i * 13.1, z * f * 1.3 + i * 7.7));
-      r += a * Math.pow(v, 1.4); n += a; a *= 0.48; f *= 2.1;
+      r += a * Math.pow(v, 1.8); n += a; a *= 0.48; f *= 2.1;
     }
     r /= n;
     // great rounded domes of granite, creased by ridges and gullies
     const domes = 0.55 + 0.45 * U.noise2(x * 0.0045 + 3.3, z * 0.006 + 1.1);
     const swell = 0.62 + 0.38 * Math.cos(U.clamp((x + 40) / 520, -1, 1) * Math.PI * 0.5);
-    return 175 * rise * along * swell * (0.12 + 0.5 * domes + 0.55 * r) - 2 + U.noise2(x * 0.08, z * 0.08) * 1.2 * rise;
+    return 200 * rise * along * swell * (0.08 + 0.4 * domes + 0.72 * r) - 2 + U.noise2(x * 0.08, z * 0.08) * 1.2 * rise;
   }
 
   ENGINE.register(WORLD.stage({
@@ -58,7 +58,7 @@
       const fogCol = new T.Color(0xe6c4a0);
       const w = this.w = WORLD.create(env, {
         start: { x: 3, z: 30, yaw: 0.05, pitch: 0.06 }, exposure: 1.0, far: 2000,
-        fog: { color: fogCol, density: 0.0011 }, bounds: [-95, -95, 95, 95], ground,
+        fog: { color: fogCol, density: 0.0008 }, bounds: [-95, -95, 95, 95], ground,
         surface: (x, z) => (Math.hypot(x - HILL.x, z - HILL.z) < HILL.r - 4 ? 'gravel' : 'sand'),
       });
       const S = w.scene;
@@ -73,7 +73,7 @@
 
       /* ---------- textures ---------- */
       const granite = w.tex(512, (g, s) => {
-        g.fillStyle = '#c4b4ac'; g.fillRect(0, 0, s, s);
+        g.fillStyle = '#b0a098'; g.fillRect(0, 0, s, s);
         for (let i = 0; i < 9000; i++) { const c = Math.random(); g.fillStyle = c < 0.5 ? 'rgba(70,60,58,0.45)' : c < 0.85 ? 'rgba(150,130,124,0.4)' : 'rgba(240,232,226,0.4)'; g.fillRect(Math.random() * s, Math.random() * s, 1 + Math.random() * 2.5, 1 + Math.random() * 2.5); }
         g.strokeStyle = 'rgba(40,20,16,0.35)';
         for (let i = 0; i < 40; i++) { g.lineWidth = 0.6 + Math.random() * 1.5; g.beginPath(); let x = Math.random() * s, y = Math.random() * s; g.moveTo(x, y); for (let k = 0; k < 6; k++) { x += (Math.random() - 0.5) * 40; y += Math.random() * 30; g.lineTo(x, y); } g.stroke(); }
@@ -82,7 +82,7 @@
       /* ---------- Uhud ---------- */
       const mg = new T.PlaneGeometry(1500, 460, 300, 110); mg.rotateX(-Math.PI / 2); mg.translate(-40, 0, -M_FOOT - 215);
       const mp = mg.attributes.position, mc = new Float32Array(mp.count * 3);
-      const STRATA = [[0.66, 0.31, 0.22], [0.44, 0.21, 0.19], [0.76, 0.48, 0.38], [0.36, 0.19, 0.19], [0.7, 0.38, 0.27], [0.55, 0.32, 0.3]];
+      const STRATA = [[0.62, 0.25, 0.17], [0.4, 0.17, 0.15], [0.7, 0.4, 0.3], [0.32, 0.15, 0.15], [0.66, 0.31, 0.2], [0.5, 0.26, 0.24]];
       for (let i = 0; i < mp.count; i++) {
         const x = mp.getX(i), z = mp.getZ(i), y = mountain(x, z); mp.setY(i, y);
         // tilted bands of colour in the granite, with dark varnish in the gullies and pale sand at the foot
@@ -104,16 +104,16 @@
       const np = ng.attributes.position, nc = new Float32Array(np.count * 3);
       for (let i = 0; i < np.count; i++) {
         const x = np.getX(i), z = np.getZ(i), y = ground(x, z); np.setY(i, y);
-        const rock = U.smooth(0.3, 2.5, hill(x, z)) * (0.6 + 0.4 * (U.noise2(x * 0.2, z * 0.2) * 0.5 + 0.5));
-        nc.set(U.mix([0.92, 0.8, 0.64], [0.6, 0.36, 0.3], rock), i * 3);
+        const rock = U.smooth(0.15, 1.6, hill(x, z)) * (0.6 + 0.4 * (U.noise2(x * 0.2, z * 0.2) * 0.5 + 0.5));
+        nc.set(U.mix([0.92, 0.8, 0.64], [0.4, 0.21, 0.17], rock), i * 3);
       }
       ng.setAttribute('color', new T.BufferAttribute(nc, 3)); ng.computeVertexNormals();
       S.add(new T.Mesh(ng, KIT.std({ map: KIT.sand(w, [26, 26]), vertexColors: true, relief: 0.03 })));
 
       const rockMat = KIT.std({ map: granite, color: 0x9a5a48, flatShading: true, relief: 0.03 });
       const r = U.seeded(625);
-      for (let i = 0; i < 70; i++) {
-        const a = r() * 6.283, d = 5 + r() * (HILL.r - 4);
+      for (let i = 0; i < 120; i++) {
+        const a = r() * 6.283, d = 4.5 + r() * (HILL.r - 3);
         if (Math.abs(Math.atan2(Math.sin(a), Math.cos(a)) - Math.PI / 2) < 0.35 && d > 4) continue;   // keep the south path clear
         const x = HILL.x + Math.cos(a) * d, z = HILL.z + Math.sin(a) * d / 1.12, s = 0.3 + Math.pow(r(), 2.5) * 1.2;
         const m = new T.Mesh(new T.DodecahedronGeometry(s, 0), rockMat); m.position.set(x, ground(x, z) + s * 0.25, z); m.rotation.set(r() * 3, r() * 3, r() * 3); m.scale.y = 0.7; S.add(m);
@@ -124,7 +124,7 @@
         const s = 0.2 + r() * 0.6; const m = new T.Mesh(new T.DodecahedronGeometry(s, 0), rockMat); m.position.set(x, ground(x, z), z); m.rotation.set(r() * 3, r() * 3, 0); S.add(m);
       }
       // acacias scattered on the plain
-      const barkM = KIT.std({ color: 0x3e3028 }), leafM = KIT.std({ color: 0x46522c, roughness: 1, flatShading: true });
+      const barkM = KIT.std({ color: 0x3e3028 }), leafM = KIT.std({ color: 0x34401f, roughness: 1, flatShading: true });
       const acacia = (x, z, h) => {
         const g = new T.Group();
         const tr = new T.Mesh(new T.CylinderGeometry(0.1, 0.18, h, 6), barkM); tr.position.y = h / 2; g.add(tr);
@@ -156,10 +156,10 @@
       this.topRing.position.set(HILL.x, topY + 0.12, HILL.z); this.topRing.userData.dynamic = true; S.add(this.topRing);
 
       /* ---------- the martyrs' resting place: a low wall, unmarked stones ---------- */
-      const wallMat = KIT.std({ map: KIT.basalt(w, [3, 0.5]), color: 0xb8a090 });
+      const wallMat = KIT.std({ map: KIT.mudBrick(w, [3, 0.4]), color: 0xe8d0b4 });
       const wseg = (x0, z0, x1, z1) => {
         const lx = Math.abs(x1 - x0) || 0.6, lz = Math.abs(z1 - z0) || 0.6, cx = (x0 + x1) / 2, cz = (z0 + z1) / 2;
-        const m = new T.Mesh(new T.BoxGeometry(lx, 1.1, lz), wallMat); m.position.set(cx, ground(cx, cz) + 0.45, cz); S.add(m);
+        const m = new T.Mesh(new T.BoxGeometry(lx, 0.9, lz), wallMat); m.position.set(cx, ground(cx, cz) + 0.35, cz); S.add(m);
         w.addBox(cx - lx / 2, cz - lz / 2, cx + lx / 2, cz + lz / 2);
       };
       wseg(CEM.x0, CEM.z0, CEM.x1, CEM.z0); wseg(CEM.x0, CEM.z1, CEM.x1, CEM.z1); wseg(CEM.x1, CEM.z0, CEM.x1, CEM.z1);
@@ -201,9 +201,10 @@
       for (let x = -420; x <= 340; x += 95) {
         let best = -1e9, bz = 0;
         for (let z = -M_FOOT - 20; z > -M_FOOT - 330; z -= 6) { const y = mountain(x, z); if (y > best) { best = y; bz = z; } }
-        const g = KIT.glow(w, 0xffd890, 120, 0); g.position.set(x, best + 10, bz); g.material.fog = false; S.add(g);
+        const g = KIT.glow(w, 0xffc878, 120, 0); g.position.set(x, best + 10, bz); g.material.fog = false; S.add(g);
+        const p = KIT.glow(w, 0xffd8a0, 1, 0); p.scale.set(26, 220, 1); p.position.set(x, best + 30, bz); p.material.fog = false; S.add(p);
         const d = Math.hypot(x - HILL.x, bz - HILL.z);
-        this.ridges.push({ x, y: best, z: bz, g, d, t: -1 });
+        this.ridges.push({ x, y: best, z: bz, g, p, d, t: -1 });
       }
       this.ridges.sort((a, b) => a.d - b.d);
 
@@ -235,10 +236,10 @@
       /* ---------- entrance: a long lateral track along the red ridges from the east, swinging to the hill ---------- */
       const E = [w.pos.x, ground(w.pos.x, w.pos.z) + 1.62, w.pos.z];
       w.cinematic([
-        { p: [460, 70, -95], l: [330, 95, -300] },
-        { p: [300, 64, -105], l: [180, 105, -300] },
-        { p: [130, 58, -110], l: [20, 110, -300] },
-        { p: [-30, 46, -95], l: [-100, 80, -300] },
+        { p: [470, 80, -40], l: [340, 110, -300] },
+        { p: [300, 72, -50], l: [180, 115, -300] },
+        { p: [130, 64, -55], l: [20, 115, -300] },
+        { p: [-30, 50, -50], l: [-100, 85, -300] },
         { p: [-58, 26, -30], l: [0, 6, 0] },
         { p: [-26, 12, 26], l: [0, 6, -6] },
         { p: E, l: [0, 6, 0] },
@@ -351,8 +352,10 @@
         let last = 0;
         for (const rg of this.ridges) {
           const a = this.echoT - rg.t;
-          rg.g.material.opacity = a > 0 ? Math.min(1, a * 4) * Math.exp(-a * 0.9) * 0.55 + (this.phase !== 'echo' ? 0.0 : 0) : 0;
+          rg.g.material.opacity = a > 0 ? Math.min(1, a * 4) * Math.exp(-a * 0.9) * 0.55 + 0.06 * Math.min(1, a) : 0;   // each ridge keeps a little of its light
           rg.g.scale.setScalar(90 + Math.min(a, 3) * 25);
+          rg.p.material.opacity = a > 0 ? Math.min(1, a * 3) * Math.exp(-a * 0.7) * 0.5 : 0;
+          if (a > 0 && !rg.lit) { rg.lit = true; SND.swell(b, { color: 'pink', f0: 200, f1: 600, dur: 2.2, gain: 0.02, pan: w.spatial(rg, 200).pan }); }
           last = Math.max(last, rg.t);
         }
         if (this.phase === 'echo' && this.echoT > last + 2.2) {

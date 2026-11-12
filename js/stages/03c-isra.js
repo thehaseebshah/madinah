@@ -16,7 +16,7 @@
   const TB = R0 + GAP * (NR - 1) + 34;      // base of the tree of light
   const TREE = { x: AX, z: AZ - 78 };
   const VIEW = { x: AX, y: TB + 16, z: AZ + 6 };
-  const GOLD = 0xffe6b0;
+  const GOLD = 0xffcf78;
   const HEAVENS = [
     { ar: 'آدَم', pb: 'عَلَيْهِ السَّلَام', en: 'Adam', n: 'The first heaven', hue: '#6a8cff', pts: 6, root: 146.83 },
     { ar: 'يَحْيَى وَعِيسَى', pb: 'عَلَيْهِمَا السَّلَام', en: 'Yahya and ‘Isa', n: 'The second heaven', hue: '#40d0dc', pts: 8, root: 164.81 },
@@ -88,13 +88,27 @@
     const g = c.getContext('2d'); g.textAlign = 'center';
     if (sub) { g.font = '30px Marcellus, Georgia, serif'; g.fillStyle = 'rgba(236,226,206,0.8)'; g.shadowColor = 'rgba(255,230,180,0.6)'; g.shadowBlur = 8; g.fillText(sub.toUpperCase().split('').join(' '), 512, 52); }
     g.direction = 'rtl'; g.shadowColor = 'rgba(255,222,150,0.95)'; g.shadowBlur = 34; g.fillStyle = '#fffaea';
-    g.font = '128px Amiri, "Geeza Pro", serif'; g.fillText(ar, 512, 196); g.shadowBlur = 14; g.fillText(ar, 512, 196);
-    if (pb) { g.font = '40px Amiri, "Geeza Pro", serif'; g.fillStyle = 'rgba(255,240,210,0.85)'; g.fillText(pb, 512, 262); }
+    g.font = '120px Amiri, "Geeza Pro", serif'; g.fillText(ar, 512, 180); g.shadowBlur = 14; g.fillText(ar, 512, 180);
+    if (pb) { g.font = '40px Amiri, "Geeza Pro", serif'; g.fillStyle = 'rgba(255,240,210,0.85)'; g.fillText(pb, 512, 268); }
     g.direction = 'ltr'; g.shadowBlur = 8; g.font = 'italic 52px Spectral, Georgia, serif'; g.fillStyle = 'rgba(248,240,224,0.95)'; g.fillText(en, 512, 340);
     const tex = new T.CanvasTexture(c); tex.encoding = T.sRGBEncoding;
     const sp = new T.Sprite(new T.SpriteMaterial({ map: tex, transparent: true, opacity: 0, depthWrite: false, fog: false }));
     sp.scale.set(17, 6.6, 1); sp.renderOrder = 5;
     return sp;
+  }
+
+  /* The kit's valley climbs without limit toward its edges; fold the high slopes down into a ring
+     of mountains so that the sky stays open over the courtyard. */
+  function squashValley(w, g0) {
+    const sq = y => (y <= 16 ? y : 16 + (y - 16) * 0.3);
+    w.scene.traverse(m => {
+      if (m.isMesh && m.geometry.attributes.color && m.geometry.attributes.position.count > 10000) {
+        const p = m.geometry.attributes.position;
+        for (let i = 0; i < p.count; i++) p.setY(i, sq(p.getY(i)));
+        m.geometry.computeVertexNormals(); m.geometry.computeBoundingSphere();
+      }
+    });
+    return (x, z) => sq(g0(x, z));
   }
 
   ENGINE.register(WORLD.stage({
@@ -144,11 +158,9 @@
       const cres = new T.Sprite(new T.SpriteMaterial({ map: crescent, transparent: true, depthWrite: false, fog: false })); cres.scale.set(60, 60, 1); cres.position.copy(moonDir).multiplyScalar(1000); S.add(cres);
 
       // the valley and the House, its cloth dark against the stars
-      const ground = KIT.makkahValley(w, { kx: 0, kz: 0, floor: 130, clear: 36, seed: 620 });
+      const ground = squashValley(w, KIT.makkahValley(w, { kx: 0, kz: 0, floor: 130, clear: 36, seed: 620 }));
       w.ground = ground; w.surface = (x, z) => (Math.hypot(x, z) < 22 ? 'stone' : 'sand');
       const kabah = KIT.kabah(w, { cloth: 0x120f10 }); S.add(kabah);
-      const band = new T.Mesh(new T.BoxGeometry(11.3, 0.7, 12.8), KIT.std({ color: 0x8a7444, roughness: 0.5, metalness: 0.5, emissive: 0x2a1c08 }));
-      band.position.y = 6.6; S.add(band);
       w.addBox(-6, -6.7, 6, 6.7);
       // the paved ring of the courtyard
       const pave = w.tex(512, (g, s) => {
@@ -202,7 +214,7 @@
       {
         const pts = [], cols = [], r = U.seeded(5314);
         const push = (x, y, z, c) => { pts.push(x, y, z); cols.push(c[0], c[1], c[2]); };
-        const trunkC = [1, 0.82, 0.5], leafA = [0.85, 1, 0.82], leafB = [1, 0.95, 0.75];
+        const trunkC = [1, 0.74, 0.38], leafA = [0.62, 0.9, 0.6], leafB = [1, 0.86, 0.5];
         // a broad trunk that splits low, as the lote tree does, into spreading limbs
         for (let i = 0; i < 1100; i++) {
           const t = r(), a = r() * 6.283, rad = 3.2 * (1 - t * 0.5);
@@ -227,16 +239,16 @@
         }
         const geo = new T.BufferGeometry();
         geo.setAttribute('position', new T.Float32BufferAttribute(pts, 3)); geo.setAttribute('color', new T.Float32BufferAttribute(cols, 3));
-        this.tree = new T.Points(geo, new T.PointsMaterial({ map: KIT.glowTex(w), vertexColors: true, size: 1.6, transparent: true, opacity: 0.0, depthWrite: false, blending: T.AdditiveBlending, fog: false }));
+        this.tree = new T.Points(geo, new T.PointsMaterial({ map: KIT.glowTex(w), vertexColors: true, size: 1.2, transparent: true, opacity: 0.0, depthWrite: false, blending: T.AdditiveBlending, fog: false }));
         this.tree.frustumCulled = false; S.add(this.tree);
         this.treeGlow = KIT.glow(w, 0xfff4d8, 150, 0); this.treeGlow.position.set(TREE.x, TB + 40, TREE.z); this.treeGlow.material.fog = false; S.add(this.treeGlow);
         // the immense calm light above everything
         this.crown = KIT.glow(w, 0xfff8ea, 1400, 0); this.crown.position.set(TREE.x, TB + 520, TREE.z - 60); this.crown.material.fog = false; S.add(this.crown);
         // fifty lights, which gather into five
         const fp = new T.BufferGeometry(); fp.setAttribute('position', new T.BufferAttribute(new Float32Array(150), 3));
-        this.fifty = new T.Points(fp, new T.PointsMaterial({ map: KIT.glowTex(w), color: GOLD, size: 1.5, transparent: true, opacity: 0, depthWrite: false, blending: T.AdditiveBlending, fog: false }));
+        this.fifty = new T.Points(fp, new T.PointsMaterial({ map: KIT.glowTex(w), color: GOLD, size: 2.4, transparent: true, opacity: 0, depthWrite: false, blending: T.AdditiveBlending, fog: false }));
         this.fifty.frustumCulled = false; S.add(this.fifty);
-        this.five = [0, 1, 2, 3, 4].map(() => { const g = KIT.glow(w, GOLD, 5, 0); g.material.fog = false; S.add(g); return g; });
+        this.five = [0, 1, 2, 3, 4].map(() => { const g = KIT.glow(w, 0xffc860, 3, 0); g.material.fog = false; S.add(g); return g; });
         this.fiftyPh = Array.from({ length: 50 }, (_, i) => ({ a: (i / 50) * 6.283, r: 9 + (i % 5) * 0.9, y: (i % 7) * 0.5, g: i % 5 }));
       }
       this.falling = KIT.dust(w, 300, [TREE.x - 50, TB - 30, TREE.z - 50, TREE.x + 50, TB + 70, TREE.z + 50], 0xfff2c8, 0.35);
@@ -320,6 +332,7 @@
       const w = this.w; if (!w) return;
       w.update(dt);
       const t = w.time, T = THREE, cam = w.camera;
+      if (w.skyMesh) w.skyMesh.position.copy(w.camera.position);   // the dome travels with the eye, so high shots never clip it
       this.starRig.rotation.y += dt * 0.012;   // the stars turn slowly
       KIT.driftDust(this.dust, dt, t, [0.04, 0.02]);
       // the motes in the column rise
@@ -430,9 +443,10 @@
       const top = this.skyBase.top.clone().lerp(hue.clone().multiplyScalar(0.07), open * 0.9);
       const mid = this.skyBase.mid.clone().lerp(hue.clone().multiplyScalar(0.2), open * 0.8);
       const heaven = this.phase === 'arrive' ? U.smooth(0, 8, this.phaseT) : this.phase === 'tree' ? 1 : 0;
-      top.lerp(new T.Color('#f6eedc'), heaven * 0.55); mid.lerp(new T.Color('#fff4e0'), heaven * 0.75);
+      top.lerp(new T.Color('#fff0d4'), heaven * 0.85); mid.lerp(new T.Color('#4a3c46'), heaven * 0.8);
       this.skyU.uTop.value.copy(top); this.skyU.uMid.value.copy(mid); this.skyU.uBot.value.copy(mid.clone().multiplyScalar(0.4));
       this.skyU.uStars.value = 0.6 * (1 - heaven);
+      this.skyU.uSun.value.setRGB(0.1, 0.13, 0.22).multiplyScalar(1 - U.smooth(30, 60, height));
       this.starRig.children.forEach((p, i) => { p.material.opacity = (i ? 0.95 : 0.75) * (1 - heaven); });
       w.scene.fog.color.copy(mid.clone().multiplyScalar(0.6));
       w.scene.fog.density = U.lerp(0.0042, 0.05, below);
@@ -444,7 +458,7 @@
         R.flash = Math.max(0, R.flash - dt * 1.2); R.bloom = Math.max(0, R.bloom - dt * 0.4);
         const dy = R.y - height, isNext = i === this.n && this.phase === 'fly';
         const near = U.clamp(1 - Math.abs(dy) / 110);
-        R.disc.material.opacity = open * (R.passed ? 0.22 + R.bloom * 0.7 : (0.25 + 0.5 * near) + R.flash * 0.5);
+        R.disc.material.opacity = open * (R.passed ? 0.12 + R.bloom * 0.7 : i === this.n ? 0.3 + 0.55 * near + R.flash * 0.5 : 0.1 * near);
         R.halo.material.opacity = open * (R.passed ? 0.1 : isNext ? 0.75 + 0.2 * Math.sin(t * 2.4) : 0.25 * near);
         R.beam.material.opacity = open * (isNext ? 0.22 + 0.06 * Math.sin(t * 2.4) : 0);
       });
@@ -455,9 +469,9 @@
       });
       // the tree and the light above it
       const tv = U.smooth(TB - 120, TB, height);
-      this.tree.material.opacity = 0.9 * tv;
-      this.tree.material.size = 1.5 + 0.15 * Math.sin(t * 0.8);
-      this.treeGlow.material.opacity = 0.35 * tv;
+      this.tree.material.opacity = 0.8 * tv;
+      this.tree.material.size = 1.15 + 0.12 * Math.sin(t * 0.8);
+      this.treeGlow.material.opacity = 0.22 * tv;
       this.crown.material.opacity = 0.75 * U.smooth(TB - 220, TB, height);
       this.falling.material.opacity = 0.7 * tv;
       if (tv > 0) {
@@ -474,11 +488,11 @@
       for (let i = 0; i < 50; i++) {
         const p = this.fiftyPh[i], ang = p.a + t * 0.12;
         const x0 = cx + Math.cos(ang) * p.r * 1.6, y0 = cy + p.y + Math.sin(ang * 2 + t * 0.3) * 1.2, z0 = cz + Math.sin(ang) * p.r * 0.5;
-        const gx = cx + (p.g - 2) * 4.2, gy = cy + 3 + Math.sin(p.g * 1.3 + t * 0.6) * 0.3, gz = cz + 1;
+        const gx = cx + (p.g - 2) * 5.5, gy = cy + 3 + Math.sin(p.g * 1.3 + t * 0.6) * 0.3, gz = cz + 1;
         a.setXYZ(i, U.lerp(x0, gx, gather), U.lerp(y0, gy, gather), U.lerp(z0, gz, gather));
       }
       a.needsUpdate = true;
-      this.five.forEach((g, i) => { g.position.set(cx + (i - 2) * 4.2, cy + 3 + Math.sin(i * 1.3 + t * 0.6) * 0.3, cz + 1); });
+      this.five.forEach((g, i) => { g.position.set(cx + (i - 2) * 5.5, cy + 3 + Math.sin(i * 1.3 + t * 0.6) * 0.3, cz + 1); });
     },
 
     treeSequence(env, dt) {
@@ -492,8 +506,8 @@
       }
       const appear = U.smooth(10, 12, T1), gather = U.ease(U.smooth(14, 23, T1));
       this.fifty.material.opacity = appear * (1 - gather * 0.85);
-      this.fifty.material.size = 1.5 + gather * 1.2;
-      this.five.forEach(g => { g.material.opacity = U.smooth(19, 24, T1) * 0.95; g.scale.setScalar(5 + U.smooth(19, 24, T1) * 3); });
+      this.fifty.material.size = 2.4 + gather * 1.6;
+      this.five.forEach(g => { g.material.opacity = U.smooth(19, 24, T1) * 0.95; g.scale.setScalar(3 + U.smooth(19, 24, T1) * 2.5); });
       this.drawFifty(gather, w.time);
       for (let i = 0; i < 5; i++) if (cross(19 + i * 0.7)) SND.bell(env.bus, [293.66, 369.99, 440, 493.88, 587.33][i], { gain: 0.045, glass: true });
       if (cross(25)) { this.phase = 'done'; w.finish('Five prayers, with the reward of fifty'); }

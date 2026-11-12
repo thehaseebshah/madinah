@@ -10,6 +10,8 @@
 (function () {
   'use strict';
   if (!window.WORLD) return;
+  // boxes without per-face groups, so that WORLD.bake can merge them
+  const BOX = (...a) => { const g = new THREE.BoxGeometry(...a); g.clearGroups(); return g; };
 
   const F = { x0: -6.5, x1: 6.5, z0: -11, z1: 3, wt: 0.8 };   // the foundation (north is -z)
   const CX = (F.x0 + F.x1) / 2, ROOF_Z = -5;                    // the roofed prayer area lies north of ROOF_Z
@@ -43,7 +45,7 @@
       const T = THREE, self = this;
       const w = this.w = WORLD.create(env, {
         start: { x: -1, z: 15, yaw: 0.12, pitch: -0.12 }, exposure: 1.05, far: 1400,
-        fog: { color: 0xe8b88a, density: 0.0052 }, bounds: [-40, -40, 40, 40],
+        fog: { color: 0xf0c08a, density: 0.0034 }, bounds: [-40, -40, 40, 40],
         surface: (x, z) => (x > F.x0 - 1 && x < F.x1 + 1 && z > F.z0 - 1 && z < F.z1 + 1 ? 'gravel' : 'sand'),
       });
       const S = w.scene;
@@ -51,7 +53,7 @@
 
       /* ---------- light: a low western sun ---------- */
       const sunDir = new T.Vector3(-0.8, 0.34, 0.22).normalize();
-      w.sky({ top: '#6a8cc0', mid: '#f4c890', bot: '#c89868', sunDir: sunDir.toArray(), sun: '#ffc070', sunSize: 0.0018 });
+      w.sky({ top: '#5a7cb8', mid: '#f6c080', bot: '#c89868', sunDir: sunDir.toArray(), sun: '#ffc070', sunSize: 0.0018 });
       S.add(new T.HemisphereLight(0xffd8b0, 0x6a4a34, 0.55));
       const sun = new T.DirectionalLight(0xffbe80, 2.5); sun.position.copy(sunDir).multiplyScalar(60); S.add(sun);
       w.followShadow(sun, 30, 2048);
@@ -59,8 +61,14 @@
       /* ---------- ground: earth, sand and scattered harrah stone ---------- */
       const earth = KIT.std({ map: KIT.sand(w, [70, 70]), color: 0xd4b08c, relief: 0.03 });
       const gnd = new T.Mesh(new T.PlaneGeometry(500, 500), earth); gnd.rotation.x = -Math.PI / 2; S.add(gnd);
-      const basaltTex = KIT.basalt(w, [1, 1]);
-      const rockMat = KIT.std({ map: basaltTex, color: 0x9a9088, flatShading: true });
+      // basalt of the harrah, dark but dusted with the sand of the oasis
+      const basaltTex = w.tex(512, (g, s) => {
+        g.fillStyle = '#5a524e'; g.fillRect(0, 0, s, s);
+        for (let i = 0; i < 70; i++) { const x = Math.random() * s, y = Math.random() * s, r = 20 + Math.random() * 70, gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, Math.random() < 0.5 ? 'rgba(40,36,36,0.55)' : 'rgba(150,126,100,0.35)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2); }
+        for (let i = 0; i < 7000; i++) { const c = Math.random(); g.fillStyle = c < 0.5 ? 'rgba(30,26,26,0.7)' : c < 0.85 ? 'rgba(120,110,104,0.6)' : 'rgba(200,170,130,0.6)'; g.fillRect(Math.random() * s, Math.random() * s, 1 + Math.random() * 2, 1 + Math.random() * 2); }
+        for (let i = 0; i < 600; i++) { g.fillStyle = 'rgba(10,8,8,0.7)'; g.beginPath(); g.arc(Math.random() * s, Math.random() * s, Math.random() * 2.4, 0, 6.283); g.fill(); }
+      }, [1, 1]);
+      const rockMat = KIT.std({ map: basaltTex, color: 0xc8beb6, flatShading: true });
       const rockGeo = new T.DodecahedronGeometry(0.22, 0);
       const r = U.seeded(1);
       const rocks = new T.InstancedMesh(rockGeo, rockMat, 520); const m4 = new T.Matrix4(), q = new T.Quaternion(), v3 = new T.Vector3(), sc = new T.Vector3();
@@ -75,29 +83,33 @@
       }
       S.add(rocks);
       // the harrah on the horizon: low black lava ridges east and west
-      const hillMat = KIT.std({ map: KIT.basalt(w, [6, 2]), color: 0x4a4440, flatShading: true });
-      for (let i = 0; i < 22; i++) {
-        const side = i % 2 ? 1 : -1, z = -260 + (i >> 1) * 48, x = side * (190 + (i % 5) * 30);
-        const h = new T.Mesh(new T.ConeGeometry(70 + (i % 3) * 25, 14 + (i % 4) * 6, 7), hillMat);
-        h.position.set(x, -2, z); h.scale.set(1, 1, 0.6); h.rotation.y = i; S.add(h);
+      const hillMat = KIT.std({ map: KIT.basalt(w, [6, 2]), color: 0x8a807a, flatShading: true });
+      const hillGeo = new T.SphereGeometry(1, 18, 8, 0, 6.283, 0, Math.PI / 2), hp = hillGeo.attributes.position;
+      for (let i = 0; i < hp.count; i++) { const x = hp.getX(i), z = hp.getZ(i), n = 1 + U.noise2(x * 3 + 5, z * 3) * 0.25; hp.setXYZ(i, x * n, hp.getY(i) * (0.8 + 0.4 * (U.noise2(x * 5, z * 5) * 0.5 + 0.5)), z * n); }
+      hillGeo.computeVertexNormals();
+      for (let i = 0; i < 26; i++) {
+        const a = (i / 26) * 6.283 + 0.1, d = 230 + (i % 4) * 45;
+        if (Math.abs(Math.cos(a)) < 0.35 && Math.sin(a) > 0) continue; // leave the south open
+        const h = new T.Mesh(hillGeo, hillMat);
+        h.position.set(Math.cos(a) * d, -1, Math.sin(a) * d); h.scale.set(60 + (i % 3) * 30, 6 + (i % 5) * 3, 30 + (i % 4) * 12); h.rotation.y = a + 1.57; S.add(h);
       }
 
       /* ---------- palms, the village and the well ---------- */
       const pr = U.seeded(622);
       const palm = (x, z, h) => { const p = KIT.palm(w, h || 7 + pr() * 6); p.position.set(x, 0, z); S.add(p); w.addCircle(x, z, 0.3); };
-      for (let i = 0; i < 46; i++) {
-        const a = pr() * 6.283, d = 20 + pr() * 34, x = Math.cos(a) * d, z = Math.sin(a) * d - 6;
+      for (let i = 0; i < 64; i++) {
+        const a = pr() * 6.283, d = 18 + pr() * 40, x = Math.cos(a) * d, z = Math.sin(a) * d - 6;
         if (Math.abs(x) < 14 && z > 10) continue;
         palm(x, z);
       }
       [[7, 19, 10], [11, 15, 8.5], [4, 23, 11.5], [-15, 14, 9], [16, -4, 9.5], [-14, -16, 10]].forEach(([x, z, h]) => palm(x, z, h));
-      const mudMats = ['#cdb08c', '#bea07c', '#d8bc98'].map(c => KIT.std({ map: KIT.mudBrick(w, [2, 0.8]), color: new T.Color(c) }));
+      const mudTex = KIT.plaster(w, [2, 1], '#b8956c'); const mudMats = ['#e0c8a8', '#d0b494', '#e8d4b8'].map(c => KIT.std({ map: mudTex, color: new T.Color(c), relief: 0.02 }));
       const roofMat = KIT.std({ map: KIT.frondRoof(w, [2, 2]), alphaTest: 0.5, side: T.DoubleSide, color: 0xc8b088 });
       const doorM = KIT.std({ color: 0x2a1c12 });
       [[-24, -18, 7, 5, 3], [-27, -4, 6, 6, 2.8], [22, -20, 8, 5, 3.2], [26, -6, 6, 7, 2.6], [-22, 12, 6, 5, 2.8], [24, 22, 7, 6, 3], [-6, -30, 8, 6, 3.1], [9, -32, 6, 5, 2.7]].forEach(([x, z, hw, hd, hh], i) => {
-        const hs = new T.Mesh(new T.BoxGeometry(hw, hh, hd), mudMats[i % 3]); hs.position.set(x, hh / 2, z); hs.rotation.y = (i % 3 - 1) * 0.15; S.add(hs);
+        const hs = new T.Mesh(BOX(hw, hh, hd), mudMats[i % 3]); hs.position.set(x, hh / 2, z); hs.rotation.y = (i % 3 - 1) * 0.15; S.add(hs);
         const rf = new T.Mesh(new T.PlaneGeometry(hw + 0.6, hd + 0.6), roofMat); rf.rotation.x = -Math.PI / 2; rf.position.set(0, hh / 2 + 0.05, 0); hs.add(rf);
-        const dr = new T.Mesh(new T.BoxGeometry(0.9, 1.8, 0.1), doorM); dr.position.set(0, -hh / 2 + 0.9, hd / 2 + 0.03); hs.add(dr);
+        const dr = new T.Mesh(BOX(0.9, 1.8, 0.1), doorM); dr.position.set(0, -hh / 2 + 0.9, hd / 2 + 0.03); hs.add(dr);
         w.addBox(x - hw / 2, z - hd / 2, x + hw / 2, z + hd / 2);
       });
       const wellStone = KIT.std({ map: KIT.basalt(w, [3, 0.5]), color: 0xb0a8a0 });
@@ -117,7 +129,7 @@
       });
       const chalk = new T.MeshBasicMaterial({ map: chalkTex, transparent: true, opacity: 0.8, depthWrite: false, color: 0xfff8e8, polygonOffset: true, polygonOffsetFactor: -2 });
       const line = (x0, z0, x1, z1) => {
-        const L = Math.hypot(x1 - x0, z1 - z0), m = new T.Mesh(new T.PlaneGeometry(L, 0.14), chalk);
+        const L = Math.hypot(x1 - x0, z1 - z0), m = new T.Mesh(new T.PlaneGeometry(L, 0.2), chalk);
         m.rotation.x = -Math.PI / 2; m.rotation.z = -Math.atan2(z1 - z0, x1 - x0); m.position.set((x0 + x1) / 2, 0.012, (z0 + z1) / 2); S.add(m);
       };
       const rect = (x0, z0, x1, z1) => { line(x0, z0, x1, z0); line(x1, z0, x1, z1); line(x1, z1, x0, z1); line(x0, z1, x0, z0); };
@@ -156,10 +168,10 @@
       });
 
       /* ---------- the stones ---------- */
-      this.stoneMat = KIT.std({ map: basaltTex, color: 0x8a827c, flatShading: true, roughness: 0.9 });
+      this.stoneMat = KIT.std({ map: basaltTex, color: 0xffffff, flatShading: true, roughness: 0.62, metalness: 0.05 });
       this.geos = {};
       Object.keys(SIZES).forEach(k => {
-        const [a, b, c] = SIZES[k].dim, g = new T.BoxGeometry(a, b, c, 2, 2, 2), p = g.attributes.position, rr = U.seeded(k.charCodeAt(0));
+        const [a, b, c] = SIZES[k].dim, g = BOX(a, b, c, 2, 2, 2), p = g.attributes.position, rr = U.seeded(k.charCodeAt(0));
         const seen = new Map();
         for (let i = 0; i < p.count; i++) { const key = `${p.getX(i).toFixed(3)},${p.getY(i).toFixed(3)},${p.getZ(i).toFixed(3)}`; if (!seen.has(key)) seen.set(key, [(rr() - 0.5) * a * 0.12, (rr() - 0.5) * b * 0.16, (rr() - 0.5) * c * 0.12]); const o = seen.get(key); p.setXYZ(i, p.getX(i) + o[0], p.getY(i) + o[1], p.getZ(i) + o[2]); }
         g.computeVertexNormals(); this.geos[k] = g;
@@ -188,41 +200,44 @@
       // the stone in your hands
       S.add(w.camera);
       this.held = new T.Mesh(this.geos.s, this.stoneMat); this.held.visible = false; this.held.userData.dynamic = true;
-      w.camera.add(this.held); this.heldHome = new T.Vector3(0.22, -0.48, -0.95); this.held.position.copy(this.heldHome); this.held.rotation.set(0.25, 0.35, 0);
+      w.camera.add(this.held); this.heldHome = new T.Vector3(0.3, -0.5, -1.1); this.held.position.copy(this.heldHome); this.held.rotation.set(0.25, 0.35, 0); this.held.scale.setScalar(0.62);
       this.shake = 0; this.lift = 0;
 
       /* ---------- what rises at the end: walls, pillars, the frond roof ---------- */
-      const wallMat = KIT.std({ map: KIT.mudBrick(w, [3, 1]), color: 0xc8a888 });
-      const footMat = KIT.std({ map: KIT.basalt(w, [4, 0.5]), color: 0x9a928c });
+      const wallMat = KIT.std({ map: KIT.plaster(w, [3, 1], '#b8956c'), color: 0xe8d4b8, relief: 0.03 });
+      const footTex = basaltTex.clone(); footTex.needsUpdate = true; footTex.repeat.set(4, 0.6);
+      const footMat = KIT.std({ map: footTex, color: 0xe0d8d0 });
       this.rise = new T.Group(); this.rise.userData.dynamic = true; S.add(this.rise);
       const WH = 2.4;
+      this.wallBoxes = [];
       const wallSeg = (x0, z0, x1, z1) => {
         const lx = Math.max(F.wt, Math.abs(x1 - x0)), lz = Math.max(F.wt, Math.abs(z1 - z0));
         const g = new T.Group(); g.position.set((x0 + x1) / 2, 0, (z0 + z1) / 2);
-        const foot = new T.Mesh(new T.BoxGeometry(lx + 0.06, 0.8, lz + 0.06), footMat); foot.position.y = 0.4; g.add(foot);
-        const mud = new T.Mesh(new T.BoxGeometry(lx, WH - 0.8, lz), wallMat); mud.position.y = 0.8 + (WH - 0.8) / 2; g.add(mud);
-        g.scale.y = 0.001; g.visible = false; this.rise.add(g); return g;
+        const foot = new T.Mesh(BOX(lx + 0.06, 0.8, lz + 0.06), footMat); foot.position.y = 0.4; g.add(foot);
+        const mud = new T.Mesh(BOX(lx, WH - 0.8, lz), wallMat); mud.position.y = 0.8 + (WH - 0.8) / 2; g.add(mud);
+        g.scale.y = 0.001; g.visible = false; this.rise.add(g);
+        this.wallBoxes.push([g.position.x - lx / 2, g.position.z - lz / 2, g.position.x + lx / 2, g.position.z + lz / 2]); return g;
       };
       this.walls = [
         wallSeg(F.x0, F.z0 + F.wt / 2, F.x1, F.z0 + F.wt / 2), wallSeg(F.x0 + F.wt / 2, F.z0 + F.wt, F.x0 + F.wt / 2, F.z1 - F.wt), wallSeg(F.x1 - F.wt / 2, F.z0 + F.wt, F.x1 - F.wt / 2, F.z1 - F.wt),
         wallSeg(F.x0, F.z1 - F.wt / 2, -1.3, F.z1 - F.wt / 2), wallSeg(1.3, F.z1 - F.wt / 2, F.x1, F.z1 - F.wt / 2),
       ];
       const trunkMat = KIT.std({ map: KIT.bark(w), color: 0xc8b096 });
-      this.pillars = [-3.2, 0, 3.2].map(x => { const p = new T.Mesh(new T.CylinderGeometry(0.17, 0.21, WH + 0.3, 9), trunkMat); p.position.set(x, (WH + 0.3) / 2, (F.z0 + ROOF_Z) / 2 + 0.6); p.scale.y = 0.001; p.visible = false; this.rise.add(p); return p; });
+      this.pillars = [-3.2, 0, 3.2].map(x => { const pg = new T.CylinderGeometry(0.17, 0.21, WH + 0.3, 9); pg.translate(0, (WH + 0.3) / 2, 0); const p = new T.Mesh(pg, trunkMat); p.position.set(x, 0, (F.z0 + ROOF_Z) / 2 + 0.6); p.scale.y = 0.001; p.visible = false; this.rise.add(p); return p; });
       const roofTex = KIT.frondRoof(w, [4, 2]);
       const fRoof = KIT.std({ map: roofTex, alphaTest: 0.5, side: T.DoubleSide, color: 0xd8c8a0 });
       const roofDepth = new T.MeshDepthMaterial({ depthPacking: T.RGBADepthPacking, map: roofTex, alphaTest: 0.5, side: T.DoubleSide });
       const RD = ROOF_Z - (F.z0 + 0.2), RW = F.x1 - F.x0 - 0.2;
       this.roof = new T.Group(); this.roof.position.set(CX, WH + 0.2, F.z0 + 0.1); this.rise.add(this.roof);
-      [0, 0.1].forEach((dy, i) => {
-        const rf = new T.Mesh(new T.PlaneGeometry(RW, RD), fRoof); rf.rotation.x = -Math.PI / 2; rf.rotation.z = i * 0.06; rf.position.set(0, dy, RD / 2); rf.customDepthMaterial = roofDepth; rf.castShadow = true; this.roof.add(rf);
+      [0, 0.08, 0.16].forEach((dy, i) => {
+        const rf = new T.Mesh(new T.PlaneGeometry(RW, RD), fRoof); rf.rotation.x = -Math.PI / 2; rf.rotation.z = (i - 1) * 0.07; rf.position.set(0, dy, RD / 2); rf.customDepthMaterial = roofDepth; rf.castShadow = true; this.roof.add(rf);
       });
-      for (let x = -RW / 2 + 1.2; x < RW / 2; x += 2.6) { const bm = new T.Mesh(new T.BoxGeometry(0.2, 0.18, RD), trunkMat); bm.position.set(x, -0.1, RD / 2); this.roof.add(bm); }
+      for (let x = -RW / 2 + 1.2; x < RW / 2; x += 2.6) { const bm = new T.Mesh(BOX(0.2, 0.18, RD), trunkMat); bm.position.set(x, -0.1, RD / 2); this.roof.add(bm); }
       this.roof.scale.z = 0.001; this.roof.visible = false;
 
       /* ---------- doves, waiting in the palms ---------- */
-      const dg = new T.SphereGeometry(0.12, 8, 6); dg.scale(1.6, 1, 1);
-      this.doveMesh = new T.InstancedMesh(dg, KIT.std({ color: 0xa8a4a8, roughness: 0.7 }), 12); this.doveMesh.userData.dynamic = true; this.doveMesh.visible = false; S.add(this.doveMesh);
+      const dg = new T.SphereGeometry(0.1, 8, 6); dg.scale(1.7, 0.9, 1);
+      this.doveMesh = new T.InstancedMesh(dg, KIT.std({ color: 0x8a8088, roughness: 0.7 }), 12); this.doveMesh.userData.dynamic = true; this.doveMesh.visible = false; S.add(this.doveMesh);
       const perch = [[-5.6, -10.6], [-3, -10.6], [-0.4, -10.6], [2.4, -10.6], [5, -10.6], [-6.1, -6], [-6.1, -2], [6.1, -4.5], [6.1, -0.5], [-4, 2.6], [3, 2.6], [5.4, 2.6]];
       this.doves = perch.map(([x, z], i) => ({ from: new T.Vector3(-40 + i * 3, 18 + (i % 3) * 3, 30 - i * 2), to: new T.Vector3(x, WH + 0.12, z), t: -i * 0.35, ph: Math.random() * 6 }));
 
@@ -231,6 +246,7 @@
       this.puffTex = KIT.glowTex(w);
 
       w.receiveAll();
+      w.scene.traverse(o => { if (o.isMesh && !Array.isArray(o.material) && o.geometry.groups.length > 1) o.geometry.clearGroups(); }); // single-material meshes merge in the bake
       this.baked = w.bake();
 
       /* ---------- sound ---------- */
@@ -245,9 +261,9 @@
 
       // arrival: a slow crane down from above the palm crowns onto the chalk foundation, ending at your eyes
       w.cinematic([
-        { p: [14, 34, 34], l: [CX, 0, -4] },
-        { p: [9, 15, 24], l: [CX, 0, -4] },
-        { p: [5.5, 7, 19], l: [CX - 1, 0, -4] },
+        { p: [18, 24, 36], l: [CX - 2, 3, -14] },
+        { p: [11, 15, 26], l: [CX - 1, 0, -6] },
+        { p: [6, 8, 20], l: [CX - 1, 0, -4] },
         { p: [1, 3.2, 17.5], l: [-3, 0.5, 4] },
         { p: [-1, 1.62, 15], l: [-0.2, 1.4, 5] },
       ], 10);
@@ -309,6 +325,7 @@
 
       // guiding light: matching places glow while you carry; piles glow when your hands are empty
       SLOTS.forEach((sl, i) => {
+        sl.glow.visible = sl.glow.material.opacity > 0.01; sl.mesh.visible = sl.mat.opacity > 0.01;
         sl.flash = Math.max(0, sl.flash - dt * 1.5);
         const match = !sl.filled && this.carrying === sl.size && this.phase === 'build';
         const target = match ? 0.55 + 0.25 * Math.sin(t * 3 + i) : 0;
@@ -316,7 +333,7 @@
         sl.mat.opacity = sl.filled ? Math.max(0, sl.mat.opacity - dt) : 0.55 + (match ? 0.4 : 0) + sl.flash * 0.45 * (0.5 + 0.5 * Math.sin(t * 20));
         sl.mat.color.setRGB(1, 0.97 - sl.flash * 0.15, 0.88 - sl.flash * 0.3);
       });
-      PILES.forEach((pl, i) => { pl.glow.material.opacity = U.damp(pl.glow.material.opacity, !this.carrying && this.phase === 'build' ? 0.32 + 0.12 * Math.sin(t * 2 + i) : 0, 4, dt); });
+      PILES.forEach((pl, i) => { pl.glow.visible = pl.glow.material.opacity > 0.01; pl.glow.material.opacity = U.damp(pl.glow.material.opacity, !this.carrying && this.phase === 'build' ? 0.32 + 0.12 * Math.sin(t * 2 + i) : 0, 4, dt); });
 
       // stones in flight settle with a little weight
       for (const f of this.flying) {
@@ -340,10 +357,10 @@
         this.palmsN.set('gain', this.phase === 'hush' ? 0.004 : 0.02, 0.8);
         if (this.phase === 'hush' && T1 > 2.5) { this.phase = 'rise'; this.seqT = 0; }
         if (this.phase === 'rise' || this.phase === 'still') {
-          if (at(0.01)) { SND.swell(env.bus, { f0: 80, f1: 300, dur: 6, gain: 0.12, color: 'brown' }); SND.glow(env.bus, 146.83, { gain: 0.06, dur: 14, vowel: 'a' }); this.walls.forEach(g => { g.visible = true; }); }
+          if (at(0.01)) { SND.swell(env.bus, { f0: 80, f1: 300, dur: 6, gain: 0.12, color: 'brown' }); SND.glow(env.bus, 146.83, { gain: 0.06, dur: 14, vowel: 'a' }); this.walls.forEach(g => { g.visible = true; }); this.wallBoxes.forEach(b => w.addBox(...b)); }
           const wk = U.smooth(0, 5, T1);
           this.walls.forEach((g, i) => { g.scale.y = Math.max(0.001, U.smooth(i * 0.25, 4 + i * 0.25, T1)); });
-          if (at(2.5)) this.pillars.forEach(p => { p.visible = true; });
+          if (at(2.5)) this.pillars.forEach(p => { p.visible = true; w.addCircle(p.position.x, p.position.z, 0.22); });
           this.pillars.forEach((p, i) => { p.scale.y = Math.max(0.001, U.smooth(2.5 + i * 0.3, 4.5 + i * 0.3, T1)); });
           if (at(5)) { this.roof.visible = true; SND.swell(env.bus, { color: 'pink', type: 'bandpass', f0: 600, f1: 2400, dur: 4.5, gain: 0.06, q: 1.5 }); SND.glow(env.bus, 220, { gain: 0.05, dur: 12, delay: 0.3, vowel: 'o' }); }
           this.roof.scale.z = Math.max(0.001, U.easeOut(U.smooth(5, 9.5, T1)));

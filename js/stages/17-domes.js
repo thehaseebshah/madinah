@@ -10,6 +10,18 @@
 (function () {
   'use strict';
   if (!window.WORLD) return;
+  // a soft image-based light painted on a canvas (sky above, warm floor below) for marble and gold
+  function paintedEnv(w, top, mid, bot) {
+    const c = document.createElement('canvas'); c.width = 256; c.height = 128;
+    const g = c.getContext('2d'), gr = g.createLinearGradient(0, 0, 0, 128);
+    gr.addColorStop(0, top); gr.addColorStop(0.47, mid); gr.addColorStop(0.53, mid); gr.addColorStop(1, bot);
+    g.fillStyle = gr; g.fillRect(0, 0, 256, 128);
+    const t = new THREE.CanvasTexture(c); t.mapping = THREE.EquirectangularReflectionMapping; t.encoding = THREE.sRGBEncoding;
+    const pm = new THREE.PMREMGenerator(w.renderer), rt = pm.fromEquirectangular(t);
+    w.scene.environment = rt.texture; w._envRT = rt; t.dispose(); pm.dispose();
+  }
+  // one material per mesh here, so geometry groups only stop the bake from merging
+  const ungroup = S => S.traverse(o => { if (o.isMesh && !Array.isArray(o.material) && o.geometry.groups.length > 1) o.geometry.clearGroups(); });
   const T = THREE;
   const BAY = 8, HALF = 3.8, CEIL = 7.5, ROOF = 8.0, HALL = 24;
   const SUN = new T.Vector3(0.5, 0.866, 0).normalize();
@@ -58,8 +70,8 @@ void main(){
     enter(env) {
       const self = this;
       const w = this.w = WORLD.create(env, {
-        start: { x: 3, z: 15, yaw: 0.12, pitch: 0.12 }, exposure: 1.12, far: 900,
-        fog: { color: 0xe6dccb, near: 30, far: 140 },
+        start: { x: 3, z: 15, yaw: 0.12, pitch: 0.12 }, exposure: 1.0, far: 900,
+        fog: { color: 0xb8a68e, near: 45, far: 220 },
         bounds: [-HALL + 0.8, -HALL + 0.8, HALL - 0.8, HALL - 0.8],
         surface: () => 'wood',
       });
@@ -67,8 +79,8 @@ void main(){
       this.reveal = -1; this.lookedUp = false; this.cards = {};
 
       w.sky({ top: '#3f78c4', mid: '#d6e6f2', bot: '#c8bca8', sunDir: SUN.toArray(), sun: '#fff0d0', sunSize: 0.002 });
-      w.envFromSky();
-      S.add(new T.HemisphereLight(0xfff0dc, 0x7a3428, 0.62));
+      paintedEnv(w, '#9cc4ec', '#f4ead8', '#8a3a30');
+      S.add(new T.HemisphereLight(0xfff0dc, 0xa07a62, 0.34));
       const sun = this.sun = new T.DirectionalLight(0xfff0d8, 3.4);
       sun.position.copy(SUN).multiplyScalar(60); sun.target.position.set(0, 0, 0); S.add(sun, sun.target);
       sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
@@ -147,8 +159,8 @@ void main(){
       /* ---------- the hall ---------- */
       const floor = new T.Mesh(worldPlane(-HALL, -HALL, HALL, HALL, 0, false, 2.4), KIT.std({ map: carpet, roughness: 1, relief: 0.02 }));
       carpet.repeat.set(1, 1); S.add(floor);
-      const marble = KIT.std({ map: marbleTex, roughness: 0.25, relief: 0, envMapIntensity: 0.6 });
-      const gold = KIT.std({ color: 0xd6ad5c, metalness: 0.9, roughness: 0.32, envMapIntensity: 1.0 });
+      const marble = KIT.std({ map: marbleTex, roughness: 0.3, relief: 0, envMapIntensity: 0.3 });
+      const gold = KIT.std({ color: 0xd6ad5c, metalness: 0.9, roughness: 0.32, envMapIntensity: 0.6 });
       const plaster = KIT.std({ map: KIT.plaster(w, [4, 4], '#e8e0d0'), roughness: 0.8 });
       const ceilMat = KIT.std({ map: starCross, roughness: 0.6, relief: 0.01 });
 
@@ -201,7 +213,7 @@ void main(){
       }
       // walls with arched windows of soft light
       wallTex.repeat.set(6, 1); wallGlow.repeat.set(6, 1);
-      const wallMat = KIT.std({ map: wallTex, emissive: 0xffe8c0, emissiveMap: wallGlow, emissiveIntensity: 0.55, roughness: 0.7, relief: 0 });
+      const wallMat = KIT.std({ map: wallTex, emissive: 0xffe8c0, emissiveMap: wallGlow, emissiveIntensity: 0.4, roughness: 0.7, relief: 0 });
       [[0, -HALL, 0], [0, HALL, Math.PI], [-HALL, 0, Math.PI / 2], [HALL, 0, -Math.PI / 2]].forEach(([x, z, ry]) => {
         const m = new T.Mesh(new T.PlaneGeometry(HALL * 2, ROOF), wallMat); m.position.set(x, ROOF / 2, z); m.rotation.y = ry; S.add(m);
         const back = new T.Mesh(new T.BoxGeometry(HALL * 2 + 2, ROOF + 0.5, 0.6), plaster); back.position.set(x * 1.0125 + (x ? Math.sign(x) * 0.0 : 0), ROOF / 2, z * 1.0125); back.rotation.y = ry; S.add(back);
@@ -287,7 +299,7 @@ void main(){
         const g = new T.PlaneGeometry(BAY, BAY); g.rotateX(-Math.PI / 2); g.translate(px, 0.025, pz);
         const p = g.attributes.position, uv = g.attributes.uv;
         for (let k = 0; k < p.count; k++) uv.setXY(k, (p.getX(k) + OFF) / SZ + 0.5, 0.5 - p.getZ(k) / SZ);
-        const mat = new T.MeshStandardMaterial({ map: starTex, alphaTest: 0.35, metalness: 0.75, roughness: 0.3, emissive: 0xffc860, emissiveMap: starTex, emissiveIntensity: 0.12, polygonOffset: true, polygonOffsetFactor: -2, envMapIntensity: 0.8 });
+        const mat = new T.MeshStandardMaterial({ map: starTex, alphaTest: 0.35, metalness: 0.6, roughness: 0.4, emissive: 0xffc860, emissiveMap: starTex, emissiveIntensity: 0.05, polygonOffset: true, polygonOffsetFactor: -2, envMapIntensity: 0.25 });
         const m = new T.Mesh(g, mat); m.userData.dynamic = true; m.userData.noCast = true; S.add(m);
         d.tile = mat; this.tiles.push(mat); void half;
       });
@@ -305,6 +317,7 @@ void main(){
 
       w.receiveAll();
       S.traverse(o => { if (o.isMesh && o.userData.noCast) o.castShadow = false; });
+      ungroup(S);
       this.baked = w.bake();
 
       /* ---------- the one interaction: the dome above you ---------- */
@@ -367,7 +380,7 @@ void main(){
       const moving = this.domes.some(d => Math.abs(d.k - d.target) > 0.001);
       let step;
       if (wrong) step = wrong > 1 ? `${wrong} squares of light fall on the red carpet, outside the star. Roll those domes back.` : 'One square of light falls on the red carpet, outside the star. Roll that dome back.';
-      else if (right < 5) step = right ? `The star is ${['', 'beginning', 'half', 'nearly', 'nearly'][right]} lit. Which other domes would light its points?` : 'Stand under a dome and press E to roll it aside.';
+      else if (right < 5) step = right ? (right === 1 ? 'Part of the star is in light. Which other domes would light its points?' : `${right} of the star’s five parts are in light. Which domes would light the rest?`) : 'Stand under a dome and press E to roll it aside.';
       else step = 'The star is complete.';
       w.progress(right, step);
       if (right === 2 && !this.cards.history) {
@@ -415,7 +428,7 @@ void main(){
         const under = this.under() === d;
         d.ring.material.opacity = (0.22 + 0.12 * Math.sin(t * 1.4 + d.i + d.j * 2) + (under ? 0.25 : 0) + d.flare * 0.6) * (1 - light * 0.6) * (this.reveal >= 0 ? 0.3 : 1);
         d.ring.material.color.setHex(d.target && !d.correct && d.k > 0.99 ? 0xd8d4cc : 0xffd890);
-        if (d.tile) d.tile.emissiveIntensity = 0.12 + U.ease(light) * 0.45 + (this.blaze || 0) * 1.6;
+        if (d.tile) d.tile.emissiveIntensity = 0.05 + U.ease(light) * 0.3 + (this.blaze || 0) * 1.2;
       }
       // the outside comes in as the roof opens
       this.rumble.set('gain', Math.min(0.22, movingN * 0.12), 0.25);
@@ -438,6 +451,18 @@ void main(){
         const cross = s => r0 < s && r1 >= s;
         if (cross(0.01)) { this.voices.forEach(v => v.setGain(0.002, 0.8)); }
         this.blaze = U.smooth(1.4, 4.5, r1);
+        if (cross(1.2)) {
+          // rise into the height of the hall to see the whole star in light, then come back down
+          const e = [w.pos.x, w.y + w.eye, w.pos.z];
+          w.cinematic([
+            { p: e, l: [-OFF, 0.5, 0] },
+            { p: [w.pos.x * 0.5 + 4, 5.2, w.pos.z * 0.5 + 9], l: [-OFF, 0, 0] },
+            { p: [-OFF + 5, 7.1, 7.5], l: [-OFF, 0, -0.5] },
+            { p: [-OFF + 4, 7.1, 5], l: [-OFF, 0, -0.5] },
+            { p: [w.pos.x * 0.6 + 2, 4, w.pos.z * 0.6 + 6], l: [-OFF, 0, 0] },
+            { p: e, l: [-OFF, 1, 0] },
+          ], 11);
+        }
         if (cross(1.4)) {
           SND.glow(env.bus, 146.83, { gain: 0.08, dur: 12 }); SND.glow(env.bus, 220, { gain: 0.05, dur: 11, delay: 1 });
           SND.sing(env.bus, 587.33, { vowel: 'a', dur: 7, delay: 2.2, gain: 0.03, voices: 4, attack: 2.5 });
@@ -446,7 +471,7 @@ void main(){
         if (cross(2.2)) { this.doveMesh.count = this.doves.length; for (let k = 0; k < 16; k++) SND.swell(env.bus, { color: 'white', type: 'bandpass', f0: 900, f1: 2200, dur: 0.09, gain: 0.03, delay: 1.5 + k * 0.07, q: 1.5, pan: U.rnd(-0.6, 0.6) }); }
         if (cross(3.2)) w.say('Open to the Sky', 'The first mosque here was a courtyard under the open sky, shaded with palm fronds. Now, in the cool of the morning, the domes roll back and the sky returns to the prayer hall, and the light falls where you placed it.', { ms: 13000 });
         if (cross(5)) { w.finish('The sky is open'); this.voices.forEach((v, i) => v.setGain([0.014, 0.011, 0.009, 0.007, 0.006][i], 3)); }
-        w.renderer.toneMappingExposure = 1.12 + this.blaze * 0.12;
+        w.renderer.toneMappingExposure = 1.0 + this.blaze * 0.06;
       }
       if (this.doveMesh.count) {
         const M = new T.Matrix4(), Q = new T.Quaternion(), V = new T.Vector3(), Sc = new T.Vector3();

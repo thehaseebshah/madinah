@@ -217,8 +217,8 @@
       /* ---------- the oasis, waiting below the horizon until dawn ---------- */
       const oasisGroup = new T.Group();
       const ro = U.seeded(33);
-      for (let i = 0; i < 44; i++) {
-        const x = (ro() - 0.5) * 300, z = -400 - ro() * 70, p = KIT.palm(w, 9 + ro() * 6);
+      for (let i = 0; i < 56; i++) {
+        const cx = [-110, -40, 20, 90, 140][i % 5], x = cx + (ro() - 0.5) * 70, z = -395 - ro() * 120 - (i % 5 === 2 ? 0 : 20), p = KIT.palm(w, 9 + ro() * 7);
         p.position.set(x, ground(x, z) - 0.2, z); oasisGroup.add(p);
       }
       const before = new Set(S.children);
@@ -227,11 +227,15 @@
       S.children.filter(c => !before.has(c) && c !== this.oasis).forEach(c => { S.remove(c); this.oasis.add(c); });
       // dark basalt heights far to the north, behind the oasis
       const hillMat = KIT.std({ color: 0x1a1820, flatShading: true });
-      for (let i = 0; i < 9; i++) { const c = new T.Mesh(new T.ConeGeometry(70 + (i % 3) * 30, 30 + (i % 4) * 9, 7), hillMat); c.position.set(-320 + i * 80, 4, -600 - (i % 2) * 40); c.scale.z = 0.5; S.add(c); }
+      const hg = new T.SphereGeometry(1, 18, 8, 0, 6.283, 0, Math.PI / 2), hp = hg.attributes.position;
+      for (let i = 0; i < hp.count; i++) { const x = hp.getX(i), z = hp.getZ(i), n = 1 + U.noise2(x * 3 + 5, z * 3) * 0.25; hp.setXYZ(i, x * n, hp.getY(i) * (0.75 + 0.5 * (U.noise2(x * 5, z * 5) * 0.5 + 0.5)), z * n); }
+      hg.computeVertexNormals();
+      for (let i = 0; i < 11; i++) { const c = new T.Mesh(hg, hillMat); c.position.set(-420 + i * 84, -2, -680 - (i % 3) * 50); c.scale.set(80 + (i % 3) * 30, 9 + (i % 4) * 5, 40); S.add(c); }
 
       // drifting sand
       this.dust = KIT.dust(w, 160, [-12, 0.1, -12, 12, 2.2, 12], 0xc8c0d8, 0.035); this.dust.userData.dynamic = true; S.add(this.dust);
 
+      w.scene.traverse(o => { if (o.isMesh && !Array.isArray(o.material) && o.geometry.groups.length > 1) o.geometry.clearGroups(); }); // single-material meshes merge in the bake
       this.baked = w.bake();
 
       /* ---------- sound ---------- */
@@ -264,8 +268,8 @@
       for (let i = 0; i < 5; i++) SND.swell(env.bus, { color: 'white', type: 'highpass', f0: 3000, f1: 5000, dur: 0.5, gain: 0.01, delay: i * 0.05 });
       const CARDS = [
         ['Out of the Cave of Thawr', 'After three nights in the cave, the guide came with the camels. He was a man of Banu ad-Dil, an expert in the roads, who still followed the religion of Quraysh; they trusted him and gave him their two mounts. (Sahih al-Bukhari 3905) The books of sirah name him ‘Abdullah ibn Urayqit.', 'هَادِيًا خِرِّيتًا'],
-        ['The Coastal Road', '‘Amir ibn Fuhayrah went with them, and the guide took them by the road along the coast (Sahih al-Bukhari 3905): a winding way of some 450 to 470 kilometres, chosen because few would look for them there.'],
-        ['The Tent at Qudayd', 'A well-known report of the sirah tells of the tent of Umm Ma‘bad at Qudayd, where a dry ewe gave milk when he touched her udder. It is a beloved tradition, though its chains are of disputed strength.'],
+        ['The Coastal Road', '‘Amir ibn Fuhayrah went with them, and the guide took them by the road along the coast (Sahih al-Bukhari 3905): a long way of some 450 to 470 kilometres to Yathrib.'],
+        ['The Tent at Qudayd', 'A well-known report of the sirah tells of the tent of Umm Ma‘bad at Qudayd, where a dry ewe gave milk. It is a beloved tradition, though its chains are of disputed strength.'],
         ['The Pursuer', 'Suraqah ibn Malik rode after them for the reward Quraysh had offered. He said: <span class="q">“The forelegs of my horse sank into the ground up to the knees.”</span> He asked for safety and turned back. (Sahih al-Bukhari 3906)', 'سَاخَتْ يَدَا فَرَسِي فِي الأَرْضِ حَتَّى بَلَغَتَا الرُّكْبَتَيْنِ'],
         ['Quba', 'They reached Quba, at the edge of the oasis of Yathrib, on a Monday in the month of Rabi‘ al-Awwal. (Sahih al-Bukhari 3906)'],
       ];
@@ -291,9 +295,10 @@
       const next = this.found < 5 ? CAIRNS[this.found] : null;
       CAIRNS.forEach((c, i) => {
         if (c.lit) { c.litT += dt; const f = 0.85 + 0.15 * U.noise1(t * 5 + i * 9); c.glow.material.opacity = Math.min(1, c.litT * 1.5) * 0.75 * f; c.glow.scale.setScalar(1.5 + Math.max(0, 1 - c.litT) * 3); c.flame.material.opacity = Math.min(1, c.litT * 2) * f; }
-        else if (c === next) { c.glow.material.opacity = 0.38 + 0.18 * Math.sin(t * 2.2); c.glow.scale.setScalar(3.4); c.flame.material.opacity = 0.5; }
+        else if (c === next) { c.glow.material.opacity = 0.42 + 0.18 * Math.sin(t * 2.2); c.glow.scale.setScalar(Math.max(3.4, Math.hypot(w.pos.x - c.x, w.pos.z - c.z) * 0.075)); c.flame.material.opacity = 0.5; }
         else { c.glow.material.opacity = 0; c.flame.material.opacity = 0; }
       });
+      CAIRNS.forEach(c => { c.glow.visible = c.glow.material.opacity > 0.01; c.flame.visible = c.flame.material.opacity > 0.01; });
       if (next) {
         this.beacon.position.copy(next.top); this.beacon.intensity = 0.8 + 0.3 * Math.sin(t * 2.2);
         const d = Math.hypot(w.pos.x - next.x, w.pos.z - next.z);
@@ -313,7 +318,7 @@
       if (this.phase === 'dawn') {
         target = 0.72 + U.smooth(0, 9, this.dawnT) * 0.28;
         this.wind.set('gain', 0.04, 2);
-        if (this.dawnT > 4 && !this.saidDawn) { this.saidDawn = true; w.say('The Oasis of Yathrib', 'The dark gives way and the palms of the oasis rise out of the morning haze. The people of Yathrib had been watching this road for days.', { ms: 11000 }); SND.glow(env.bus, 293.66, { gain: 0.05, dur: 10, vowel: 'a' }); }
+        if (this.dawnT > 4 && !this.saidDawn) { this.saidDawn = true; w.say('The Oasis of Yathrib', 'The dark gives way and the palms of the oasis rise out of the morning haze. The people of Yathrib had been going out every morning to watch for them (Sahih al-Bukhari 3906).', { ms: 11000 }); SND.glow(env.bus, 293.66, { gain: 0.05, dur: 10, vowel: 'a' }); }
         if (this.dawnT > 12) { this.phase = 'still'; this.dawnT = 0; }
       }
       if (this.phase === 'still' && this.dawnT > 4 && !this.done) { this.done = true; w.finish('The road has reached the oasis'); }
