@@ -175,6 +175,22 @@
       "ref": "Sahih al-Bukhari 3906",
       "url": "https://sunnah.com/bukhari:3906",
       "note": ""
+    },
+    {
+      "n": 81,
+      "claim": "Their guide was from Banu ad-Dil and still followed the religion of the pagan Quraysh; 'Amir ibn Fuhayrah went with them.",
+      "grade": "sahih",
+      "ref": "Sahih al-Bukhari 3905",
+      "url": "https://sunnah.com/bukhari:3905",
+      "note": "'Amir ibn Fuhayrah and the guide set out with them and took the coastal road. This matches entries 13-14."
+    },
+    {
+      "n": 82,
+      "claim": "He arrived at Quba on a Monday in Rabi' al-Awwal.",
+      "grade": "sahih",
+      "ref": "Sahih al-Bukhari 3906",
+      "url": "https://sunnah.com/bukhari:3906",
+      "note": "The number is confirmed: the wording 'that was on Monday, in the month of Rabi' al-Awwal' is in 3906 (Urwah's report). This duplicates entry 21."
     }
   ],
   "quba": [
@@ -201,6 +217,22 @@
       "ref": "Smithsonian Global Volcanism Program, Harrat Rahat (231070)",
       "url": "https://volcano.si.edu/volcano.cfm?vn=231070",
       "note": "The hadith also speak of Madinah lying 'between its two lava tracts' (labatayha), e.g. Sahih Muslim 2047."
+    },
+    {
+      "n": 83,
+      "claim": "He visited the Mosque of Quba every Saturday, walking or riding.",
+      "grade": "sahih",
+      "ref": "Sahih al-Bukhari 1193, 1194; Sahih Muslim 1399",
+      "url": "https://sunnah.com/bukhari:1193",
+      "note": "Ibn 'Umar's hadith. 'Every Saturday' is in Bukhari 1193 and in some of Muslim's versions (1399a mentions riding and on foot only). Bukhari 1194 adds that he prayed two rak'ahs there."
+    },
+    {
+      "n": 84,
+      "claim": "A prayer in the Mosque of Quba is like an 'umrah.",
+      "grade": "hasan",
+      "ref": "Jami' al-Tirmidhi 324; Sunan Ibn Majah 1411 (Usayd ibn Zuhayr); Sunan Ibn Majah 1412 and Sunan al-Nasa'i 699 (Sahl ibn Hunayf)",
+      "url": "https://sunnah.com/tirmidhi:324",
+      "note": "Al-Tirmidhi: hasan gharib. Al-Albani: sahih. Zubair Ali Za'i: hasan. Al-Dhahabi called the Usayd route munkar because Abu al-Abrad is little known, but Sahl ibn Hunayf's report supports it: 'whoever purifies himself at home, then comes and prays in the Mosque of Quba, has the reward of an umrah'. The numbers are correct."
     }
   ],
   "badr": [
@@ -227,6 +259,14 @@
       "ref": "Sahih Muslim 1385; Sahih al-Bukhari 1871, 1872",
       "url": "https://sunnah.com/muslim:1385",
       "note": "'Madinat an-Nabi' is a later conventional name, not a name stated in these hadith."
+    },
+    {
+      "n": 85,
+      "claim": "Al-Bara': 'I never saw the people of Madinah rejoice at anything as they rejoiced at the Messenger of God'; even the slave girls were saying 'The Messenger of God has come'.",
+      "grade": "sahih",
+      "ref": "Sahih al-Bukhari 3925",
+      "url": "https://sunnah.com/bukhari:3925",
+      "note": ""
     }
   ],
   "palm-mosque": [
@@ -303,6 +343,14 @@
       "ref": "Qur'an 2:144",
       "url": "https://quran.com/2/144",
       "note": ""
+    },
+    {
+      "n": 87,
+      "claim": "Bukhari 40 and 403 are two different 'turning during prayer' reports.",
+      "grade": "sahih",
+      "ref": "Sahih al-Bukhari 40 (al-Bara'), 403 (Ibn 'Umar)",
+      "url": "https://sunnah.com/bukhari:40",
+      "note": "Bukhari 40: the first prayer he prayed toward the Ka'bah was 'Asr. A man who had prayed with him passed a mosque (unnamed) whose people were bowing, and they turned while still in ruku'. Ibn Hajar and al-Ayni identify it as Banu Salimah (Masjid al-Qiblatayn); other reports say Banu Harithah. Bukhari 403: the people of Quba turned during Fajr the next morning. Neither has the Prophet himself turning during a prayer."
     }
   ],
   "uhud": [
@@ -329,6 +377,14 @@
       "ref": "Sahih al-Bukhari 3039",
       "url": "https://sunnah.com/bukhari:3039",
       "note": "The order is sahih. In the sirah the hill is called 'Aynayn; 'Jabal ar-Rumat' (archers' hill) is its later popular name."
+    },
+    {
+      "n": 88,
+      "claim": "'Uhud is a mountain that loves us and we love it.'",
+      "grade": "sahih",
+      "ref": "Sahih al-Bukhari 4422 (Abu Humayd, returning from Tabuk), 2889 (Anas); Sahih Muslim 1393 (Anas), 1392 (Abu Humayd)",
+      "url": "https://sunnah.com/bukhari:4422",
+      "note": "Both numbers are confirmed (online editions list Muslim 1393a and 1393b). In 4422 he also says 'This is Tabah', meaning Madinah."
     }
   ],
   "trench": [
@@ -407,6 +463,14 @@
       "ref": "Sahih Muslim 2048, 2047a",
       "url": "https://sunnah.com/muslim:2048",
       "note": "Muslim 2048 (Aisha) names al-Aliyah, the upper, southern part of Madinah."
+    },
+    {
+      "n": 86,
+      "claim": "Pollination of the palms: 'You know better the affairs of your world.'",
+      "grade": "sahih",
+      "ref": "Sahih Muslim 2363 ('A'ishah and Anas); cf. 2361 (Talhah), 2362 (Rafi' ibn Khadij)",
+      "url": "https://sunnah.com/muslim:2363",
+      "note": "The exact words 'antum a'lamu bi-amri dunyakum' are in 2363. The parallel reports (2361-2362) say 'if I command you something of your religion, take it; if it is my own opinion, I am only a human being'."
     }
   ],
   "aqiq": [
@@ -455,6 +519,14 @@
       "ref": "Wikipedia 'Al-Masjid an-Nabawi'",
       "url": "https://en.wikipedia.org/wiki/Al-Masjid_an-Nabawi",
       "note": ""
+    },
+    {
+      "n": 91,
+      "claim": "The 27 sliding domes in the roof of the Prophet's Mosque belong to King Fahd's (second Saudi) expansion, begun in 1984-1985; the domes were installed in 1992.",
+      "grade": "history",
+      "ref": "SL Rasch, 'Sliding Domes' project page; Saudipedia, 'The Second Saudi Expansion of the Prophet's Mosque'",
+      "url": "https://www.sl-rasch.com/?p=548",
+      "note": "Each dome is about 18 x 18 m and 6.3 m high, weighs about 80 tonnes, and rolls on rails along the roof in about a minute. They open after sunset to let heat out and close in the day. Saudipedia gives 1993 for completion of the expansion (SL Rasch: 1984-1994). It is safe to say 'the King Fahd expansion (completed early 1990s)'."
     }
   ],
   "rawdah": [
@@ -465,6 +537,22 @@
       "ref": "Sahih al-Bukhari 1196, 1195; Sahih Muslim 1390, 1391",
       "url": "https://sunnah.com/bukhari:1196",
       "note": ""
+    },
+    {
+      "n": 89,
+      "claim": "The historic named columns of the Rawdah: al-Mukhallaqah, also al-Hannanah (the place of the weeping palm trunk, by his prayer niche); 'A'ishah (also al-Muhajirin and al-Qur'ah: 'A'ishah said people would draw lots to pray there); at-Tawbah (Abu Lubabah's repentance); as-Sarir (where his bed was placed in i'tikaf); al-Mahras or al-Haras (where 'Ali and others kept guard); al-Wufud (where he received delegations).",
+      "grade": "history",
+      "ref": "al-Samhudi, Wafa' al-Wafa' (ch. 4, on the mosque); Ariffin, Architectural Conservation in Islam (2005), pp. 88-89; Sunan Ibn Majah 1774 (as-Sarir / at-Tawbah)",
+      "url": "https://madainproject.com/notable_pillars_in_rawdah_riyad_ul_jannah",
+      "note": "The names and meanings agree across secondary sources (Madain Project citing Ariffin; Saudipedia; IslamicLandmarks), which go back to Ibn Zabalah and Ibn al-Najjar via al-Samhudi. I could not read al-Samhudi's text online, so treat the explanations as tradition: most rest on mursal or local reports. 'Mukhallaqah' means perfumed with khaluq, said to date from 'Umar ibn Abd al-Aziz's time. Sources differ on whether the trunk stood exactly there. Ibn Majah 1774 (Ibn 'Umar, hasan per Zubair Ali Za'i) says his bed was placed behind the Pillar of Repentance during i'tikaf. Two more are often listed: at-Tahajjud, behind Fatimah's house, and the one by the Prophet's chamber (Marba'at al-Qabr / Maqam Jibril), now enclosed. The present columns are Ottoman."
+    },
+    {
+      "n": 90,
+      "claim": "Abu Lubabah tied himself to a pillar (trunk) of the mosque in repentance until God accepted it and the Prophet himself untied him.",
+      "grade": "sirah",
+      "ref": "Ibn Ishaq (Ibn Hisham), after Banu Qurayzah, via Yazid ibn Abdullah ibn Qusayt; tafsir of Qur'an 8:27 and 9:102 (al-Tabari, Ibn Kathir)",
+      "url": "https://hadithunlocked.com/ibnhisham:1160",
+      "note": "Ibn Ishaq: after signalling 'slaughter' to Banu Qurayzah he tied himself to a pillar ('trunk') of the mosque for six nights. His wife untied him at each prayer. At dawn the Prophet, in Umm Salamah's house, received the acceptance, and he untied him on the way to Fajr. Ibn Hisham links 8:27 to the betrayal and 9:102 ('others who have confessed their sins') to his repentance. Ibn Abbas's tafsir report puts the tying after he stayed behind from Tabuk, with 9:102. There is no sahih hadith for it, so it is sirah."
     }
   ],
   "city": [
@@ -483,6 +571,208 @@
       "ref": "Wikipedia 'Green Dome' (citing Ariffin, Architectural Conservation in Islam, 2005; Petersen, Dictionary of Islamic Architecture)",
       "url": "https://en.wikipedia.org/wiki/Green_Dome",
       "note": "The original Mamluk dome was unpainted wood. It was rebuilt after the 1481 fire (Qaitbay) and again in 1818."
+    }
+  ],
+  "boycott": [
+    {
+      "n": 57,
+      "claim": "Quraysh and Kinanah swore an oath at Khayf Bani Kinanah (al-Muhassab) against Banu Hashim and Banu al-Muttalib: no marrying them and no trading with them until they handed over the Prophet.",
+      "grade": "sahih",
+      "ref": "Sahih al-Bukhari 1590, 1589, 3882; Sahih Muslim 1314",
+      "url": "https://sunnah.com/bukhari:1590",
+      "note": "Abu Hurayrah's hadith. The Prophet recalls the place at the Farewell Hajj (1590) and before Hunayn (3882). In 1590 one narrator says 'Banu Abd al-Muttalib', the other 'Banu al-Muttalib', and al-Bukhari says 'Banu al-Muttalib' is more accurate. Muslim 1314 names the place and the oath but not the clans."
+    },
+    {
+      "n": 58,
+      "claim": "The two clans withdrew with Abu Talib into his ravine (Shi'b Abi Talib), and the boycott lasted about three years.",
+      "grade": "sirah",
+      "ref": "Ibn Ishaq (Ibn Hisham), the account of the pact; Ibn Sa'd, al-Tabaqat",
+      "url": "https://hadithunlocked.com/history/2/19",
+      "note": "Ibn Ishaq says three years, and a line of Abu Talib's poetry has 'two or three years'. Ibn Sa'd puts the start in the seventh year of prophethood. No sahih hadith gives the length."
+    },
+    {
+      "n": 59,
+      "claim": "Hakim ibn Hizam smuggled food (wheat) to his aunt Khadijah in the ravine.",
+      "grade": "sirah",
+      "ref": "Ibn Ishaq (Ibn Hisham), the account of the pact",
+      "url": "https://hadithunlocked.com/history/2/19",
+      "note": "Abu Jahl caught him with a slave carrying wheat for Khadijah. Abu al-Bakhtari stepped in and struck Abu Jahl with a camel's jawbone. There is no isnad."
+    },
+    {
+      "n": 60,
+      "claim": "The boycott document hung in the Ka'bah was eaten by termites (al-aradah) except the words 'Bismika Allahumma' (In Your name, O God).",
+      "grade": "sirah",
+      "ref": "Ibn Hisham (on Ibn Ishaq), the account of the pact; al-Bayhaqi, Dala'il al-Nubuwwah (via Musa ibn Uqbah and Urwah, mursal)",
+      "url": "https://hadithunlocked.com/history/2/19",
+      "note": "There is no connected chain: it comes from Ibn Ishaq/Ibn Hisham and mursal maghazi reports, and is not in the sahih collections. The wording varies. Ibn Hisham has 'all except Bismika Allahumma', while the Prophet's message to Abu Talib in the same account says the termites left every name of God and ate the injustice, the cutting of ties and the slander. Safer wording: 'the sirah reports...'. The scribe is named as Mansur ibn Ikrimah (some say al-Nadr ibn al-Harith)."
+    },
+    {
+      "n": 61,
+      "claim": "The boycott was ended by Hisham ibn Amr, Zuhayr ibn Abi Umayyah, al-Mut'im ibn Adi, Abu al-Bakhtari ibn Hisham and Zam'ah ibn al-Aswad.",
+      "grade": "sirah",
+      "ref": "Ibn Ishaq (Ibn Hisham), the account of the pact",
+      "url": "https://hadithunlocked.com/history/2/19",
+      "note": "The five names are correct as given by Ibn Ishaq. Hisham ibn Amr started it and Abu Jahl opposed them. In Ibn Ishaq's account al-Mut'im tore up the document."
+    },
+    {
+      "n": 62,
+      "claim": "Abu Talib and Khadijah died soon after the boycott, about three years before the Hijrah. The name 'Year of Sorrow' ('Am al-Huzn) is later usage.",
+      "grade": "history",
+      "ref": "Sahih al-Bukhari 3896 (Khadijah died three years before he left for Madinah); Ibn Ishaq (both died in one year); the name: IslamQA 221486 (al-Albani and Dr. al-Awshan found no isnad)",
+      "url": "https://islamqa.info/ar/answers/221486",
+      "note": "The deaths are well attested. Bukhari 3896 is Urwah's report, technically mursal, though Ibn Hajar thought it was likely taken from Aisha. The name 'Am al-Huzn' has no isnad to the Prophet, nor to the Companions or early imams. It first appears in later works (lexicographers via Tha'lab from Ibn al-A'rabi, then al-Qastallani and al-Sakhawi). Do not write 'the Prophet called it the Year of Sorrow'. Say 'later called the Year of Sorrow'."
+    }
+  ],
+  "isra": [
+    {
+      "n": 63,
+      "claim": "Qur'an 17:1: 'Glory be to Him who took His servant by night from al-Masjid al-Haram to al-Masjid al-Aqsa...'.",
+      "grade": "quran",
+      "ref": "Qur'an 17:1",
+      "url": "https://quran.com/17/1",
+      "note": ""
+    },
+    {
+      "n": 64,
+      "claim": "The prophets met in each heaven: Adam (1st), Yahya and 'Isa (2nd), Yusuf (3rd), Idris (4th), Harun (5th), Musa (6th), Ibrahim (7th).",
+      "grade": "sahih",
+      "ref": "Sahih al-Bukhari 3887 (Anas from Malik ibn Sa'sa'ah); Sahih Muslim 162 (Anas)",
+      "url": "https://sunnah.com/bukhari:3887",
+      "note": "The list and order are exactly as in Bukhari 3887. Note that Abu Dharr's version (Bukhari 349) places Ibrahim in the sixth heaven and does not give the heavens of Idris, Musa and 'Isa, so use 3887 for the sequence."
+    },
+    {
+      "n": 65,
+      "claim": "Sidrat al-Muntaha (the Lote Tree of the Utmost Boundary).",
+      "grade": "quran",
+      "ref": "Qur'an 53:14 (also 53:16); Sahih al-Bukhari 3887",
+      "url": "https://quran.com/53/14",
+      "note": "53:14 is 'by the Lote Tree of the Utmost Boundary'. Bukhari 3887 also describes it on the Mi'raj."
+    },
+    {
+      "n": 66,
+      "claim": "Fifty prayers were reduced to five at Musa's urging, with the reward of fifty.",
+      "grade": "sahih",
+      "ref": "Sahih al-Bukhari 3887 (reduction), 349 ('they are five and they are fifty')",
+      "url": "https://sunnah.com/bukhari:349",
+      "note": "In 3887 the reduction is in steps (50, 40, 30, 20, 10, 5), ending with 'I have carried out My obligation and lightened it for My servants'. The words 'five, and they are fifty' and 'My word does not change' are in Abu Dharr's version (349), where the reduction is by halves."
+    },
+    {
+      "n": 67,
+      "claim": "The date is disputed; a common view puts the Isra' about a year before the Hijrah.",
+      "grade": "sirah",
+      "ref": "Ibn Sa'd, al-Tabaqat; Ibn Hajar, Fath al-Bari (Kitab Manaqib al-Ansar, bab al-Mi'raj)",
+      "url": "https://hadithunlocked.com/bukhari:3887",
+      "note": "Ibn Hajar lists more than ten opinions, ranging from about five years after the first revelation to six months before the Hijrah. 'One year before' is attributed to Ibn Sa'd and others, and Ibn Hazm claimed consensus, which others reject. The popular date of 27 Rajab has no firm basis. Keep the wording 'scholars differ'."
+    }
+  ],
+  "aqabah": [
+    {
+      "n": 68,
+      "claim": "First Pledge of al-Aqabah: twelve men pledged not to associate anything with God, steal, commit adultery, kill their children, bring slander, or disobey him in what is right (the 'pledge of women', before fighting was prescribed).",
+      "grade": "sahih",
+      "ref": "Musnad Ahmad 22754 and Ibn Ishaq (Ibn Hisham), both from 'Ubadah ibn as-Samit; cf. Sahih al-Bukhari 18",
+      "url": "https://hadithunlocked.com/ahmad:22754",
+      "note": "Bukhari 18 gives the terms and identifies 'Ubadah as a naqib of the night of al-Aqabah, but it does not say 'first pledge' or 'twelve'. Ibn Hajar argues that the pledge in Bukhari 18 itself was a later one, after the conquest. The 'twelve men' and the link of these terms to the First Aqabah come from Ibn Ishaq's report (Yazid ibn Abi Habib, Marthad al-Yazani, al-Sunabihi, 'Ubadah), recorded by Ahmad 22754, which al-Arna'ut graded sahih. A parallel in al-Hakim says eleven."
+    },
+    {
+      "n": 69,
+      "claim": "Mus'ab ibn Umayr was sent to Madinah after the First Pledge to teach the Qur'an; he and Ibn Umm Maktum were the first of the emigrants to come to the Ansar.",
+      "grade": "sahih",
+      "ref": "Sahih al-Bukhari 3925, 3924 (al-Bara'); Ibn Ishaq (Ibn Hisham) for his being sent after the First Pledge",
+      "url": "https://sunnah.com/bukhari:3925",
+      "note": "Wording fix: al-Bara' says 'the first to come to us were Mus'ab ibn Umayr and Ibn Umm Maktum, and they taught the people the Qur'an', so Mus'ab was not alone. Ibn Ishaq names Abu Salamah ibn Abd al-Asad as the first Makkan emigrant to reach Madinah, a year before the pledge. Better: 'among the first to arrive, sent to teach'."
+    },
+    {
+      "n": 70,
+      "claim": "Second Pledge: seventy-odd men and two women (Nusaybah bint Ka'b and Asma' bint Amr) met him at night at al-Aqabah and pledged to protect him as they protected their own women and children.",
+      "grade": "hasan",
+      "ref": "Musnad Ahmad 15798 (Ka'b ibn Malik, via Ibn Ishaq); Ibn Ishaq (Ibn Hisham): seventy-three men and two women",
+      "url": "https://hadithunlocked.com/ahmad:15798",
+      "note": "Al-Arna'ut: 'a strong hadith, and this chain is hasan'. Ahmad's text says 'we were seventy men' and names the two women. The figure 'seventy-three men and two women' is Ibn Ishaq's (Ibn Hisham). The terms are 'protect me from what you protect your women and children from'. 'About seventy-three men and two women' is fine if you attribute it to the sirah."
+    },
+    {
+      "n": 71,
+      "claim": "Masjid al-Bay'ah at the site of the pledge was built by the Abbasid caliph Abu Ja'far al-Mansur in 144 AH (761-762 CE).",
+      "grade": "history",
+      "ref": "Saudipedia 'Al-Bay'ah Mosque'; Wikipedia 'Bay'ah Mosque' (two inscriptions, on the qiblah and southern walls)",
+      "url": "https://en.wikipedia.org/wiki/Bay%27ah_Mosque",
+      "note": "The inscriptions also record a restoration by the Abbasid caliph al-Mustansir (reigned 623-640 AH; one source gives 625 AH). It lies in a pass of Thabir near the Jamrat al-Aqabah in Mina."
+    }
+  ],
+  "conquest": [
+    {
+      "n": 72,
+      "claim": "He set out for Makkah in Ramadan with about ten thousand men.",
+      "grade": "sahih",
+      "ref": "Sahih al-Bukhari 4276 (Ibn Abbas)",
+      "url": "https://sunnah.com/bukhari:4276",
+      "note": ""
+    },
+    {
+      "n": 73,
+      "claim": "There were 360 idols around the Ka'bah; he struck them with a stick in his hand, reciting 'Truth has come and falsehood has vanished' (Qur'an 17:81).",
+      "grade": "sahih",
+      "ref": "Sahih al-Bukhari 4287, 4720, 2478 (Ibn Mas'ud); Sahih Muslim 1781; Qur'an 17:81, 34:49",
+      "url": "https://sunnah.com/bukhari:4287",
+      "note": "He also recited 34:49 ('Truth has come, and falsehood neither begins nor returns'). The verses are at https://quran.com/17/81."
+    },
+    {
+      "n": 74,
+      "claim": "'Whoever enters the house of Abu Sufyan is safe; whoever lays down his arms is safe; whoever locks his door is safe.'",
+      "grade": "sahih",
+      "ref": "Sahih Muslim 1780 (Abu Hurayrah)",
+      "url": "https://sunnah.com/muslim:1780a",
+      "note": "Online editions list it as 1780a; the printed (Abd al-Baqi) number is 1780. The Abu Sufyan line is also in Sunan Abi Dawud 3021 (Ibn Abbas; al-Albani: hasan)."
+    },
+    {
+      "n": 75,
+      "claim": "Bilal gave the call to prayer from the roof of the Ka'bah on the day of the conquest.",
+      "grade": "sirah",
+      "ref": "Ibn Ishaq (Ibn Hisham), from 'some of the family of Jubayr ibn Mut'im'; Urwah (mursal), cited in al-Dhahabi, Siyar 2/181; Ibn Sa'd, al-Tabaqat",
+      "url": "https://islamqa.info/ar/answers/427771",
+      "note": "This is well known in the sirah but rests on mursal or incomplete chains. It is not in the sahih collections. The story that Abu Bakr and Umar lifted Bilal up has no known isnad. Present it as 'the sirah reports'."
+    },
+    {
+      "n": 76,
+      "claim": "'Go, you are free' (idhhabu fa-antum al-tulaqa').",
+      "grade": "weak",
+      "ref": "Ibn Ishaq (Ibn Hisham 2/412: 'some of the people of knowledge told me'); al-Tabari, Tarikh; al-Albani, al-Silsilah al-Da'ifah 1163",
+      "url": "https://islamqa.info/ar/answers/290672",
+      "note": "This exact sentence has weak chains: Ibn Ishaq's source is unnamed, and the other route is mursal or includes weak narrators. The general pardon of the Makkans is well established, and the term 'al-tulaqa'' for those freed at the conquest is in sahih hadith (e.g. Sahih al-Bukhari 4333, Anas on the day of Hunayn). If the scene quotes it, mark it as 'reported in the sirah'."
+    }
+  ],
+  "arafat": [
+    {
+      "n": 77,
+      "claim": "The Farewell Sermon at 'Arafah: 'Your blood and your property are sacred...'; 'Fear God concerning women'; 'I have left among you... the Book of God'; 'O God, bear witness'.",
+      "grade": "sahih",
+      "ref": "Sahih Muslim 1218 (Jabir)",
+      "url": "https://sunnah.com/muslim:1218a",
+      "note": "Wording fix: in Muslim 1218 he asks 'You will be asked about me; what will you say?' They answer 'We bear witness that you have conveyed...', and he says 'O God, bear witness' three times, pointing his finger to the sky and then to the people. The question 'Have I conveyed?' (a la hal ballaghtu) is from the sermon at Mina on the Day of Sacrifice (Sahih al-Bukhari 1739, 1741), not from Jabir's 'Arafah text. Jabir places the sermon in the bottom of the valley (Batn al-Wadi, i.e. 'Uranah, near today's Masjid Namirah), not on the hill. Afterwards he stood at the rocks at the foot of the hill."
+    },
+    {
+      "n": 78,
+      "claim": "'Let the one present convey to the one absent.'",
+      "grade": "sahih",
+      "ref": "Sahih al-Bukhari 67, 1741 (Abu Bakrah), 1739 (Ibn Abbas)",
+      "url": "https://sunnah.com/bukhari:67",
+      "note": "Place fix: this was said on the Day of Sacrifice (10 Dhu al-Hijjah) at Mina, not at 'Arafah. Bukhari 67 asks 'Is it not the Day of Nahr?', and Ibn Hajar and al-Ayni place it at Mina. If the 'Arafat scene uses it, say it was part of the Farewell Hajj sermons at Mina."
+    },
+    {
+      "n": 79,
+      "claim": "Qur'an 5:3 ('This day I have perfected your religion for you') was revealed on the Day of 'Arafah, a Friday, while the Prophet was standing at 'Arafat.",
+      "grade": "sahih",
+      "ref": "Sahih al-Bukhari 45, 4606 ('Umar); Sahih Muslim 3017; Qur'an 5:3",
+      "url": "https://sunnah.com/bukhari:45",
+      "note": "The verse is at https://quran.com/5/3."
+    },
+    {
+      "n": 80,
+      "claim": "The name 'Jabal ar-Rahmah' (Mount of Mercy) is later usage; the hill was anciently called Ilal.",
+      "grade": "history",
+      "ref": "IslamQA 34154 (Ibn Uthaymin: the name has no basis in the Sunnah); 'Atiq al-Biladi via IslamOnline (old name Ilal); Saudipedia 'Jabal al-Rahmah'",
+      "url": "https://islamqa.info/ar/34154",
+      "note": "Classical sources call it Ilal (also al-Qurayn); the hadith call it simply 'the mountain' or the rocks (al-sakharat) at 'Arafah. I did not find when 'Jabal ar-Rahmah' first came into use, so 'later name' is the safe wording."
     }
   ]
 }
