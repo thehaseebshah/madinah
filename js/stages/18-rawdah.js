@@ -602,7 +602,7 @@
         c.plateGlow.material.opacity = open ? 0.18 + 0.12 * Math.sin(t * 2 + c.pattern) : 0.05;
         c.plate.emissiveIntensity = open ? 0.25 + U.smooth(4, 1, d) * 0.35 : 0.5;
       });
-      const hush = this.reveal >= 0 ? U.smooth(0, 1, this.reveal) * (1 - U.smooth(3, 7, this.reveal)) : 0;
+      const hush = this.reveal >= 0 ? U.smooth(3.5, 4.8, this.reveal) * (1 - U.smooth(8, 12, this.reveal)) : 0;
       this.shimmer.set('gain', near < 1e8 ? U.smooth(6, 1, near) * 0.008 * (this.ov ? 0 : 1) : 0, 0.3);
       this.room.set('gain', 0.06 * (1 - hush * 0.8), 0.6);
       this.air.set('gain', 0.003 * (1 - hush), 0.6);
@@ -615,19 +615,21 @@
       if (this.reveal >= 0) {
         const r0 = this.reveal, r1 = (this.reveal += dt);
         const cross = s => r0 < s && r1 >= s;
-        if (cross(0.01)) {
+        // the sixth column's story first; then near-silence; then the garden is named
+        if (r1 >= 4 && !this.wordsPlaced) {
+          this.wordsPlaced = true;
           this.voices.forEach(v => v.setGain(0.002, 1));
           const f = w.forward(), l = Math.hypot(f.x, f.z) || 1;
           this.words.position.set(w.pos.x + f.x / l * 4.6, w.y + w.eye + 1.55, w.pos.z + f.z / l * 4.6);
         }
-        if (cross(1.6)) {
+        if (cross(6.2)) {
           SND.glow(env.bus, 196, { gain: 0.08, dur: 13 }); SND.glow(env.bus, 293.66, { gain: 0.05, dur: 12, delay: 1.2 });
           SND.sing(env.bus, 587.33, { vowel: 'a', dur: 7, delay: 2.4, gain: 0.03, voices: 4, attack: 2.5 });
           SND.sing(env.bus, 783.99, { vowel: 'o', dur: 6, delay: 3.6, gain: 0.018, voices: 3, attack: 2 });
         }
-        if (cross(2.6)) w.say('A Garden from the Gardens of Paradise', '<span class="q">“Between my house and my pulpit is a garden from the gardens of Paradise.”</span> (Sahih al-Bukhari 1196; Sahih Muslim 1390)', { ar: 'مَا بَيْنَ بَيْتِي وَمِنْبَرِي رَوْضَةٌ مِنْ رِيَاضِ الْجَنَّةِ', ms: 16000 });
-        if (cross(5)) { w.finish('Six columns, six vines'); this.voices.forEach((v, i) => v.setGain([0.012, 0.01, 0.008, 0.007, 0.006, 0.005][i], 3)); }
-        const L = U.smooth(1.6, 5, r1);
+        if (cross(7.4)) w.say('A Garden from the Gardens of Paradise', '<span class="q">“Between my house and my pulpit is a garden from the gardens of Paradise.”</span> (Sahih al-Bukhari 1196; Sahih Muslim 1390)', { ar: 'مَا بَيْنَ بَيْتِي وَمِنْبَرِي رَوْضَةٌ مِنْ رِيَاضِ الْجَنَّةِ', ms: 16000 });
+        if (cross(10)) { w.finish('Six columns, six vines'); this.voices.forEach((v, i) => v.setGain([0.012, 0.01, 0.008, 0.007, 0.006, 0.005][i], 3)); }
+        const L = U.smooth(6.2, 9.5, r1);
         this.words.material.opacity = L * 0.95;
         this.motes.material.opacity = L * 0.8;
         KIT.driftDust(this.motes, dt, t, [0, 0]);
