@@ -87,6 +87,9 @@
     },
   };
 
+  // narration for newer stations, generated from audio/narration/drafts by tools/tts/merge-drafts.js
+  Object.assign(SCRIPT, window.NARRATION_EXTRA || {});
+
   const LANGS = ['en', 'ar', 'off'];
   const N = { lang: 'en', script: SCRIPT, token: 0, audio: null, speaking: false, voices: [] };
   try { const saved = localStorage.getItem('madinah.narration'); if (LANGS.includes(saved)) N.lang = saved; } catch (e) {}
