@@ -16,7 +16,7 @@
     era: 'Rajab or Sha‘ban, 2 AH · 624 CE',
     hint: 'Drag around the circle to turn toward Makkah',
     sound: { reverb: 0.5 },
-    story: `<p>For the first months in Madinah, the Muslims prayed facing Jerusalem. Then, the narrations say, during a prayer in the mosque of Banu Salimah, the command came to turn toward the Ka‘bah in Makkah, and the congregation turned where they stood.</p>
+    story: `<p>For the first months in Madinah, the Muslims prayed facing Jerusalem. Then the command came to turn toward the Ka‘bah in Makkah. The sahih reports tell of congregations who heard the news in the middle of a prayer and turned where they stood: in Quba at dawn, and in a mosque of Madinah that later tradition identifies with Banu Salimah.</p>
             <p>The mosque has been called <i>Masjid al-Qiblatayn</i>, the Mosque of the Two Qiblas, ever since. From Madinah, Jerusalem lies at about 332° and Makkah at about 176°: nearly opposite directions.</p>`,
 
     enter(env) {

@@ -18,8 +18,8 @@
     era: 'Arrival in Yathrib, 1 AH',
     hint: 'Drag upward to raise the moon',
     sound: { reverb: 0.55 },
-    story: `<p>The people of Yathrib had waited on the lava fields every morning, watching the southern road. When the Prophet ﷺ finally arrived, the city came out to meet him. Tradition remembers the welcome in a song still sung today.</p>
-            <p>From that day the oasis took a new name: <i>Madinat an-Nabi</i>, the City of the Prophet, and later <i>al-Madinah al-Munawwarah</i>, the Illuminated City.</p>`,
+    story: `<p>The people of Yathrib went out to the lava fields every morning to watch the southern road, until the midday heat drove them home. When the Prophet ﷺ finally arrived, the city came out to meet him with joy (Sahih al-Bukhari). The song of welcome sung here, <i>Tala‘a al-Badru</i>, is loved and still sung, though its chain is weak and some scholars place it at the return from Tabuk.</p>
+            <p>Yathrib became known as <i>al-Madinah</i>, the City; the Prophet ﷺ called it <i>Taybah</i>, the good (Sahih Muslim). Later generations named it <i>al-Madinah al-Munawwarah</i>, the Illuminated City.</p>`,
 
     enter(env) {
       const { ctx } = env.canvas2d();

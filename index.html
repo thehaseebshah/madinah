@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Madinah — Sixteen Stations</title>
+<title>Sirah in Light and Sound</title>
 <meta name="description" content="An immersive, interactive journey through Madinah al-Munawwarah in sixteen stations: sound, light, touch, narration and walkable 3D scenes.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,15 +18,26 @@
 <div id="intro" class="intro">
   <canvas id="intro-sky" aria-hidden="true"></canvas>
   <div class="intro-inner">
-    <p class="eyebrow">A journey in sixteen stations</p>
-    <h1 class="intro-ar" lang="ar" dir="rtl">المدينة المنوّرة</h1>
-    <p class="intro-en">Madinah <span>al-Munawwarah</span></p>
-    <p class="intro-sub">The Illuminated City. Hide in the Cave of Thawr, walk the night road of the Hijrah, raise the first stones, turn with the qibla, and stand beneath a sky that opens. A guide narrates in English or Arabic; every other sound is made live, as you move.</p>
-    <button id="begin" class="begin" type="button">
-      <span class="begin-star" aria-hidden="true"></span>
-      <span>Begin the journey</span>
-    </button>
-    <p class="intro-note">Best with headphones · Sound on · Mouse, touch or keyboard · Walk the 3D scenes with WASD and E</p>
+    <p class="eyebrow">The life of the Prophet ﷺ in two cities</p>
+    <h1 class="intro-ar" lang="ar" dir="rtl">السِّيرة النَّبَوِيّة</h1>
+    <p class="intro-en">The Sirah <span>in light and sound</span></p>
+    <p class="intro-sub">Walk the places where it happened, from the Ka‘bah and the Cave of Hira to the lanes of the Illuminated City. Every story is checked against the Qur’an, the hadith collections and the classical sirah, and narrated in English or Arabic.</p>
+    <div class="worlds" role="group" aria-label="Choose a city">
+      <button id="go-makkah" class="world-card makkah" type="button">
+        <span class="wc-ar" lang="ar" dir="rtl">مَكّة المُكَرَّمة</span>
+        <span class="wc-name">Makkah</span>
+        <span class="wc-span">c. 605 – 622 CE · 5 stations</span>
+        <span class="wc-line">The Ka‘bah, Hira, as-Safa, Thawr and the night road</span>
+      </button>
+      <button id="go-madinah" class="world-card madinah" type="button">
+        <span class="wc-ar" lang="ar" dir="rtl">المَدِينة المُنَوَّرة</span>
+        <span class="wc-name">Madinah</span>
+        <span class="wc-span">622 CE – today · 14 stations</span>
+        <span class="wc-line">Quba, the Prophet’s Mosque, Uhud, the Trench and the city of light</span>
+      </button>
+    </div>
+    <button id="begin" class="ghost begin-start" type="button">Begin at the beginning: the Ka‘bah, c. 605 CE</button>
+    <p class="intro-note">Best with headphones · Mouse, touch or keyboard · Walk the 3D scenes with WASD and E</p>
   </div>
 </div>
 
@@ -38,6 +49,7 @@
     </div>
     <ol id="progress" class="progress" aria-label="Stations"></ol>
     <div class="hud-tools">
+      <button id="btn-map" class="tool voice" type="button" aria-label="Open the map" title="Map"><span>Map</span></button>
       <button id="btn-voice" class="tool voice" type="button" aria-label="Narration language: English" title="Narration: English / Arabic / off (N)"><span id="voice-label">EN</span></button>
       <button id="btn-sound" class="tool" type="button" aria-pressed="true" aria-label="Mute sound" title="Sound (M)">
         <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path class="ico-on" d="M4 9v6h4l5 4V5L8 9H4zm12.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z" fill="currentColor"/><path class="ico-off" d="M4 9v6h4l5 4V5L8 9H4zm12.6 3 2.7-2.7-1.1-1.1-2.7 2.7-2.7-2.7-1.1 1.1 2.7 2.7-2.7 2.7 1.1 1.1 2.7-2.7 2.7 2.7 1.1-1.1z" fill="currentColor"/></svg>
@@ -64,6 +76,7 @@
         <span id="story-era" class="story-era"></span>
       </button>
       <div id="story-body" class="story-body"></div>
+      <button id="btn-sources" class="sources-btn" type="button">Sources and authenticity</button>
     </section>
     <p id="hint" class="hint"></p>
     <div class="nav">
@@ -80,14 +93,57 @@
 
 <div id="finale" class="finale" hidden>
   <div class="finale-inner">
-    <p class="eyebrow">The journey is complete</p>
-    <p class="finale-ar" lang="ar" dir="rtl">السَّلامُ عَلَيْكُم</p>
-    <p class="finale-en">Peace be upon you</p>
-    <p class="finale-sub">From a night road in the desert to a city of light that welcomes millions each year, Madinah has been a place of arrival for fourteen centuries.</p>
+    <p id="finale-eyebrow" class="eyebrow">The journey is complete</p>
+    <p id="finale-ar" class="finale-ar" lang="ar" dir="rtl">السَّلامُ عَلَيْكُم</p>
+    <p id="finale-en" class="finale-en">Peace be upon you</p>
+    <p id="finale-sub" class="finale-sub">From a night road in the desert to a city of light that welcomes millions each year, Madinah has been a place of arrival for fourteen centuries.</p>
     <div class="finale-actions">
       <button id="btn-again" class="begin" type="button"><span class="begin-star" aria-hidden="true"></span><span>Walk it again</span></button>
       <button id="btn-stay" class="ghost" type="button">Stay a while</button>
     </div>
+  </div>
+</div>
+<div id="atlas" class="atlas" hidden>
+  <canvas id="atlas-canvas" aria-hidden="true"></canvas>
+  <div id="atlas-pins" class="atlas-pins"></div>
+  <header class="atlas-head">
+    <button id="atlas-home" class="tool" type="button" aria-label="Back to the start" title="Back to the start">
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M15 5 8 12l7 7" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+    </button>
+    <div class="atlas-title">
+      <p id="atlas-ar" class="atlas-ar" lang="ar" dir="rtl"></p>
+      <h2 id="atlas-name" class="atlas-name"></h2>
+      <p class="atlas-meta"><span id="atlas-span"></span></p>
+      <p id="atlas-blurb" class="atlas-blurb"></p>
+    </div>
+    <div class="atlas-actions">
+      <button id="atlas-switch" class="ghost" type="button">Go to <span id="atlas-switch-label"></span></button>
+      <button id="atlas-begin" class="begin small" type="button"><span class="begin-star" aria-hidden="true"></span><span>Begin here</span></button>
+    </div>
+  </header>
+  <nav class="atlas-listwrap" aria-label="Stations">
+    <p class="atlas-listhead">Stations</p>
+    <ol id="atlas-list" class="atlas-list"></ol>
+    <p class="atlas-help">Drag to turn · scroll or pinch to zoom · right-drag to pan</p>
+  </nav>
+  <section id="atlas-card" class="atlas-card" hidden aria-live="polite">
+    <button id="ac-close" class="ac-close" type="button" aria-label="Close">×</button>
+    <p id="ac-num" class="ac-num"></p>
+    <p id="ac-ar" class="ac-ar" lang="ar" dir="rtl"></p>
+    <h3 id="ac-title" class="ac-title"></h3>
+    <p id="ac-blurb" class="ac-blurb"></p>
+    <p id="ac-src" class="ac-src"></p>
+    <button id="ac-enter" class="begin small" type="button"><span class="begin-star" aria-hidden="true"></span><span>Enter the station</span></button>
+  </section>
+</div>
+
+<div id="sources" class="sources" hidden role="dialog" aria-modal="true" aria-labelledby="src-title">
+  <div class="sources-inner">
+    <button id="src-close" class="ac-close" type="button" aria-label="Close sources">×</button>
+    <p class="eyebrow">Sources and authenticity</p>
+    <h3 id="src-title" class="src-title"></h3>
+    <p class="src-key"><span class="g g-quran">Qur’an</span><span class="g g-sahih">Sahih</span><span class="g g-hasan">Hasan</span><span class="g g-sirah">Sirah report</span><span class="g g-weak">Weak / disputed</span><span class="g g-history">Historical record</span></p>
+    <ol id="src-list" class="src-list"></ol>
   </div>
 </div>
 <!--/BODY-->
@@ -95,26 +151,33 @@
 <script src="js/vendor/three.min.js"></script>
 <script src="js/core/audio.js"></script>
 <script src="js/core/util.js"></script>
+<script src="js/data/stations.js"></script>
+<script src="js/data/sources.js"></script>
+<script src="js/data/sources.data.js"></script>
 <script src="js/core/narration.js"></script>
 <script src="js/core/engine.js"></script>
 <script src="js/core/world.js"></script>
 <script src="js/core/kit3d.js"></script>
-<script src="js/stages/01-thawr.js"></script>
-<script src="js/stages/02-hijrah.js"></script>
-<script src="js/stages/03-quba.js"></script>
-<script src="js/stages/04-badr.js"></script>
-<script src="js/stages/05-palm-mosque.js"></script>
-<script src="js/stages/06-qiblatayn.js"></script>
-<script src="js/stages/07-uhud.js"></script>
-<script src="js/stages/08-trench.js"></script>
-<script src="js/stages/09-well.js"></script>
-<script src="js/stages/10-palms.js"></script>
-<script src="js/stages/11-aqiq.js"></script>
-<script src="js/stages/12-lanes.js"></script>
-<script src="js/stages/13-railway.js"></script>
-<script src="js/stages/14-domes.js"></script>
-<script src="js/stages/15-rawdah.js"></script>
-<script src="js/stages/16-city.js"></script>
+<script src="js/core/atlas.js"></script>
+<script src="js/stages/01-kabah.js"></script>
+<script src="js/stages/02-hira.js"></script>
+<script src="js/stages/03-safa.js"></script>
+<script src="js/stages/04-thawr.js"></script>
+<script src="js/stages/05-hijrah.js"></script>
+<script src="js/stages/06-quba.js"></script>
+<script src="js/stages/07-badr.js"></script>
+<script src="js/stages/08-palm-mosque.js"></script>
+<script src="js/stages/09-qiblatayn.js"></script>
+<script src="js/stages/10-uhud.js"></script>
+<script src="js/stages/11-trench.js"></script>
+<script src="js/stages/12-well.js"></script>
+<script src="js/stages/13-palms.js"></script>
+<script src="js/stages/14-aqiq.js"></script>
+<script src="js/stages/15-lanes.js"></script>
+<script src="js/stages/16-railway.js"></script>
+<script src="js/stages/17-domes.js"></script>
+<script src="js/stages/18-rawdah.js"></script>
+<script src="js/stages/19-city.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

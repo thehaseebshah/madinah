@@ -14,7 +14,7 @@
     era: 'Madinah station · 1908 · walk the platform',
     hint: 'WASD to walk · E to ring the bell, read the board and meet the train',
     sound: { reverb: 0.35 },
-    story: `<p>Between 1900 and 1908 the Ottoman state built a railway of some 1,300 kilometres from Damascus to Madinah, paid for largely by donations from Muslims across the world. A pilgrimage that took forty days by caravan now took a few days by train.</p>
+    story: `<p>Between 1900 and 1908 the Ottoman state built a railway of some 1,300 kilometres from Damascus to Madinah, paid for largely by donations, most from within the Ottoman Empire and some from Muslims as far away as India and Morocco. A pilgrimage that took forty days by caravan now took a few days by train.</p>
             <p>The line ran for only about a decade before it was wrecked in the First World War. The station in Madinah still stands, now a museum. Ring the bell and wait for the train.</p>`,
 
     enter(env) {
@@ -172,7 +172,7 @@
       });
       w.interact({
         key: 'board', pos: [-8.6, 2.2, FACE_Z], r: 3, once: true, label: 'Read the board',
-        onUse: () => w.say('Damascus — Madinah', 'The line ran some 1,300 kilometres south from Damascus, through Dara‘a, Amman, Ma‘an, Tabuk and Mada’in Salih. It was built in eight years, much of it by soldiers and engineers of the Ottoman army, and paid for by gifts from Muslims from Morocco to India.', { ms: 12000 }),
+        onUse: () => w.say('Damascus — Madinah', 'The line ran some 1,300 kilometres south from Damascus, through Dara‘a, Amman, Ma‘an, Tabuk and Mada’in Salih. It was built in eight years, much of it by soldiers and engineers of the Ottoman army, and paid for largely by public donations, most of them from within the Ottoman Empire.', { ms: 12000 }),
       });
       w.interact({
         key: 'door', pos: new T.Vector3(0, 1.2, -1.2), r: 3.2, once: true, label: 'Greet the pilgrims stepping down',
@@ -181,7 +181,7 @@
           self.doorOpen = 1;
           SND.knock(env.bus, { f: 200, gain: 0.3, click: 900 });
           SND.glow(env.bus, 146.83, { gain: 0.06, dur: 9 });
-          w.say('Forty Days into Four', 'For a pilgrim from Damascus the journey had taken some forty days by caravan, through heat and danger. By train it took about four. In its few years the railway carried many thousands of pilgrims to the Prophet’s city.', { ms: 13000 });
+          w.say('Forty Days into Five', 'For a pilgrim from Damascus the journey had taken some forty days by caravan, through heat and danger. By train it took about five. In its few years the railway carried many thousands of pilgrims to the Prophet’s city.', { ms: 13000 });
           env.complete(); self.unlockSoon();
         },
       });

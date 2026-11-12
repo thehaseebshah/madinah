@@ -12,7 +12,7 @@
     era: 'Rabi‘ al-Awwal, 1 AH',
     hint: 'Tap to lay a stone · hold to build',
     sound: { reverb: 0.3 },
-    story: `<p>Before entering the city, the Prophet ﷺ stayed in the village of Quba, on the southern edge of the oasis. There, with his companions, he laid the foundations of the first mosque in Islam, carrying stones with his own hands.</p>
+    story: `<p>Before entering the city, the Prophet ﷺ stayed in Quba, on the southern edge of the oasis, for some ten or fourteen nights. There he and his companions founded the first mosque in Islam; a report in al-Tabarani says he carried stones for it himself.</p>
             <p class="q"><span class="ar">لَمَسْجِدٌ أُسِّسَ عَلَى التَّقْوَىٰ</span>“A mosque founded on piety from the first day…” (Qur’an 9:108)</p>
             <p>Madinah sits among fields of black volcanic rock, the <i>harrah</i>. Its early walls were built from that basalt and from sun-dried brick.</p>`,
 

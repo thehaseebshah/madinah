@@ -1,4 +1,4 @@
-/* Opening sky and the first step of the journey. */
+/* Opening sky, the choice of city, and the first step of the journey. */
 (function () {
   'use strict';
   const intro = document.getElementById('intro');
@@ -24,9 +24,8 @@
       ctx.fillStyle = `rgba(242,233,214,${a * (1 - s.y / h * 0.7)})`;
       ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 6.283); ctx.fill();
     }
-    // a slow ring of eight-pointed stars, like a lamp's pierced brass
     ctx.save(); ctx.translate(w / 2, h / 2);
-    const R = Math.min(w, h) * 0.42;
+    const R = Math.min(w, h) * 0.46;
     for (let i = 0; i < 24; i++) {
       const a = (i / 24) * 6.283 + t * 0.02;
       ctx.globalAlpha = 0.08 + 0.06 * Math.sin(t * 0.6 + i);
@@ -38,13 +37,36 @@
   }
   requestAnimationFrame(draw);
 
-  const m = /station-(\d+)/.exec(location.hash);
-  const startAt = m ? Math.max(0, Math.min(ENGINE.stages.length - 1, parseInt(m[1], 10) - 1)) : 0;
-
-  document.getElementById('begin').addEventListener('click', () => {
+  function leaveIntro() {
     SND.init();
     intro.classList.add('gone');
-    setTimeout(() => { running = false; intro.remove(); }, 1700);
-    ENGINE.start(startAt);
-  });
+    setTimeout(() => { running = false; }, 1700);
+  }
+  ENGINE.onHome = () => {
+    if (window.ATLAS) ATLAS.hide();
+    document.getElementById('hud').hidden = true;
+    intro.classList.remove('gone');
+    if (!running) { running = true; requestAnimationFrame(draw); }
+  };
+
+  const ids = () => SIRAH.stations.map(s => s.id);
+  const startAtId = id => { leaveIntro(); const go = () => ENGINE.start(ENGINE.indexOf(id)); ENGINE.boot(); go(); };
+
+  document.getElementById('go-makkah').addEventListener('click', () => { leaveIntro(); ENGINE.openMap('makkah'); });
+  document.getElementById('go-madinah').addEventListener('click', () => { leaveIntro(); ENGINE.openMap('madinah'); });
+  document.getElementById('begin').addEventListener('click', () => startAtId(ids()[0]));
+
+  // Deep links: #makkah, #madinah, #<station id>, or #station-N (Nth station in order)
+  const hash = location.hash.slice(1);
+  const m = /^station-(\d+)$/.exec(hash);
+  const target = m ? ids()[Math.max(0, Math.min(ids().length - 1, parseInt(m[1], 10) - 1))] : ids().includes(hash) ? hash : null;
+  if (target || hash === 'makkah' || hash === 'madinah') {
+    const btn = document.getElementById('begin');
+    btn.textContent = target ? `Continue to ${(ENGINE.byId(target) || {}).title || target}` : `Open the map of ${hash === 'makkah' ? 'Makkah' : 'Madinah'}`;
+    btn.classList.add('linked');
+    btn.addEventListener('click', e => {
+      e.stopImmediatePropagation();
+      if (target) startAtId(target); else { leaveIntro(); ENGINE.openMap(hash); }
+    }, true);
+  }
 })();

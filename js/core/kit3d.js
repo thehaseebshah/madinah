@@ -253,6 +253,70 @@
       return g;
     },
 
+    /* The valley of Makkah: a sandy floor between granite mountains, with flat-roofed houses.
+       kx/kz place the Ka'bah in scene coordinates; returns the ground-height function. */
+    makkahValley(w, o) {
+      o = o || {};
+      const kx = o.kx || 0, kz = o.kz || 0, floorR = o.floor || 120, S = w.scene;
+      const ground = (x, z) => {
+        const d = Math.hypot(x - kx, (z - kz) * 0.8);
+        const rise = Math.max(0, d - floorR);
+        let y = Math.pow(rise, 1.25) * 0.55 * (0.7 + 0.6 * (U.noise2(x * 0.004 + 3, z * 0.004) * 0.5 + 0.5));
+        y += (U.noise2(x * 0.02, z * 0.02) * 6 + U.noise2(x * 0.06, z * 0.06) * 2) * U.smooth(floorR, floorR + 60, d);
+        y += U.noise2(x * 0.15, z * 0.15) * 0.08;
+        return y;
+      };
+      const size = o.size || 900, seg = o.seg || 200;
+      const geo = new T.PlaneGeometry(size, size, seg, seg); geo.rotateX(-Math.PI / 2);
+      if (o.ox || o.oz) geo.translate(o.ox || 0, 0, o.oz || 0);
+      const p = geo.attributes.position, col = new Float32Array(p.count * 3);
+      for (let i = 0; i < p.count; i++) {
+        const x = p.getX(i), z = p.getZ(i), y = ground(x, z); p.setY(i, y);
+        const rock = U.smooth(2, 18, y);
+        col.set(U.mix([0.92, 0.82, 0.66], [0.52, 0.42, 0.36], rock), i * 3);
+      }
+      geo.setAttribute('color', new T.BufferAttribute(col, 3)); geo.computeVertexNormals();
+      const terrain = new T.Mesh(geo, KIT.std({ map: KIT.sand(w, [90, 90]), vertexColors: true, relief: 0.03 }));
+      terrain.receiveShadow = true; S.add(terrain);
+      // houses of stone and mud, closest round the Ka'bah
+      const r = U.seeded(o.seed || 570), mats = ['#cdb894', '#b8a07c', '#d8c8a8', '#a8927a'].map(c => KIT.std({ map: KIT.mudBrick(w, [1, 0.6]), color: new T.Color(c) }));
+      const doorM = KIT.std({ color: 0x3a2818 });
+      for (let i = 0; i < (o.houses || 90); i++) {
+        const a = r() * 6.283, d = (o.clear || 34) + Math.pow(r(), 0.8) * (floorR - 30);
+        const x = kx + Math.cos(a) * d, z = kz + Math.sin(a) * d * 1.2;
+        if (o.avoid && o.avoid(x, z)) continue;
+        const hw = 5 + r() * 6, hd = 5 + r() * 6, hh = 3 + r() * 4.5, y = ground(x, z);
+        const m = new T.Mesh(new T.BoxGeometry(hw, hh, hd), mats[i % 4]); m.position.set(x, y + hh / 2 - 0.2, z); m.rotation.y = Math.round(r() * 4) * 0.4 + a; S.add(m);
+        const dr = new T.Mesh(new T.BoxGeometry(1.0, 1.9, 0.1), doorM); dr.position.set(0, -hh / 2 + 0.95, hd / 2 + 0.03); m.add(dr);
+        if (w.addCircle && d < floorR) w.addCircle(x, z, Math.max(hw, hd) * 0.55);
+      }
+      return ground;
+    },
+
+    /* The Ka'bah as Quraysh rebuilt it: courses of stone alternating with timber (Ibn Ishaq).
+       built: 0..1 how far the walls have risen. */
+    kabah(w, o) {
+      o = o || {};
+      const g = new T.Group(), W = 11, D = 12.5, H = o.height || 9;
+      const courses = w.tex(512, (gc, s) => {
+        gc.fillStyle = '#6a625a'; gc.fillRect(0, 0, s, s);
+        for (let y = 0, row = 0; y < s; y += 42, row++) {
+          if (row % 3 === 2) { gc.fillStyle = '#5a3c22'; gc.fillRect(0, y, s, 14); y -= 28; continue; }
+          for (let x = -(row % 2) * 40; x < s; x += 80) { const t = Math.random(); gc.fillStyle = `rgb(${88 + t * 40 | 0},${82 + t * 34 | 0},${76 + t * 30 | 0})`; gc.fillRect(x + 2, y + 2, 76, 38); }
+        }
+      }, [2, 1.6]);
+      const mat = KIT.std({ map: courses, relief: 0.06 });
+      const built = o.built == null ? 1 : o.built;
+      const body = new T.Mesh(new T.BoxGeometry(W, H * built, D), mat); body.position.y = H * built / 2; g.add(body);
+      if (o.cloth && built >= 1) {
+        const cloth = new T.Mesh(new T.BoxGeometry(W + 0.12, H - 0.6, D + 0.12), KIT.std({ color: o.cloth, roughness: 0.9 }));
+        cloth.position.y = (H - 0.6) / 2 + 0.6; g.add(cloth);
+      }
+      const base = new T.Mesh(new T.BoxGeometry(W + 0.8, 0.5, D + 0.8), KIT.std({ map: KIT.basalt(w, [3, 0.3]), color: 0xb0a8a0 })); base.position.y = 0.25; g.add(base);
+      g.userData.size = [W, H, D];
+      return g;
+    },
+
     /* Soft round sprite for glows, dust and lantern halos. */
     glowTex(w) {
       if (w._glow) return w._glow;

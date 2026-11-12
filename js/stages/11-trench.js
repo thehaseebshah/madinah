@@ -167,7 +167,7 @@
           onUse: () => {
             p.fill = 0;
             SND.glow(env.bus, 146.83, { gain: 0.04, dur: 5 });
-            w.say('A Section Cut', 'Each household was given a length of trench to dig, about forty cubits for every ten people. They worked through cold days with little food, singing as they carried the earth.', { ms: 9000 });
+            w.say('A Section Cut', 'The whole community dug, the Prophet ﷺ among them, carrying earth until the dust covered his skin (Sahih al-Bukhari). A report with a weak chain says each ten men were given forty cubits to dig. They worked through cold days with little food, singing as they carried the earth.', { ms: 9000 });
             counter();
           },
         });
@@ -175,7 +175,7 @@
       const LINES = [
         ['The First Blow', 'The narrations say a rock appeared in the trench that no pick could break. The Prophet ﷺ came down, said <i>Bismillah</i> and struck it, and a third of it broke away in a flash of light. <span class="q">“Allahu akbar. I have been given the keys of ash-Sham.”</span>'],
         ['The Second Blow', 'He struck again, and another third fell, with light. <span class="q">“Allahu akbar. I have been given the keys of Persia.”</span>'],
-        ['The Third Blow', 'At the third blow the rest of the rock gave way. <span class="q">“Allahu akbar. I have been given the keys of Yemen.”</span> At the height of the siege, with an army at the trench, this was a promise of what lay ahead. <span class="q">(Musnad Ahmad; Sunan an-Nasa’i)</span>'],
+        ['The Third Blow', 'At the third blow the rest of the rock gave way. <span class="q">“Allahu akbar. I have been given the keys of Yemen.”</span> At the height of the siege, with an army at the trench, this was a promise of what lay ahead. <span class="q">(Musnad Ahmad, a chain Ibn Hajar called hasan and others weak. The rock itself is in Sahih al-Bukhari; an-Nasa’i’s version names Persia, Byzantium and Ethiopia.)</span>'],
       ];
       w.interact({
         key: 'rock', pos: [ROCK.x, -DEPTH + 1.2, ROCK.z], r: 4.2, label: () => `Strike the rock (${self.strikes + 1} of 3)`,

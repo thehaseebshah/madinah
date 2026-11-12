@@ -1,4 +1,16 @@
 {
+ "kabah": {
+  "en": "Makkah, around the year 605. A flood has damaged the Ka’bah, and Quraysh are rebuilding it in courses of stone and timber. Among those carrying stones is Muhammad, about thirty-five years old, whom the people of Makkah call al-Amin, the trustworthy. When the walls reach the place of the Black Stone, the clans quarrel over who will set it, and agree that the next man through the gate will decide.",
+  "ar": "مكة، نحو سنة ستمئة وخمس للميلاد. أصاب السيلُ الكعبة، فأخذت قريش تعيد بناءها مداميكَ من الحجر والخشب. وكان ممن ينقل الحجارة محمدٌ، في نحو الخامسة والثلاثين من عمره، وكان أهل مكة يسمّونه الأمين. فلما بلغ البنيان موضعَ الحجر الأسود اختلفت القبائل فيمن يضعه، ثم اتفقوا على أن يحكم بينهم أولُ داخلٍ من الباب."
+ },
+ "hira": {
+  "en": "Some five years later, he would leave Makkah for nights at a time to worship alone in a small cave on a mountain north-east of the city. There, one night in Ramadan, when he was forty, the angel came to him and said: Read. Climb to the Cave of Hira.",
+  "ar": "بعد نحو خمس سنين، كان يخرج من مكة الليالي ذواتِ العدد يتعبّد وحده في غارٍ صغير بجبلٍ شمالَ شرق مكة. وهناك، في ليلةٍ من رمضان، وهو ابن أربعين سنة، جاءه الملَك فقال: اقرأ. اصعد إلى غار حراء."
+ },
+ "safa": {
+  "en": "For about three years the call was quiet. Then came the command: warn your nearest kin. He climbed the rock of as-Safa beside the Ka’bah and raised the alarm used at dawn when raiders were seen, and the clans of Quraysh gathered below.",
+  "ar": "ظلّت الدعوة نحو ثلاث سنين سرًّا. ثم نزل الأمر: وأنذر عشيرتك الأقربين. فصعد على الصفا بجوار الكعبة، ونادى بالنداء الذي يُطلق عند رؤية الغارة في الصباح، فاجتمعت بطون قريش تحته."
+ },
  "thawr": {
   "en": "Makkah, the year 622. The Prophet, peace be upon him, and his companion Abu Bakr have left the city by night and climbed Mount Thawr to the south. For three nights they hide in this narrow cave while search parties comb the mountains. The Qur’an remembers the moment: the second of two, when they were in the cave, and he said to his companion, do not grieve, God is with us.",
   "ar": "مكة، سنة ستمئة واثنتين وعشرين للميلاد. خرج النبي صلى الله عليه وسلم وصاحبه أبو بكر من مكة ليلًا، وصعدا جبل ثور في جنوبها. ثلاث ليالٍ اختبآ في هذا الغار الضيق، والطلب يجوب الجبال بحثًا عنهما. ويذكر القرآن تلك اللحظة: ثاني اثنين إذ هما في الغار، إذ يقول لصاحبه: لا تحزن إن الله معنا."
@@ -8,12 +20,12 @@
   "ar": "بعد ثلاث ليالٍ جاء الدليل عبد الله بن أريقط بالرواحل، فسلكوا طريقًا غير مطروق نحو الساحل ثم شمالًا. رحلة تقارب أربعمئة وخمسين كيلومترًا، قطعوا أكثرها ليلًا. وصارت هذه الهجرة بداية التقويم الإسلامي."
  },
  "quba": {
-  "en": "Before entering the city, the Prophet stayed at Quba, on the southern edge of the oasis. There he and his companions built the first mosque in Islam, and he carried its stones with his own hands. The Qur’an calls it a mosque founded on piety from the first day.",
-  "ar": "قبل أن يدخل المدينة نزل النبي صلى الله عليه وسلم في قباء، على طرف الواحة الجنوبي. وهناك بنى مع أصحابه أول مسجد في الإسلام، وكان يحمل الحجارة بيديه. وقد وصفه القرآن بأنه مسجد أُسِّس على التقوى من أول يوم."
+  "en": "Before entering the city, the Prophet stayed at Quba, on the southern edge of the oasis, for some ten nights or more. There he and his companions founded the first mosque in Islam. Many scholars hold that it is the mosque the Qur’an describes as founded on piety from the first day.",
+  "ar": "قبل أن يدخل المدينة نزل النبي صلى الله عليه وسلم في قباء، على طرف الواحة الجنوبي، بضع عشرة ليلة. وهناك أسّس مع أصحابه أول مسجد في الإسلام. ويرى كثير من العلماء أنه المسجد الذي وصفه القرآن بأنه أُسِّس على التقوى من أول يوم."
  },
  "badr": {
-  "en": "The people of Yathrib had waited every morning on the lava fields, watching the southern road. When he arrived at last, the whole city came out to meet him, and the welcome they sang is still sung today: the full moon has risen over us. From that day, Yathrib became Madinat an-Nabi, the City of the Prophet.",
-  "ar": "كان أهل يثرب يخرجون كل صباح إلى الحرة يرقبون الطريق الجنوبي. فلما وصل أخيرًا خرجت المدينة كلها لاستقباله، وما زال نشيد ترحيبهم يُنشد إلى اليوم: طلع البدر علينا. ومنذ ذلك اليوم صارت يثرب مدينةَ النبي."
+  "en": "The people of Yathrib went out every morning to the lava fields to watch the southern road, until the midday heat drove them home. When he arrived at last, the whole city came out to meet him with joy. A song of welcome is still sung in memory of that day: the full moon has risen over us. It is loved, though its report is weak. The city came to be called al-Madinah, and he named it Taybah, the good.",
+  "ar": "كان أهل يثرب يخرجون كل صباح إلى الحرّة يرقبون الطريق الجنوبي حتى يردّهم حرّ الظهيرة. فلما وصل أخيرًا خرجت المدينة كلها لاستقباله فرحين. ويُنشد في ذكرى ذلك اليوم نشيد: طلع البدر علينا، وهو محبوب وإن كان سنده ضعيفًا. وصارت تُعرف بالمدينة، وسمّاها النبي صلى الله عليه وسلم طابة."
  },
  "palm-mosque": {
   "en": "Where his camel knelt, they built his mosque: walls of sun-dried brick, palm trunks for pillars, palm fronds for a roof. Walk through it. Listen for the old palm trunk he once leaned on, and find the minbar, the shade of the Suffah, and the roof of fronds.",
