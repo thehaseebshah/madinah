@@ -618,7 +618,7 @@
         if (cross(0.01)) {
           this.voices.forEach(v => v.setGain(0.002, 1));
           const f = w.forward(), l = Math.hypot(f.x, f.z) || 1;
-          this.words.position.set(w.pos.x + f.x / l * 4.6, w.y + w.eye + 0.85, w.pos.z + f.z / l * 4.6);
+          this.words.position.set(w.pos.x + f.x / l * 4.6, w.y + w.eye + 1.55, w.pos.z + f.z / l * 4.6);
         }
         if (cross(1.6)) {
           SND.glow(env.bus, 196, { gain: 0.08, dur: 13 }); SND.glow(env.bus, 293.66, { gain: 0.05, dur: 12, delay: 1.2 });

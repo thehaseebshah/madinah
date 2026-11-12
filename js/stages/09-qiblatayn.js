@@ -337,7 +337,7 @@
           this.bearing = (this.bearing + db + 360) % 360;
           // a gentle pull when it is nearly true
           const off = angDiff(this.bearing, MAKKAH);
-          if (Math.abs(off) < 6 && Math.abs(db) < 0.4) this.bearing = (this.bearing - off * Math.min(1, dt * 2.5) + 360) % 360;
+          if (Math.abs(off) < 8 && Math.abs(db) < 0.4) this.bearing = (this.bearing - off * Math.min(1, dt * 2.5) + 360) % 360;
           const tick = Math.round(this.bearing / 5);
           if (tick !== this.tickB) { this.tickB = tick; SND.knock(b, { f: 900, gain: 0.03, click: 5200 }); }
         }

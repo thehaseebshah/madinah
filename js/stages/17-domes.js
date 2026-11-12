@@ -422,13 +422,13 @@ void main(){
         const light = d.lift ? U.clamp((d.k - 0.3) / 0.7) : U.clamp((d.k - 0.02) / 0.98);
         d.light = light;
         openSum += light;
-        d.shaft.uniforms.uOp.value = 0.11 * U.ease(light) * (1 + (this.blaze || 0) * 0.8);
+        d.shaft.uniforms.uOp.value = 0.075 * U.ease(light) * (1 + (this.blaze || 0) * 0.6);
         d.shaft.uniforms.uTime.value = t;
         d.flare = Math.max(0, (d.flare || 0) - dt * 1.5);
         const under = this.under() === d;
         d.ring.material.opacity = (0.22 + 0.12 * Math.sin(t * 1.4 + d.i + d.j * 2) + (under ? 0.25 : 0) + d.flare * 0.6) * (1 - light * 0.6) * (this.reveal >= 0 ? 0.3 : 1);
         d.ring.material.color.setHex(d.target && !d.correct && d.k > 0.99 ? 0xd8d4cc : 0xffd890);
-        if (d.tile) d.tile.emissiveIntensity = 0.05 + U.ease(light) * 0.3 + (this.blaze || 0) * 1.2;
+        if (d.tile) d.tile.emissiveIntensity = 0.05 + U.ease(light) * 0.25 + (this.blaze || 0) * 0.55;
       }
       // the outside comes in as the roof opens
       this.rumble.set('gain', Math.min(0.22, movingN * 0.12), 0.25);
@@ -457,8 +457,8 @@ void main(){
           w.cinematic([
             { p: e, l: [-OFF, 0.5, 0] },
             { p: [w.pos.x * 0.5 + 4, 5.2, w.pos.z * 0.5 + 9], l: [-OFF, 0, 0] },
-            { p: [-OFF + 5, 7.1, 7.5], l: [-OFF, 0, -0.5] },
-            { p: [-OFF + 4, 7.1, 5], l: [-OFF, 0, -0.5] },
+            { p: [0, 7.0, 8], l: [-OFF, 0, -0.5] },
+            { p: [-8, 7.0, 8], l: [-OFF, 0, -0.5] },
             { p: [w.pos.x * 0.6 + 2, 4, w.pos.z * 0.6 + 6], l: [-OFF, 0, 0] },
             { p: e, l: [-OFF, 1, 0] },
           ], 11);

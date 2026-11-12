@@ -119,7 +119,7 @@ void main(){
         const body = new T.Mesh(new T.CylinderGeometry(0.17, 0.13, 0.28, 14, 1, true), new T.MeshStandardMaterial({ color: 0x5a3a22, roughness: 0.75, side: T.DoubleSide })); g.add(body);
         const bot = new T.Mesh(new T.CircleGeometry(0.13, 14), leather); bot.rotation.x = -Math.PI / 2; bot.position.y = -0.14; g.add(bot);
         const bar = new T.Mesh(new T.BoxGeometry(0.36, 0.025, 0.025), woodM); bar.position.y = 0.16; g.add(bar);
-        const water = new T.Mesh(new T.CircleGeometry(0.155, 14), new T.MeshBasicMaterial({ color: 0x8aa0c8 })); water.rotation.x = -Math.PI / 2; water.position.y = 0.08; water.visible = false; g.add(water);
+        const water = new T.Mesh(new T.CircleGeometry(0.155, 14), new T.MeshBasicMaterial({ color: 0x3e5478 })); water.rotation.x = -Math.PI / 2; water.position.y = 0.08; water.visible = false; g.add(water);
         g.userData.water = water;
         return g;
       };
@@ -262,7 +262,7 @@ void main(){
 
       // the bucket you carry
       this.carried = makeBucket(); this.carried.userData.water.visible = true; this.carried.visible = false; this.carried.userData.dynamic = true;
-      S.add(w.camera); w.camera.add(this.carried); this.carried.position.set(0.32, -0.55, -0.75); this.carried.rotation.set(0.25, 0, 0.05);
+      S.add(w.camera); w.camera.add(this.carried); this.carried.position.set(0.38, -0.62, -1.05); this.carried.rotation.set(0.3, 0, 0.05); this.carried.scale.setScalar(0.8);
 
       /* ---------- the haul gauge (2D overlay) ---------- */
       const ov = document.createElement('div');
@@ -413,7 +413,7 @@ void main(){
       // rope from the wheel down to the bucket, and from the wheel to the hands
       const ry0 = 2.33, ry1 = this.carrying ? 2.0 : by + 0.17;
       this.rope.scale.y = Math.max(0.05, ry0 - ry1); this.rope.position.set(this.bucket.position.x * 0.5, (ry0 + ry1) / 2, -0.2);
-      const hx = this.hauling ? w.pos.x : HAUL.x, hz = this.hauling ? w.pos.z - 0.45 : 0.75, hy = this.hauling ? w.y + 1.15 : 0.95;
+      const hx = this.hauling ? w.pos.x + 0.25 : HAUL.x, hz = this.hauling ? w.pos.z - 0.35 : 0.75, hy = this.hauling ? w.y + 0.85 : 0.95;
       const a = new THREE.Vector3(0, 2.55, 0.2), c = new THREE.Vector3(hx, hy, hz);
       this.ropeH.position.copy(a).add(c).multiplyScalar(0.5); this.ropeH.scale.y = a.distanceTo(c);
       this.ropeH.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), c.clone().sub(a).normalize());
