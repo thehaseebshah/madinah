@@ -115,8 +115,8 @@ void main(){
       this.palms = [];
       const ladenAt = [[7.6, 9], [-6.2, 3], [7.6, -4], [-12.8, -10], [3.6, -15], [-4, -21]];
       const plant = (x, z, laden) => {
-        const h = laden >= 0 ? 6.6 + r() * 0.6 : 7 + r() * 4;
-        const p = KIT.palm(w, h, { lean: laden >= 0 ? 0.08 : (r() - 0.5) * 0.35, fronds: 17, frondScale: 1.05 });
+        const h = laden >= 0 ? 6.8 + r() * 0.6 : 7.5 + r() * 4.5;
+        const p = KIT.palm(w, h, { lean: laden >= 0 ? 0.08 : (r() - 0.5) * 0.35, fronds: 18, frondScale: laden >= 0 ? 1.3 : 1.25 + r() * 0.3 });
         p.position.set(x, 0, z); p.rotation.y = r() * 6.28; S.add(p);
         p.updateMatrixWorld(true);
         const top = p.userData.top.clone().applyMatrix4(p.matrixWorld);
@@ -124,12 +124,12 @@ void main(){
         w.addCircle(x, z, 0.36);
       };
       ladenAt.forEach(([x, z], k) => plant(x, z, k));
-      for (let i = 0; i < 12; i++) for (let j = 0; j < 11; j++) {
-        let x = -35.75 + i * 6.5 + (r() - 0.5) * 1.6, z = 25 - j * 7 + (r() - 0.5) * 1.6;
+      for (let i = 0; i < 13; i++) for (let j = 0; j < 12; j++) {
+        let x = -35.75 + i * 6 + (r() - 0.5) * 1.4, z = 25 - j * 6.2 + (r() - 0.5) * 1.4;
         if (Math.abs(x - CHAN_X) < 1.6) x += x < CHAN_X ? -1.2 : 1.2;
         if (CROSS_Z.some(c => Math.abs(z - c) < 1.5)) continue;
         if (Math.hypot(x - WELL.x, z - WELL.z) < 4) continue;
-        if (ladenAt.some(([lx, lz]) => Math.hypot(lx - x, lz - z) < 4.0)) continue;
+        if (ladenAt.some(([lx, lz]) => Math.hypot(lx - x, lz - z) < 3.6)) continue;
         if (Math.hypot(x - 1.7, z - 13) < 2) continue;
         plant(x, z, -1);
       }
@@ -178,21 +178,16 @@ void main(){
         f.position.set(U.rnd(-36, 36), 0.04, U.rnd(-44, 25)); f.rotation.set(-Math.PI / 2 + U.rnd(-0.08, 0.08), 0, r() * 6.28);
         f.scale.setScalar(0.8 + r() * 0.4); S.add(f);
       }
-      const cropTex = w.tex(256, (g, s) => {
-        g.clearRect(0, 0, s, s);
-        for (let i = 0; i < 1600; i++) {
-          const x = Math.random() * s, y = Math.random() * s, e = Math.min(x, y, s - x, s - y) / (s * 0.5);
-          if (Math.random() > e * 1.6) continue;
-          const c = 60 + Math.random() * 60; g.fillStyle = `rgb(${c * 0.7 | 0},${c + 40 | 0},${c * 0.35 | 0})`;
-          g.beginPath(); g.ellipse(x, y, 2 + Math.random() * 3, 1.5 + Math.random() * 2, Math.random() * 3, 0, 6.283); g.fill();
-        }
+      // each palm stands in its own basin of damp earth, ringed by a low bank
+      const bankMat = KIT.std({ map: KIT.sand(w, [2, 2]), color: 0x8a6446, relief: 0.03 });
+      const dampMat = KIT.std({ map: KIT.sand(w, [2, 2]), color: 0x6a4a34, roughness: 1, relief: 0 });
+      const cropMat = dampMat;
+      const bankGeo = new T.TorusGeometry(1.15, 0.16, 5, 18); bankGeo.rotateX(Math.PI / 2); bankGeo.scale(1, 0.45, 1);
+      const dampGeo = new T.CircleGeometry(1.1, 18); dampGeo.rotateX(-Math.PI / 2);
+      this.palms.forEach((p, i) => {
+        const bk = new T.Mesh(bankGeo, bankMat); bk.position.set(p.x, 0.02, p.z); S.add(bk);
+        const dm = new T.Mesh(dampGeo, dampMat); dm.position.set(p.x, 0.012 + (i % 4) * 0.001, p.z); S.add(dm);
       });
-      const cropMat = KIT.std({ map: cropTex, alphaTest: 0.5, color: 0xb8c890, roughness: 0.9 });
-      for (let i = 0; i < 26; i++) {
-        const along = U.rnd(-30, 24), side = i % 2 ? 1 : -1;
-        const m = new T.Mesh(new T.PlaneGeometry(U.rnd(2, 4), U.rnd(3, 6)), cropMat);
-        m.rotation.x = -Math.PI / 2; m.position.set(CHAN_X + side * U.rnd(1.2, 2.4), 0.03 + i * 0.0005, along); S.add(m);
-      }
 
       /* ---------- water: the channels and the well that feeds them ---------- */
       this.waterMat = new T.ShaderMaterial({
@@ -212,16 +207,16 @@ void main(){
       channel(CHAN_X, WELL.z + 1.2, CHAN_X, 27);
       CROSS_Z.forEach(z => { channel(-40, z, CHAN_X - 0.6, z); channel(CHAN_X + 0.6, z, 40, z); });
       // the well: a ring of basalt, a frame of palm wood, a stone trough
-      const basalt = KIT.std({ map: KIT.basalt(w, [3, 1]), color: 0xd8d0c8 });
-      const ring = new T.Mesh(new T.CylinderGeometry(1.1, 1.2, 0.9, 20, 1, true), basalt); ring.position.set(WELL.x, 0.45, WELL.z); S.add(ring);
-      const ringIn = new T.Mesh(new T.CylinderGeometry(0.9, 0.9, 0.9, 20, 1, true), basalt); ringIn.position.copy(ring.position); ringIn.material = basalt; S.add(ringIn);
-      const lip = new T.Mesh(new T.TorusGeometry(1.0, 0.16, 6, 20), basalt); lip.rotation.x = Math.PI / 2; lip.position.set(WELL.x, 0.9, WELL.z); S.add(lip);
+      const wellStone = KIT.std({ map: KIT.plaster(w, [3, 1], '#c8a882'), color: 0xd8c0a0 });
+      const ring = new T.Mesh(new T.CylinderGeometry(1.1, 1.2, 0.9, 20, 1, true), wellStone); ring.position.set(WELL.x, 0.45, WELL.z); S.add(ring);
+      const ringIn = new T.Mesh(new T.CylinderGeometry(0.9, 0.9, 0.9, 20, 1, true), wellStone); ringIn.position.copy(ring.position); S.add(ringIn);
+      const lip = new T.Mesh(new T.TorusGeometry(1.0, 0.16, 6, 20), wellStone); lip.rotation.x = Math.PI / 2; lip.position.set(WELL.x, 0.9, WELL.z); S.add(lip);
       const deep = new T.Mesh(new T.CircleGeometry(0.9, 20), new T.MeshBasicMaterial({ color: 0x080604 })); deep.rotation.x = -Math.PI / 2; deep.position.set(WELL.x, 0.3, WELL.z); S.add(deep);
       const wood = KIT.std({ map: KIT.wood(w, [1, 2], '#6e4a2c'), color: 0xc0a080 });
       [-1.3, 1.3].forEach(dx => { const post = new T.Mesh(new T.BoxGeometry(0.18, 2.6, 0.18), wood); post.position.set(WELL.x + dx, 1.3, WELL.z); S.add(post); });
       const bar = new T.Mesh(new T.CylinderGeometry(0.08, 0.08, 2.9, 8), wood); bar.rotation.z = Math.PI / 2; bar.position.set(WELL.x, 2.5, WELL.z); S.add(bar);
       const wheel = new T.Mesh(new T.TorusGeometry(0.25, 0.05, 6, 14), wood); wheel.position.set(WELL.x, 2.5, WELL.z); wheel.rotation.y = Math.PI / 2; S.add(wheel);
-      const trough = new T.Mesh(new T.BoxGeometry(1.0, 0.4, 1.4), basalt); trough.position.set(WELL.x, 0.2, WELL.z + 1.6); S.add(trough);
+      const trough = new T.Mesh(new T.BoxGeometry(1.0, 0.4, 1.4), wellStone); trough.position.set(WELL.x, 0.2, WELL.z + 1.6); S.add(trough);
       w.addCircle(WELL.x, WELL.z, 1.3);
 
       // the garden wall of sun-dried brick behind you, with its gate
@@ -243,7 +238,7 @@ void main(){
       this.shafts = [];
       const rs = U.seeded(9);
       for (let i = 0; i < 16; i++) {
-        const m = new T.Mesh(new T.PlaneGeometry(1, 1), new T.MeshBasicMaterial({ map: shaftTex, color: 0xffcc88, transparent: true, opacity: 0.05 + rs() * 0.07, depthWrite: false, blending: T.AdditiveBlending, side: T.DoubleSide, fog: false }));
+        const m = new T.Mesh(new T.PlaneGeometry(1, 1), new T.MeshBasicMaterial({ map: shaftTex, color: 0xffcc88, transparent: true, opacity: 0.07 + rs() * 0.09, depthWrite: false, blending: T.AdditiveBlending, side: T.DoubleSide, fog: false }));
         const c = new T.Vector3(U.lerp(-24, 24, rs()), 2.5 + rs() * 5, U.lerp(-30, 20, rs()));
         m.userData = { dynamic: true, c, wdt: 0.6 + rs() * 2.2, len: 34, base: m.material.opacity, ph: rs() * 6 };
         m.matrixAutoUpdate = false; m.frustumCulled = false; S.add(m); this.shafts.push(m);
@@ -286,10 +281,10 @@ void main(){
       const bm = new T.Mesh(new T.LatheGeometry(prof, 22), KIT.std({ map: weave, side: T.DoubleSide, roughness: 0.9, relief: 0.02 }));
       basket.add(bm);
       const rim = new T.Mesh(new T.TorusGeometry(0.19, 0.012, 6, 28), KIT.std({ color: 0x8a5a26 })); rim.rotation.x = Math.PI / 2; rim.position.y = 0.13; basket.add(rim);
-      basket.position.set(0.17, -0.4, -0.52); basket.rotation.set(0.55, 0, 0.08);
+      basket.position.set(0.2, -0.36, -0.6); basket.rotation.set(0.85, 0, 0.1); basket.scale.setScalar(0.72);
       basket.userData.dynamic = true; w.camera.add(basket);
       const fallGeo = new T.SphereGeometry(0.045, 8, 6); fallGeo.scale(1, 1.45, 1);
-      const fallMat = KIT.std({ color: 0x2a140c, roughness: 0.35 });
+      const fallMat = KIT.std({ color: 0x1c0c06, roughness: 0.4 });
       this.inBasket = new T.InstancedMesh(fallGeo, fallMat, 7); this.inBasket.count = 0; basket.add(this.inBasket);
       const m4 = new T.Matrix4();
       for (let i = 0; i < 7; i++) { const a = i * 2.1; m4.makeRotationZ(1.3 + i * 0.4); m4.setPosition(Math.cos(a) * 0.07 * (i ? 1 : 0), 0.04 + (i > 4 ? 0.03 : 0), Math.sin(a) * 0.07 * (i ? 1 : 0)); this.inBasket.setMatrixAt(i, m4); }
@@ -355,7 +350,7 @@ void main(){
       const sunFar = ht.clone().addScaledVector(SUN, 60);
       const L = this.laden[0];
       w.cinematic([
-        { p: [ht.x + 0.5, ht.y + 0.35, ht.z + 0.9], l: [sunFar.x, sunFar.y - 6, sunFar.z] },
+        { p: [ht.x + 1.1, ht.y + 0.5, ht.z + 2.4], l: [sunFar.x, sunFar.y - 8, sunFar.z] },
         { p: [ht.x + 1.6, ht.y - 0.4, ht.z + 2.2], l: [sunFar.x * 0.6 + L.top.x * 0.4, L.top.y + 4, sunFar.z * 0.6 + L.top.z * 0.4] },
         { p: [ht.x + 2.6, ht.y - 2.6, ht.z + 4.2], l: [L.top.x, L.top.y - 0.6, L.top.z] },
         { p: [w.pos.x + 0.6, 3.2, w.pos.z + 2.2], l: [L.x, 3.0, L.z] },
@@ -519,7 +514,7 @@ void main(){
       // the basket dips as a date lands in it, and settles
       this.basketKick = U.damp(this.basketKick || 0, 0, 5, dt);
       const kb = this.basketKick;
-      this.basket.position.y = -0.4 - Math.sin(kb * Math.PI) * 0.05;
+      this.basket.position.y = -0.36 - Math.sin(kb * Math.PI) * 0.04;
       this.basket.rotation.z = 0.08 + Math.sin(t * 1.3) * 0.015 + kb * 0.06 * Math.sin(t * 20);
 
       // doves wheel slowly overhead

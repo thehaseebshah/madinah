@@ -1,226 +1,385 @@
-/* Station VI — Uhud, the Mountain That Loves Us.
-   Layered granite ridges under a sun you carry across the sky. Tap the mountain and it answers:
-   a call echoes back from ridge to ridge, each one flaring with light as the sound reaches it. */
+/* Station VI — Uhud, the Mountain That Loves Us (walkable).
+   The plain north of Madinah in afternoon light. The long red-granite massif of Uhud fills the
+   north; in front of it stands the small hill now called Jabal ar-Rumat, the Archers' Hill, and the
+   low wall of the martyrs' resting place. Hold the hill for a minute while glints of spoils and
+   murmurs call from the plain; then call to the mountain and the echo rolls from ridge to ridge,
+   each flaring with light. Nobody is shown: presence is only light, cloth and wordless voices. */
 (function () {
   'use strict';
-  const SKY_TOP = [[0, '#28305e'], [0.22, '#4b7cb6'], [0.5, '#3a78c4'], [0.78, '#4a68a6'], [1, '#2a2350']];
-  const SKY_HOR = [[0, '#f2a27c'], [0.22, '#f3d9b4'], [0.5, '#d4e6f2'], [0.78, '#f5c48a'], [1, '#ff7c4a']];
-  const LAYERS = [ // far -> near
-    { base: 0.5, amp: 0.2, fq: 0.0028, jag: 0.6, seed: 2, col: '#8c5a48' },
-    { base: 0.53, amp: 0.26, fq: 0.0034, jag: 0.8, seed: 7, col: '#7a4634' },
-    { base: 0.58, amp: 0.24, fq: 0.004, jag: 1, seed: 13, col: '#6c3a2a' },
-    { base: 0.64, amp: 0.16, fq: 0.005, jag: 1, seed: 21, col: '#5a2f22' },
-    { base: 0.76, amp: 0.035, fq: 0.003, jag: 0.3, seed: 34, col: '#9a7a58' }, // the plain
-  ];
+  if (!window.WORLD) return;
+  const HILL = { x: 0, z: 0, h: 8, top: 3.8, r: 21 };
+  const CEM = { x0: 26, z0: -50, x1: 60, z1: -26, gateZ: -38 };
+  const HOLD = 60;
+  const M_FOOT = 175;                       // the mountain rises from z = -M_FOOT northward
 
-  function ridge(L, x, w, h) {
-    // a massif that swells in the middle of the frame, like Uhud seen from the south
-    const env = Math.pow(Math.sin(U.clamp(x / w) * Math.PI), 0.6) * 0.85 + 0.15;
-    const n = U.fbm1(x * L.fq + L.seed * 10, 6);
-    const sharp = Math.abs(U.noise1(x * L.fq * 3.1 + L.seed)) * 0.25 * L.jag;
-    return h * (L.base - L.amp * env * (0.55 + n * 0.8 + sharp));
+  function plain(x, z) {
+    const edge = 1 - U.smooth(80, 100, Math.max(Math.abs(x), Math.abs(z)));
+    return (U.noise2(x * 0.018, z * 0.018) * 0.7 + U.noise2(x * 0.09, z * 0.09) * 0.16) * edge;
+  }
+  function hill(x, z) {
+    const d = Math.hypot(x - HILL.x, (z - HILL.z) * 1.12);
+    const body = HILL.h * (1 - U.smooth(HILL.top, HILL.r, d));
+    const rough = (U.noise2(x * 0.35, z * 0.35) * 0.35 + U.noise2(x * 0.12 + 7, z * 0.12) * 0.6) * U.smooth(2.5, 8, d) * (1 - U.smooth(HILL.r - 3, HILL.r + 4, d));
+    return body + rough;
+  }
+  const ground = (x, z) => plain(x, z) + hill(x, z);
+
+  // Uhud: a ridged granite massif, swelling in its middle, cut by gullies
+  function mountain(x, z) {
+    const u = (-z - M_FOOT) / 260;
+    if (u < -0.05) return -2;
+    const along = 1 - U.smooth(380, 640, Math.abs(x + 40));
+    const rise = U.smooth(-0.02, 0.32, u) * (1 - 0.35 * U.smooth(0.75, 1.3, u));
+    let r = 0, a = 1, f = 0.007, n = 0;
+    for (let i = 0; i < 5; i++) {
+      const v = 1 - Math.abs(U.noise2(x * f + i * 13.1, z * f * 1.3 + i * 7.7));
+      r += a * Math.pow(v, 1.4); n += a; a *= 0.48; f *= 2.1;
+    }
+    r /= n;
+    // great rounded domes of granite, creased by ridges and gullies
+    const domes = 0.55 + 0.45 * U.noise2(x * 0.0045 + 3.3, z * 0.006 + 1.1);
+    const swell = 0.62 + 0.38 * Math.cos(U.clamp((x + 40) / 520, -1, 1) * Math.PI * 0.5);
+    return 175 * rise * along * swell * (0.12 + 0.5 * domes + 0.55 * r) - 2 + U.noise2(x * 0.08, z * 0.08) * 1.2 * rise;
   }
 
-  ENGINE.register({
+  ENGINE.register(WORLD.stage({
     key: 'uhud',
-    id: 'uhud',
     arabic: 'أُحُد',
     title: 'The Mountain That Loves Us',
     era: 'Jabal Uhud · 3 AH · 625 CE',
-    hint: 'Drag across the sky to move the sun · tap the mountain to call',
-    sound: { reverb: 0.6 },
-    story: `<p>Uhud rises from the plain north of the city, a red granite massif about seven kilometres long. In 625 the Battle of Uhud was fought at its foot. Seventy companions fell there, among them Hamzah, the Prophet’s uncle; they are buried on the plain below.</p>
-            <p class="q"><span class="ar">أُحُدٌ جَبَلٌ يُحِبُّنَا وَنُحِبُّهُ</span>“Uhud is a mountain that loves us, and we love it.” (Sahih al-Bukhari)</p>`,
+    hint: 'WASD to walk · climb the Archers’ Hill and stay on its top · then E to call to the mountain',
+    sound: { reverb: 0.7 },
+    story: `<p>Uhud rises from the plain north of the city, a red granite massif about seven kilometres long. In Shawwal of the year 3 AH (625 CE) a battle was fought at its foot. The Prophet ﷺ placed about fifty archers on a small hill under ‘Abdullah ibn Jubayr and told them not to leave their place whatever they saw. When most of them left, thinking the battle won, it turned. Some seventy Muslims were killed, among them Hamzah, the Prophet’s uncle.</p>
+            <p class="q"><span class="ar">أُحُدٌ جَبَلٌ يُحِبُّنَا وَنُحِبُّهُ</span>“Uhud is a mountain that loves us, and we love it.” (Sahih al-Bukhari 4422; Sahih Muslim 1393)</p>
+            <p>Climb the small hill, now called Jabal ar-Rumat, the Archers’ Hill, and hold it.</p>`,
 
     enter(env) {
-      const { ctx } = env.canvas2d();
-      this.ctx = ctx;
-      this.sun = 0.18; this.sunTarget = 0.18; this.moved = 0; this.echoes = []; this.calls = 0; this.hadith = 0;
-      this.birds = Array.from({ length: 9 }, (_, i) => ({ x: -100 - i * 30 - Math.random() * 40, y: 0.22 + Math.random() * 0.08 + (i % 3) * 0.015, ph: Math.random() * 6 }));
-      const b = env.bus;
-      this.wind = SND.noise(b, { color: 'pink', type: 'bandpass', freq: 380, q: 0.5, gain: 0.08 });
-      SND.lfo(b, this.wind.gain && this.wind.gain.gain, 0.06, 0.05);
-      SND.lfo(b, this.wind.filter && this.wind.filter.frequency, 0.09, 140);
-      this.gustClock = 3;
-    },
+      const T = THREE, self = this;
+      const fogCol = new T.Color(0xe6c4a0);
+      const w = this.w = WORLD.create(env, {
+        start: { x: 3, z: 30, yaw: 0.05, pitch: 0.06 }, exposure: 1.0, far: 2000,
+        fog: { color: fogCol, density: 0.0011 }, bounds: [-95, -95, 95, 95], ground,
+        surface: (x, z) => (Math.hypot(x - HILL.x, z - HILL.z) < HILL.r - 4 ? 'gravel' : 'sand'),
+      });
+      const S = w.scene;
+      this.phase = 'climb'; this.held = 0; this.awayT = 0; this.warned = 0; this.echoes = []; this.seen = {};
 
-    inSky(env, p) { return p.y < ridge(LAYERS[1], p.x, env.w, env.h) - 10; },
+      /* ---------- the afternoon sky; the sun sinks a little while you hold ---------- */
+      this.sunA = new T.Vector3(-0.66, 0.5, 0.42).normalize();
+      this.sunB = new T.Vector3(-0.78, 0.26, 0.45).normalize();
+      this.skyM = w.sky({ top: '#5784bd', mid: '#f0cfa4', bot: '#c89a72', sunDir: this.sunA.toArray(), sun: '#ffd6a0', sunSize: 0.0016 });
+      this.hemi = new T.HemisphereLight(0xffe2c4, 0x8a5a40, 0.62); S.add(this.hemi);
+      this.sun = new T.DirectionalLight(0xffd2a0, 2.3); this.sun.position.copy(this.sunA).multiplyScalar(60); S.add(this.sun);
 
-    down(env, p) {
-      if (this.inSky(env, p)) { this.drag = { x: p.x, s: this.sunTarget }; return; }
-      this.call(env, p);
-    },
-    move(env, p) {
-      if (!p.down || !this.drag) return;
-      const ns = U.clamp(this.drag.s + (p.x - this.drag.x) / env.w);
-      this.moved += Math.abs(ns - this.sunTarget);
-      this.sunTarget = ns;
-    },
-    up() { this.drag = null; },
-    wheel(env, dy) { const ns = U.clamp(this.sunTarget + dy * 0.0004); this.moved += Math.abs(ns - this.sunTarget); this.sunTarget = ns; },
-    key(env, e) { if (e.key === ' ') this.call(env, { x: env.w / 2, y: env.h * 0.5 }); },
+      /* ---------- textures ---------- */
+      const granite = w.tex(512, (g, s) => {
+        g.fillStyle = '#c4b4ac'; g.fillRect(0, 0, s, s);
+        for (let i = 0; i < 9000; i++) { const c = Math.random(); g.fillStyle = c < 0.5 ? 'rgba(70,60,58,0.45)' : c < 0.85 ? 'rgba(150,130,124,0.4)' : 'rgba(240,232,226,0.4)'; g.fillRect(Math.random() * s, Math.random() * s, 1 + Math.random() * 2.5, 1 + Math.random() * 2.5); }
+        g.strokeStyle = 'rgba(40,20,16,0.35)';
+        for (let i = 0; i < 40; i++) { g.lineWidth = 0.6 + Math.random() * 1.5; g.beginPath(); let x = Math.random() * s, y = Math.random() * s; g.moveTo(x, y); for (let k = 0; k < 6; k++) { x += (Math.random() - 0.5) * 40; y += Math.random() * 30; g.lineTo(x, y); } g.stroke(); }
+      }, [60, 20]);
 
-    call(env, p) {
-      this.calls++;
-      const pan = (p.x / env.w) * 2 - 1;
-      const f = U.pick([220, 246.9, 293.7, 329.6]);
-      this.echoes.push({ x: p.x, y: p.y, t: 0 });
-      SND.glow(env.bus, f, { gain: 0.07, dur: 1.4, pan });
-      for (let k = 1; k <= 6; k++) {
-        const side = k % 2 ? -pan * 0.8 - 0.2 * Math.sign(pan || 1) : pan * 0.6;
-        SND.glow(env.bus, f, { gain: 0.06 * Math.pow(0.58, k), dur: 1.4 + k * 0.15, delay: k * 0.48, pan: side });
+      /* ---------- Uhud ---------- */
+      const mg = new T.PlaneGeometry(1500, 460, 300, 110); mg.rotateX(-Math.PI / 2); mg.translate(-40, 0, -M_FOOT - 215);
+      const mp = mg.attributes.position, mc = new Float32Array(mp.count * 3);
+      const STRATA = [[0.66, 0.31, 0.22], [0.44, 0.21, 0.19], [0.76, 0.48, 0.38], [0.36, 0.19, 0.19], [0.7, 0.38, 0.27], [0.55, 0.32, 0.3]];
+      for (let i = 0; i < mp.count; i++) {
+        const x = mp.getX(i), z = mp.getZ(i), y = mountain(x, z); mp.setY(i, y);
+        // tilted bands of colour in the granite, with dark varnish in the gullies and pale sand at the foot
+        const band = y * 0.075 + x * 0.006 + U.noise2(x * 0.012, z * 0.012) * 1.4;
+        const bi = Math.floor(((band % STRATA.length) + STRATA.length) % STRATA.length), bf = band - Math.floor(band);
+        let c = U.mix(STRATA[bi], STRATA[(bi + 1) % STRATA.length], U.smooth(0.45, 1, bf));
+        c = U.mix(c, [0.3, 0.18, 0.15], U.clamp(0.5 - U.noise2(x * 0.03, z * 0.03)) * 0.5);
+        c = U.mix([0.78, 0.64, 0.5], c, U.smooth(1, 14, y));
+        mc.set(c, i * 3);
       }
-      SND.thump(env.bus, { f: 45, gain: 0.12, pan });
+      mg.setAttribute('color', new T.BufferAttribute(mc, 3)); mg.computeVertexNormals();
+      this.mountainMat = KIT.std({ map: granite, vertexColors: true, relief: 0.04, color: 0xffffff });
+      const mtn = new T.Mesh(mg, this.mountainMat); mtn.userData.noCast = true; S.add(mtn);
+
+      /* ---------- the plain and the Archers' Hill ---------- */
+      const far = new T.Mesh(new T.PlaneGeometry(2400, 2400, 2, 2), KIT.std({ map: KIT.sand(w, [300, 300]), color: 0xd8b892 }));
+      far.rotation.x = -Math.PI / 2; far.position.y = -0.3; S.add(far);
+      const ng = new T.PlaneGeometry(200, 200, 170, 170); ng.rotateX(-Math.PI / 2);
+      const np = ng.attributes.position, nc = new Float32Array(np.count * 3);
+      for (let i = 0; i < np.count; i++) {
+        const x = np.getX(i), z = np.getZ(i), y = ground(x, z); np.setY(i, y);
+        const rock = U.smooth(0.3, 2.5, hill(x, z)) * (0.6 + 0.4 * (U.noise2(x * 0.2, z * 0.2) * 0.5 + 0.5));
+        nc.set(U.mix([0.92, 0.8, 0.64], [0.6, 0.36, 0.3], rock), i * 3);
+      }
+      ng.setAttribute('color', new T.BufferAttribute(nc, 3)); ng.computeVertexNormals();
+      S.add(new T.Mesh(ng, KIT.std({ map: KIT.sand(w, [26, 26]), vertexColors: true, relief: 0.03 })));
+
+      const rockMat = KIT.std({ map: granite, color: 0x9a5a48, flatShading: true, relief: 0.03 });
+      const r = U.seeded(625);
+      for (let i = 0; i < 70; i++) {
+        const a = r() * 6.283, d = 5 + r() * (HILL.r - 4);
+        if (Math.abs(Math.atan2(Math.sin(a), Math.cos(a)) - Math.PI / 2) < 0.35 && d > 4) continue;   // keep the south path clear
+        const x = HILL.x + Math.cos(a) * d, z = HILL.z + Math.sin(a) * d / 1.12, s = 0.3 + Math.pow(r(), 2.5) * 1.2;
+        const m = new T.Mesh(new T.DodecahedronGeometry(s, 0), rockMat); m.position.set(x, ground(x, z) + s * 0.25, z); m.rotation.set(r() * 3, r() * 3, r() * 3); m.scale.y = 0.7; S.add(m);
+        if (s > 0.8) w.addCircle(x, z, s * 0.8);
+      }
+      for (let i = 0; i < 60; i++) {
+        const x = (r() - 0.5) * 180, z = (r() - 0.5) * 180; if (Math.hypot(x, z) < HILL.r + 4) continue;
+        const s = 0.2 + r() * 0.6; const m = new T.Mesh(new T.DodecahedronGeometry(s, 0), rockMat); m.position.set(x, ground(x, z), z); m.rotation.set(r() * 3, r() * 3, 0); S.add(m);
+      }
+      // acacias scattered on the plain
+      const barkM = KIT.std({ color: 0x3e3028 }), leafM = KIT.std({ color: 0x46522c, roughness: 1, flatShading: true });
+      const acacia = (x, z, h) => {
+        const g = new T.Group();
+        const tr = new T.Mesh(new T.CylinderGeometry(0.1, 0.18, h, 6), barkM); tr.position.y = h / 2; g.add(tr);
+        for (let k = 0; k < 5; k++) {
+          const cg = new T.IcosahedronGeometry(1, 1); const cp = cg.attributes.position;
+          for (let j = 0; j < cp.count; j++) cp.setY(j, cp.getY(j) * 0.42 + (r() - 0.5) * 0.12);
+          cg.computeVertexNormals();
+          const c = new T.Mesh(cg, leafM), R = h * (0.32 + r() * 0.22); c.scale.setScalar(R); c.position.set((r() - 0.5) * h * 0.6, h + r() * 0.3, (r() - 0.5) * h * 0.6); g.add(c);
+        }
+        g.position.set(x, ground(x, z), z); S.add(g); w.addCircle(x, z, 0.3);
+      };
+      for (let i = 0; i < 22; i++) { const x = (r() - 0.5) * 180, z = (r() - 0.5) * 170; if (Math.hypot(x, z) < HILL.r + 6 || (x > CEM.x0 - 4 && x < CEM.x1 + 4 && z > CEM.z0 - 4 && z < CEM.z1 + 4)) continue; acacia(x, z, 2 + r() * 2.2); }
+
+      /* ---------- the archers' place on the hilltop: a ring of stones and a pale pennant ---------- */
+      const topY = ground(HILL.x, HILL.z);
+      for (let i = 0; i < 16; i++) {
+        const a = i / 16 * 6.283, x = HILL.x + Math.cos(a) * 3.3, z = HILL.z + Math.sin(a) * 3.3;
+        const m = new T.Mesh(new T.DodecahedronGeometry(0.22 + (i % 3) * 0.06, 0), rockMat); m.position.set(x, ground(x, z) + 0.08, z); S.add(m);
+      }
+      const pole = new T.Mesh(new T.CylinderGeometry(0.04, 0.05, 3.6, 6), KIT.std({ map: KIT.wood(w), color: 0xa08060 })); pole.position.set(HILL.x - 1.6, topY + 1.8, HILL.z - 1.4); S.add(pole);
+      w.addCircle(HILL.x - 1.6, HILL.z - 1.4, 0.15);
+      this.pennant = new T.Mesh(new T.PlaneGeometry(1.3, 0.55, 10, 2), KIT.std({ color: 0xece0c8, side: T.DoubleSide, roughness: 1 }));
+      this.pennant.position.set(HILL.x - 1.6 + 0.66, topY + 3.25, HILL.z - 1.4); this.pennant.userData.dynamic = true; S.add(this.pennant);
+      this.pennantBase = this.pennant.geometry.attributes.position.array.slice();
+      // the goal light on the hilltop (the one accent: pale gold)
+      this.topGlow = KIT.glow(w, 0xffe2a0, 7, 0.5); this.topGlow.position.set(HILL.x, topY + 0.9, HILL.z); S.add(this.topGlow);
+      const ringG = new T.RingGeometry(3.0, 3.6, 48); ringG.rotateX(-Math.PI / 2);
+      this.topRing = new T.Mesh(ringG, new T.MeshBasicMaterial({ color: 0xffe2a0, transparent: true, opacity: 0.0, depthWrite: false, blending: T.AdditiveBlending }));
+      this.topRing.position.set(HILL.x, topY + 0.12, HILL.z); this.topRing.userData.dynamic = true; S.add(this.topRing);
+
+      /* ---------- the martyrs' resting place: a low wall, unmarked stones ---------- */
+      const wallMat = KIT.std({ map: KIT.basalt(w, [3, 0.5]), color: 0xb8a090 });
+      const wseg = (x0, z0, x1, z1) => {
+        const lx = Math.abs(x1 - x0) || 0.6, lz = Math.abs(z1 - z0) || 0.6, cx = (x0 + x1) / 2, cz = (z0 + z1) / 2;
+        const m = new T.Mesh(new T.BoxGeometry(lx, 1.1, lz), wallMat); m.position.set(cx, ground(cx, cz) + 0.45, cz); S.add(m);
+        w.addBox(cx - lx / 2, cz - lz / 2, cx + lx / 2, cz + lz / 2);
+      };
+      wseg(CEM.x0, CEM.z0, CEM.x1, CEM.z0); wseg(CEM.x0, CEM.z1, CEM.x1, CEM.z1); wseg(CEM.x1, CEM.z0, CEM.x1, CEM.z1);
+      wseg(CEM.x0, CEM.z0, CEM.x0, CEM.gateZ - 1.6); wseg(CEM.x0, CEM.gateZ + 1.6, CEM.x0, CEM.z1);
+      const graveMat = KIT.std({ map: granite, color: 0xa08478, flatShading: true });
+      for (let gx = CEM.x0 + 3; gx < CEM.x1 - 2; gx += 2.6) for (let gz = CEM.z0 + 3; gz < CEM.z1 - 2; gz += 3.2) {
+        if (r() < 0.25) continue;
+        const m = new T.Mesh(new T.DodecahedronGeometry(0.18 + r() * 0.1, 0), graveMat); m.position.set(gx + (r() - 0.5) * 0.6, ground(gx, gz) + 0.06, gz); m.scale.set(1, 0.6, 1); S.add(m);
+        const m2 = m.clone(); m2.position.z += 1.6; S.add(m2);
+      }
+      this.cemGlow = KIT.glow(w, 0xffe2a0, 14, 0); this.cemGlow.position.set((CEM.x0 + CEM.x1) / 2, ground((CEM.x0 + CEM.x1) / 2, (CEM.z0 + CEM.z1) / 2) + 1.6, (CEM.z0 + CEM.z1) / 2); S.add(this.cemGlow);
+      this.gateGlow = KIT.glow(w, 0xffe2a0, 4, 0); this.gateGlow.position.set(CEM.x0 - 0.5, ground(CEM.x0, CEM.gateZ) + 1, CEM.gateZ); S.add(this.gateGlow);
+
+      /* ---------- glints of spoils on the plain (three flickering sets) ---------- */
+      this.glints = [];
+      this.glintSpots = [];
+      const spark = w.tex(128, (g, s) => {
+        const c = s / 2;
+        const gr = g.createRadialGradient(c, c, 0, c, c, c * 0.5); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+        g.fillStyle = gr; g.fillRect(0, 0, s, s);
+        g.fillStyle = 'rgba(255,255,255,0.9)';
+        g.beginPath(); g.moveTo(c, 0); g.lineTo(c + 3, c - 3); g.lineTo(s, c); g.lineTo(c + 3, c + 3); g.lineTo(c, s); g.lineTo(c - 3, c + 3); g.lineTo(0, c); g.lineTo(c - 3, c - 3); g.closePath(); g.fill();
+      });
+      spark.wrapS = spark.wrapT = T.ClampToEdgeWrapping;
+      for (let k = 0; k < 3; k++) {
+        const n = 14, pos = new Float32Array(n * 3);
+        for (let i = 0; i < n; i++) {
+          const a = U.lerp(-0.6, 2.3, r()), d = 30 + r() * 55;          // east, south-east and south of the hill
+          const x = Math.cos(a) * d, z = Math.sin(a) * d * 0.9 + 6;
+          pos.set([x, ground(x, z) + 0.25, z], i * 3); this.glintSpots.push({ x, z });
+        }
+        const gg = new T.BufferGeometry(); gg.setAttribute('position', new T.BufferAttribute(pos, 3));
+        const pts = new T.Points(gg, new T.PointsMaterial({ map: spark, color: 0xfff0b0, size: 2.4, transparent: true, opacity: 0, depthWrite: false, blending: T.AdditiveBlending }));
+        pts.frustumCulled = false; S.add(pts); this.glints.push(pts);
+      }
+
+      /* ---------- the ridges that will answer the call ---------- */
+      this.ridges = [];
+      for (let x = -420; x <= 340; x += 95) {
+        let best = -1e9, bz = 0;
+        for (let z = -M_FOOT - 20; z > -M_FOOT - 330; z -= 6) { const y = mountain(x, z); if (y > best) { best = y; bz = z; } }
+        const g = KIT.glow(w, 0xffd890, 120, 0); g.position.set(x, best + 10, bz); g.material.fog = false; S.add(g);
+        const d = Math.hypot(x - HILL.x, bz - HILL.z);
+        this.ridges.push({ x, y: best, z: bz, g, d, t: -1 });
+      }
+      this.ridges.sort((a, b) => a.d - b.d);
+
+      this.dust = KIT.dust(w, 300, [-30, 0.3, -20, 30, 12, 40], 0xffe8c8, 0.05); this.dust.material.opacity = 0.5; S.add(this.dust);
+
+      w.followShadow(this.sun, 40); w.receiveAll();
+      mtn.castShadow = false;
+      this.baked = w.bake();
+
+      /* ---------- the activity ---------- */
+      this.bar = w.ui.layer.querySelector('.wq-bar i');
+      w.activity('Hold the hill', 3, 'Climb Jabal ar-Rumat, the Archers’ Hill, and take your place inside the ring of stones');
+      w.interact({
+        key: 'call', pos: new T.Vector3(), r: 99, once: true, label: 'Call to the mountain',
+        enabled: () => self.phase === 'call',
+        onUse: () => self.call(env),
+      });
+      this.callItem = w.items[w.items.length - 1];
+
+      /* ---------- sound ---------- */
+      const b = env.bus;
+      this.wind = SND.noise(b, { color: 'pink', type: 'bandpass', freq: 380, q: 0.5, gain: 0.04 });
+      this.gust = SND.noise(b, { color: 'white', type: 'bandpass', freq: 1800, q: 0.7, gain: 0.0 });
+      SND.lfo(b, this.wind.filter && this.wind.filter.frequency, 0.07, 120);
+      this.hum = SND.drone(b, 110, { vowel: 'u', gain: 0.0 });
+      this.hum2 = SND.drone(b, 164.81, { vowel: 'o', gain: 0.0 });
+      this.murmurClock = 2; this.birdClock = 3;
+
+      /* ---------- entrance: a long lateral track along the red ridges from the east, swinging to the hill ---------- */
+      const E = [w.pos.x, ground(w.pos.x, w.pos.z) + 1.62, w.pos.z];
+      w.cinematic([
+        { p: [460, 70, -95], l: [330, 95, -300] },
+        { p: [300, 64, -105], l: [180, 105, -300] },
+        { p: [130, 58, -110], l: [20, 110, -300] },
+        { p: [-30, 46, -95], l: [-100, 80, -300] },
+        { p: [-58, 26, -30], l: [0, 6, 0] },
+        { p: [-26, 12, 26], l: [0, 6, -6] },
+        { p: E, l: [0, 6, 0] },
+      ], 11);
+    },
+
+    call(env) {
+      const w = this.w, b = env.bus;
+      this.phase = 'echo'; this.echoT = 0;
+      SND.sing(b, 220, { vowel: 'a', dur: 1.8, gain: 0.09, voices: 1, glide: 0.82, attack: 0.08, hold: 0.5, breath: 0.12 });
+      SND.swell(b, { color: 'pink', f0: 400, f1: 900, dur: 1.4, gain: 0.04 });
+      this.ridges.forEach((rg, i) => {
+        rg.t = 1.1 + rg.d / 260 + i * 0.32;
+        const sp = w.spatial(rg, 200);
+        SND.sing(b, 220 * (i % 2 ? 1 : 0.998), { vowel: i < 3 ? 'a' : 'o', dur: 1.7, gain: 0.06 * Math.pow(0.8, i), delay: rg.t, glide: 0.85, pan: sp.pan, attack: 0.12, hold: 0.4, breath: 0.15 });
+      });
+      w.progress(2, 'Listen to the mountain answer');
     },
 
     update(env, dt) {
-      this.sun = U.damp(this.sun, this.sunTarget, 2, dt);
-      for (const e of this.echoes) e.t += dt;
-      this.echoes = this.echoes.filter(e => e.t < 4);
-      for (const b of this.birds) { b.x += dt * 42; if (b.x > env.w + 60) b.x = -60 - Math.random() * 200; }
-      this.gustClock -= dt;
-      if (this.gustClock < 0) { this.gustClock = 4 + Math.random() * 6; SND.swell(env.bus, { f0: 200, f1: 900, dur: 3 + Math.random() * 2, gain: 0.07, pan: Math.random() * 2 - 1 }); }
-      const want = this.calls >= 1 ? 1 : 0;
-      this.hadith = U.damp(this.hadith, want, 0.8, dt);
-      if (this.calls >= 2 && this.moved > 0.25) env.complete();
-      // night falls when the sun is set; wind cools
-      this.wind.set('freq', 300 + (1 - Math.abs(this.sun - 0.5) * 2) * 200, 0.6);
-    },
+      const w = this.w; if (!w) return;
+      w.update(dt);
+      const t = w.time, b = env.bus;
+      KIT.driftDust(this.dust, dt, t, [0.25, 0.05]);
+      { const f = w.forward(), l = Math.hypot(f.x, f.z) || 1; this.callItem.pos.set(w.pos.x + f.x / l * 2, w.y + 1.6, w.pos.z + f.z / l * 2); }
+      const dTop = Math.hypot(w.pos.x - HILL.x, w.pos.z - HILL.z);
+      const onTop = dTop < HILL.top + 0.4 && w.y > HILL.h - 1.2;
 
-    render(env) {
-      const ctx = this.ctx, w = env.w, h = env.h, t = env.time, s = this.sun;
-      ctx.setTransform(env.dpr, 0, 0, env.dpr, 0, 0);
+      // the pennant stirs
+      { const a = this.pennant.geometry.attributes.position, base = this.pennantBase;
+        for (let i = 0; i < a.count; i++) { const x0 = base[i * 3] + 0.65; a.setZ(i, Math.sin(t * 4 + x0 * 4) * 0.1 * x0); }
+        a.needsUpdate = true; }
 
-      const top = U.ramp(SKY_TOP, s), hor = U.ramp(SKY_HOR, s);
-      const g = ctx.createLinearGradient(0, 0, 0, h * 0.62);
-      g.addColorStop(0, U.rgb(top)); g.addColorStop(1, U.rgb(hor));
-      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-
-      // sun arc
-      const sx = U.lerp(-w * 0.05, w * 1.05, s), sy = h * 0.58 - Math.sin(s * Math.PI) * h * 0.46;
-      const warm = 1 - Math.sin(s * Math.PI) * 0.8;
-      const sunCol = U.mix([255, 250, 235], [255, 150, 80], warm);
-      const sg = ctx.createRadialGradient(sx, sy, 0, sx, sy, h * 0.55);
-      sg.addColorStop(0, U.rgb(sunCol, 0.9)); sg.addColorStop(0.035, U.rgb(sunCol, 0.75)); sg.addColorStop(0.2, U.rgb(sunCol, 0.15)); sg.addColorStop(1, U.rgb(sunCol, 0));
-      ctx.fillStyle = sg; ctx.fillRect(0, 0, w, h);
-      ctx.fillStyle = U.rgb(U.mix(sunCol, [255, 255, 255], 0.5));
-      ctx.beginPath(); ctx.arc(sx, sy, Math.min(w, h) * 0.022, 0, 6.283); ctx.fill();
-
-      // birds
-      ctx.strokeStyle = 'rgba(30,20,30,0.55)'; ctx.lineWidth = 1.2;
-      for (const b of this.birds) {
-        const by = b.y * h + Math.sin(t * 0.6 + b.ph) * 6, flap = Math.sin(t * 6 + b.ph) * 3;
-        ctx.beginPath(); ctx.moveTo(b.x - 6, by - flap); ctx.quadraticCurveTo(b.x - 2, by - 2, b.x, by); ctx.quadraticCurveTo(b.x + 2, by - 2, b.x + 6, by - flap); ctx.stroke();
+      if (!this.seen.hill && dTop < HILL.r - 6 && !w.cine) {
+        this.seen.hill = true;
+        w.say('The Archers’ Hill', 'Before the battle, the Prophet ﷺ placed about fifty archers on a small hill under ‘Abdullah ibn Jubayr, to guard the army’s back. <span class="q">(Sahih al-Bukhari 3039)</span> The hill is known today as Jabal ar-Rumat, the Archers’ Hill.', { ms: 12000 });
       }
 
-      const sunDir = [sx - w / 2, sy - h * 0.5];
-      const sl = Math.hypot(sunDir[0], sunDir[1]); sunDir[0] /= sl; sunDir[1] /= sl;
-
-      LAYERS.forEach((L, li) => {
-        const depth = 1 - li / (LAYERS.length - 1);
-        const base = U.hex(L.col);
-        const col = U.mix(U.mix(base, top, 0.08), hor, depth * 0.55);
-        const pts = [];
-        const sh = env.tilt.x * 46 * (li + 1) / LAYERS.length, sv = -env.tilt.y * 10 * (li + 1) / LAYERS.length;
-        for (let x = -8; x <= w + 8; x += 6) pts.push([x, ridge(L, x + sh, w, h) + sv]);
-        ctx.beginPath(); ctx.moveTo(-8, h);
-        pts.forEach(([x, y]) => ctx.lineTo(x, y));
-        ctx.lineTo(w + 8, h); ctx.closePath();
-        const fg = ctx.createLinearGradient(0, h * (L.base - L.amp), 0, h);
-        fg.addColorStop(0, U.rgb(col)); fg.addColorStop(1, U.rgb(U.mix(col, [10, 8, 12], 0.5)));
-        ctx.fillStyle = fg; ctx.fill();
-
-        // faces turned to the sun catch its light; faces turned away fall into shadow
-        if (li < 4) {
-          const lits = [];
-          for (let i = 0; i < pts.length - 1; i++) {
-            const [x0, y0] = pts[i], [x1, y1] = pts[i + 1];
-            const nx = -(y1 - y0), ny = x1 - x0, nl = Math.hypot(nx, ny);
-            lits.push(-(nx * sunDir[0] + ny * sunDir[1]) / nl);
-          }
-          // one seamless band of light and shadow along the ridge, coloured by a horizontal gradient
-          const dep = 50 + li * 24, span = w + 16;
-          const grad = ctx.createLinearGradient(-8, 0, w + 8, 0);
-          for (let i = 0; i < lits.length; i += 2) {
-            let lit = 0, n = 0;
-            for (let k = -3; k <= 3; k++) { const v = lits[i + k]; if (v != null) { lit += v; n++; } }
-            lit /= n;
-            const a = (lit > 0 ? lit * 0.3 : -lit * 0.26) * 0.9;
-            grad.addColorStop(U.clamp((pts[i][0] + 8) / span), lit > 0 ? U.rgb(sunCol, a * (1 - depth * 0.5)) : `rgba(20,10,30,${a})`);
-          }
-          ctx.fillStyle = grad;
-          ctx.beginPath();
-          pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
-          for (let i = pts.length - 1; i >= 0; i--) ctx.lineTo(pts[i][0], pts[i][1] + dep);
-          ctx.closePath(); ctx.fill();
+      /* climbing, then holding */
+      const hk = this.held / HOLD;
+      if (this.phase === 'climb') {
+        this.topGlow.material.opacity = 0.35 + 0.15 * Math.sin(t * 2);
+        this.topRing.material.opacity = 0.18 + 0.08 * Math.sin(t * 2);
+        if (onTop) {
+          this.phase = 'hold';
+          w.progress(1, 'Hold your place on the hill');
+          SND.bell(b, 293.66, { gain: 0.04 });
         }
-
-        // the echo reaches this ridge
-        for (const e of this.echoes) {
-          const k = e.t - (LAYERS.length - 1 - li) * 0.24 - 0.1;
-          const f = k > 0 ? Math.exp(-k * 2.2) * Math.min(1, k * 10) : 0;
-          if (f > 0.01) {
-            ctx.save(); ctx.globalCompositeOperation = 'lighter';
-            ctx.strokeStyle = `rgba(255,214,150,${0.7 * f})`; ctx.lineWidth = 2;
-            ctx.shadowColor = 'rgba(255,200,120,0.9)'; ctx.shadowBlur = 14;
-            ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke();
-            ctx.restore();
+      } else if (this.phase === 'hold') {
+        if (onTop) {
+          this.held = Math.min(HOLD, this.held + dt);
+          if (this.awayT > 0.5) w.step('Hold your place on the hill');
+          this.awayT = 0;
+        } else {
+          this.awayT += dt;
+          if (this.awayT > 0.5 && this.awayT - dt <= 0.5) {
+            w.step('Return to the ring of stones on the hilltop; the hold waits for you');
+            if (!this.warned) {
+              this.warned = 1;
+              w.say('Do Not Leave Your Place', '“Even if you see birds snatching us, do not leave this place of yours until I send for you.” <span class="q">(Sahih al-Bukhari 3039)</span>', { ar: 'إِنْ رَأَيْتُمُونَا تَخْطَفُنَا الطَّيْرُ فَلاَ تَبْرَحُوا مَكَانَكُمْ هَذَا حَتَّى أُرْسِلَ إِلَيْكُمْ', ms: 12000 });
+            }
           }
         }
-        // haze
-        ctx.fillStyle = U.rgb(hor, 0.08 * depth); ctx.fillRect(0, 0, w, h);
-      });
+        this.bar.style.width = `${(1 + this.held / HOLD) / 3 * 100}%`;
+        this.topGlow.material.opacity = onTop ? 0.12 : 0.45 + 0.15 * Math.sin(t * 3);
+        this.topRing.material.opacity = (onTop ? 0.1 : 0.3) + 0.05 * Math.sin(t * 2);
+        if (this.held >= HOLD) {
+          this.phase = 'quiet'; this.quietT = 0;
+          w.progress(2, 'Stay a moment');
+        }
+      } else if (this.phase === 'quiet') {
+        this.quietT += dt;
+        if (this.quietT > 3.2) {
+          this.phase = 'call';
+          w.progress(2, 'Press E and call to the mountain');
+          w.say('The Hill Held', 'At Uhud most of the archers left their place when they thought the battle was won, and the battle turned. <span class="q">(Sahih al-Bukhari 3039)</span> The hill is quiet now. Face the mountain, and call.', { ms: 11000 });
+        }
+      }
 
-      // Jabal ar-Rumat, the archers' hill, rising from the plain
-      const hx = w * 0.3, hy = ridge(LAYERS[4], hx, w, h);
-      ctx.fillStyle = U.rgb(U.mix([120, 86, 60], hor, 0.12));
-      ctx.beginPath(); ctx.moveTo(hx - w * 0.09, hy + 4);
-      ctx.bezierCurveTo(hx - w * 0.05, hy - h * 0.05, hx + w * 0.03, hy - h * 0.06, hx + w * 0.08, hy + 4); ctx.fill();
-      const hg = ctx.createLinearGradient(hx - w * 0.09, 0, hx + w * 0.08, 0);
-      const toSun = sx < hx ? 1 : 0;
-      hg.addColorStop(toSun ? 0 : 1, U.rgb(sunCol, 0.22)); hg.addColorStop(toSun ? 1 : 0, 'rgba(20,10,20,0.18)');
-      ctx.fillStyle = hg; ctx.beginPath(); ctx.moveTo(hx - w * 0.09, hy + 4);
-      ctx.bezierCurveTo(hx - w * 0.05, hy - h * 0.05, hx + w * 0.03, hy - h * 0.06, hx + w * 0.08, hy + 4); ctx.fill();
-      this.label(ctx, hx, hy - h * 0.055, 'JABAL AR-RUMAT', 'the archers’ hill', w);
+      // glints and murmurs grow while you hold, and fade when the hold is done
+      const lure = this.phase === 'hold' ? 0.25 + 0.75 * U.smooth(0, 0.8, hk) : this.phase === 'climb' ? 0.0 : 0;
+      this.lure = U.damp(this.lure || 0, lure, 1.5, dt);
+      this.glints.forEach((g, i) => { g.material.opacity = this.lure * U.clamp(0.4 + 0.6 * U.noise1(t * 2.2 + i * 11)); g.material.size = 1.8 + 1.6 * this.lure; });
+      this.murmurClock -= dt * (0.4 + this.lure * 2.2);
+      if (this.lure > 0.05 && this.murmurClock < 0) {
+        this.murmurClock = 0.5 + Math.random() * 1.2;
+        const s = U.pick(this.glintSpots), sp = w.spatial(s, 30);
+        SND.sing(b, U.rnd(105, 165), { vowel: U.pick(['a', 'e', 'o']), dur: U.rnd(0.35, 0.8), gain: (0.03 * sp.gain + 0.01) * this.lure * (this.awayT > 0.5 ? 1.5 : 1), pan: sp.pan, attack: 0.05, hold: 0.3, breath: 0.35, vib: 0.003, glide: U.rnd(0.9, 1.15) });
+      }
+      // the sun lowers with the hold; the afternoon turns golden and stays so
+      const sk = U.smooth(0, 1, Math.max(hk, this.phase === 'climb' || this.phase === 'hold' ? 0 : 1));
+      const sd = this.sunA.clone().lerp(this.sunB, sk).normalize();
+      this.sun.position.copy(sd).multiplyScalar(60); w._shadow.off.copy(sd).multiplyScalar(100);
+      this.skyM.material.uniforms.uSunDir.value.copy(sd);
+      this.sun.color.setRGB(1, U.lerp(0.82, 0.72, sk), U.lerp(0.63, 0.48, sk));
+      this.skyM.material.uniforms.uMid.value.setRGB(U.lerp(0.94, 0.98, sk), U.lerp(0.81, 0.72, sk), U.lerp(0.64, 0.52, sk));
 
-      // the low wall of the martyrs' resting place
-      const mx = w * 0.62, my = ridge(LAYERS[4], mx, w, h) + h * 0.06;
-      ctx.fillStyle = U.rgb(U.mix([200, 180, 150], hor, 0.2), 0.85);
-      ctx.fillRect(mx - w * 0.08, my - 5, w * 0.16, 5);
-      ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fillRect(mx - w * 0.08, my, w * 0.16, 3);
-      this.label(ctx, mx, my - 8, 'THE MARTYRS OF UHUD', 'Hamzah and his companions rest here', w);
+      // wind: stronger on the hilltop; it drops to near-silence before the call
+      const height = U.clamp(w.y / HILL.h);
+      const hush = this.phase === 'quiet' || this.phase === 'call' ? 0.2 : 1;
+      this.wind.set('gain', (0.03 + 0.04 * height) * hush, 0.6);
+      this.gust.set('gain', (0.004 + 0.01 * height * (0.5 + 0.5 * U.noise1(t * 0.4))) * hush, 0.4);
+      // a low hum of steadfastness grows the longer you hold
+      this.hum.setGain(this.phase === 'hold' && onTop ? 0.012 + 0.025 * hk : 0.0, 0.8);
+      this.hum2.setGain(this.phase === 'hold' && onTop ? 0.018 * U.smooth(0.4, 1, hk) : 0.0, 0.8);
 
-      // peak label
-      const px = w * 0.5, py = Math.min(...Array.from({ length: 30 }, (_, i) => ridge(LAYERS[1], w * 0.35 + i * w * 0.01, w, h)));
-      this.label(ctx, px, py - 10, 'JABAL UHUD', '1,077 m', w);
+      /* the echo: ridge after ridge flares as the call reaches it */
+      if (this.phase === 'echo' || this.phase === 'martyrs' || this.phase === 'done') {
+        this.echoT += dt;
+        let last = 0;
+        for (const rg of this.ridges) {
+          const a = this.echoT - rg.t;
+          rg.g.material.opacity = a > 0 ? Math.min(1, a * 4) * Math.exp(-a * 0.9) * 0.55 + (this.phase !== 'echo' ? 0.0 : 0) : 0;
+          rg.g.scale.setScalar(90 + Math.min(a, 3) * 25);
+          last = Math.max(last, rg.t);
+        }
+        if (this.phase === 'echo' && this.echoT > last + 2.2) {
+          this.phase = 'martyrs';
+          SND.glow(b, 110, { gain: 0.07, dur: 12 }); SND.glow(b, 164.81, { gain: 0.05, dur: 12, delay: 1.2 }); SND.bell(b, 440, { gain: 0.04, delay: 2.2 });
+          w.say('A Mountain That Loves Us', '“Uhud is a mountain that loves us, and we love it.” <span class="q">(Sahih al-Bukhari 4422; Sahih Muslim 1393)</span>', { ar: 'أُحُدٌ جَبَلٌ يُحِبُّنَا وَنُحِبُّهُ', ms: 12000 });
+          setTimeout(() => { if (this.w) w.step('Walk down to the low wall of the martyrs’ resting place'); }, 5000);
+        }
+      }
+      if (this.phase === 'martyrs') {
+        this.cemGlow.material.opacity = U.damp(this.cemGlow.material.opacity, 0.35, 0.5, dt);
+        this.gateGlow.material.opacity = 0.45 + 0.15 * Math.sin(t * 2);
+        this.topGlow.material.opacity = U.damp(this.topGlow.material.opacity, 0, 1, dt);
+        const nearCem = Math.hypot(w.pos.x - CEM.x0, w.pos.z - CEM.gateZ) < 6 || (w.pos.x > CEM.x0 && w.pos.x < CEM.x1 && w.pos.z > CEM.z0 && w.pos.z < CEM.z1);
+        if (nearCem) {
+          this.phase = 'done';
+          this.gateGlow.material.opacity = 0;
+          SND.glow(b, 98, { gain: 0.06, dur: 10 });
+          w.say('The Martyrs of Uhud', 'The battle was fought in Shawwal of the year 3 AH (625 CE). Some seventy Muslims were killed <span class="q">(Sahih al-Bukhari 3039, 4043)</span>, among them Hamzah, the Prophet’s uncle, killed by Wahshi <span class="q">(Sahih al-Bukhari 4072)</span>. They are remembered here, at the foot of the mountain that loves us.', { ms: 15000 });
+          w.finish('The hill held');
+        }
+      }
+      if (this.phase === 'done') this.cemGlow.material.opacity = U.damp(this.cemGlow.material.opacity, 0.25, 0.4, dt);
+      this.topRing.material.opacity *= this.phase === 'climb' || this.phase === 'hold' ? 1 : 0.95;
 
-      // ground warmth / night grade
-      const night = Math.max(0, Math.abs(s - 0.5) * 2 - 0.75) * 2.2;
-      if (night > 0) { ctx.fillStyle = `rgba(10,8,30,${night * 0.35})`; ctx.fillRect(0, 0, w, h); }
-
-      this.drawHadith(ctx, w, h);
+      this.birdClock -= dt;
+      if (this.birdClock < 0) { this.birdClock = 3 + Math.random() * 5; if (hush > 0.5) SND.chirp(b, { gain: 0.01, f: U.rnd(2200, 3200) }); }
     },
-
-    label(ctx, x, y, a, b, w) {
-      if (w < 640) return;
-      ctx.save(); ctx.textAlign = 'center';
-      ctx.strokeStyle = 'rgba(255,245,225,0.45)'; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y - 26); ctx.stroke();
-      ctx.font = '10px Marcellus, Georgia, serif'; ctx.fillStyle = 'rgba(255,248,235,0.9)'; ctx.fillText(a, x, y - 42);
-      ctx.font = 'italic 300 12px Spectral, Georgia, serif'; ctx.fillStyle = 'rgba(255,248,235,0.72)'; ctx.fillText(b, x, y - 30);
-      ctx.restore();
-    },
-
-    drawHadith(ctx, w, h) {
-      const a = this.hadith; if (a < 0.02) return;
-      ctx.save(); ctx.textAlign = 'center'; ctx.globalAlpha = a;
-      const fs = Math.round(Math.min(44, w * 0.06));
-      ctx.fillStyle = '#fffaf0'; ctx.shadowColor = 'rgba(80,30,10,0.6)'; ctx.shadowBlur = 20;
-      ctx.font = `${fs}px Amiri, serif`; ctx.direction = 'rtl';
-      ctx.fillText('أُحُدٌ جَبَلٌ يُحِبُّنَا وَنُحِبُّهُ', w / 2, h * 0.17 + 16);
-      ctx.direction = 'ltr';
-      ctx.font = `italic 300 ${Math.round(fs * 0.42)}px Spectral, Georgia, serif`;
-      ctx.fillText('“Uhud is a mountain that loves us, and we love it.”', w / 2, h * 0.17 + 16 + fs * 0.9);
-      ctx.restore();
-    },
-  });
+  }));
 })();

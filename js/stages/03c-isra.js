@@ -18,13 +18,13 @@
   const VIEW = { x: AX, y: TB + 16, z: AZ + 6 };
   const GOLD = 0xffe6b0;
   const HEAVENS = [
-    { ar: 'آدَم', pb: 'عَلَيْهِ السَّلَام', en: 'Adam', n: 'The first heaven', hue: '#8fb0ff', pts: 6, root: 146.83 },
-    { ar: 'يَحْيَى وَعِيسَى', pb: 'عَلَيْهِمَا السَّلَام', en: 'Yahya and ‘Isa', n: 'The second heaven', hue: '#78d8e0', pts: 8, root: 164.81 },
-    { ar: 'يُوسُف', pb: 'عَلَيْهِ السَّلَام', en: 'Yusuf', n: 'The third heaven', hue: '#8ee0a8', pts: 10, root: 185.0 },
-    { ar: 'إِدْرِيس', pb: 'عَلَيْهِ السَّلَام', en: 'Idris', n: 'The fourth heaven', hue: '#e8d890', pts: 12, root: 196.0 },
-    { ar: 'هَارُون', pb: 'عَلَيْهِ السَّلَام', en: 'Harun', n: 'The fifth heaven', hue: '#f0a8a8', pts: 9, root: 220.0 },
-    { ar: 'مُوسَى', pb: 'عَلَيْهِ السَّلَام', en: 'Musa', n: 'The sixth heaven', hue: '#c0a4f4', pts: 10, root: 246.94 },
-    { ar: 'إِبْرَاهِيم', pb: 'عَلَيْهِ السَّلَام', en: 'Ibrahim', n: 'The seventh heaven', hue: '#fff0d0', pts: 16, root: 293.66 },
+    { ar: 'آدَم', pb: 'عَلَيْهِ السَّلَام', en: 'Adam', n: 'The first heaven', hue: '#6a8cff', pts: 6, root: 146.83 },
+    { ar: 'يَحْيَى وَعِيسَى', pb: 'عَلَيْهِمَا السَّلَام', en: 'Yahya and ‘Isa', n: 'The second heaven', hue: '#40d0dc', pts: 8, root: 164.81 },
+    { ar: 'يُوسُف', pb: 'عَلَيْهِ السَّلَام', en: 'Yusuf', n: 'The third heaven', hue: '#58dc88', pts: 10, root: 185.0 },
+    { ar: 'إِدْرِيس', pb: 'عَلَيْهِ السَّلَام', en: 'Idris', n: 'The fourth heaven', hue: '#f0c858', pts: 12, root: 196.0 },
+    { ar: 'هَارُون', pb: 'عَلَيْهِ السَّلَام', en: 'Harun', n: 'The fifth heaven', hue: '#f27a7a', pts: 9, root: 220.0 },
+    { ar: 'مُوسَى', pb: 'عَلَيْهِ السَّلَام', en: 'Musa', n: 'The sixth heaven', hue: '#a878f4', pts: 10, root: 246.94 },
+    { ar: 'إِبْرَاهِيم', pb: 'عَلَيْهِ السَّلَام', en: 'Ibrahim', n: 'The seventh heaven', hue: '#ffe8b8', pts: 16, root: 293.66 },
   ];
 
   function starPath(g, x, y, r, inner, n, rot) {
@@ -42,7 +42,7 @@
     const S = 1024, c = S / 2, R = c - 6, cv = document.createElement('canvas'); cv.width = cv.height = S;
     const g = cv.getContext('2d');
     const wash = g.createRadialGradient(c, c, 0, c, c, R);
-    wash.addColorStop(0, 'rgba(255,255,255,0.05)'); wash.addColorStop(0.75, 'rgba(255,255,255,0.10)'); wash.addColorStop(0.97, 'rgba(255,255,255,0.18)'); wash.addColorStop(1, 'rgba(255,255,255,0)');
+    wash.addColorStop(0, 'rgba(255,255,255,0.03)'); wash.addColorStop(0.75, 'rgba(255,255,255,0.06)'); wash.addColorStop(0.97, 'rgba(255,255,255,0.14)'); wash.addColorStop(1, 'rgba(255,255,255,0)');
     g.fillStyle = wash; g.beginPath(); g.arc(c, c, R, 0, 6.283); g.fill();
     g.strokeStyle = 'rgba(255,255,255,0.85)'; g.lineCap = 'round'; g.lineJoin = 'round';
     // the great star polygon {2n/3} across the whole disc
@@ -119,7 +119,7 @@
       const S = w.scene;
       this.touch = matchMedia('(pointer: coarse)').matches;
       const moonDir = new T.Vector3(-0.5, 0.42, -0.6).normalize();
-      this.sky = w.sky({ top: '#02040c', mid: '#0f1834', bot: '#05070e', sunDir: moonDir.toArray(), sun: '#8a98c8', sunSize: 0.0005, stars: 1.5 });
+      this.sky = w.sky({ top: '#02040c', mid: '#0f1834', bot: '#05070e', sunDir: moonDir.toArray(), sun: '#1a2238', sunSize: 0.00012, stars: 0.6 });
       this.skyU = this.sky.material.uniforms;
       this.skyBase = { top: new T.Color('#02040c'), mid: new T.Color('#0f1834') };
       this.hemi = new T.HemisphereLight(0x3a4a80, 0x0c0a08, 0.3); S.add(this.hemi);
@@ -131,6 +131,16 @@
         g.globalCompositeOperation = 'destination-out'; g.beginPath(); g.arc(s / 2 + s * 0.06, s / 2 - s * 0.035, s * 0.15, 0, 6.283); g.fill();
       });
       crescent.wrapS = crescent.wrapT = T.ClampToEdgeWrapping;
+      // the turning stars: a sphere of points spinning about the celestial pole (Makkah lies near 21 degrees north)
+      this.poleRig = new T.Group(); this.poleRig.rotation.x = -1.197; S.add(this.poleRig);
+      this.starRig = new T.Group(); this.poleRig.add(this.starRig);
+      [[1800, 3.2, 0.75], [500, 6.0, 0.95]].forEach(([n, size, op]) => {
+        const sp = new Float32Array(n * 3);
+        for (let i = 0; i < n; i++) { const u = Math.random() * 2 - 1, a = Math.random() * 6.283, q = Math.sqrt(1 - u * u); sp.set([Math.cos(a) * q * 900, u * 900, Math.sin(a) * q * 900], i * 3); }
+        const g = new T.BufferGeometry(); g.setAttribute('position', new T.BufferAttribute(sp, 3));
+        const pts = new T.Points(g, new T.PointsMaterial({ map: KIT.glowTex(w), color: 0xf4f0ff, size, sizeAttenuation: false, transparent: true, opacity: op, depthWrite: false, blending: T.AdditiveBlending, fog: false }));
+        pts.frustumCulled = false; pts.renderOrder = -5; this.starRig.add(pts);
+      });
       const cres = new T.Sprite(new T.SpriteMaterial({ map: crescent, transparent: true, depthWrite: false, fog: false })); cres.scale.set(60, 60, 1); cres.position.copy(moonDir).multiplyScalar(1000); S.add(cres);
 
       // the valley and the House, its cloth dark against the stars
@@ -145,7 +155,7 @@
         g.fillStyle = '#8a8078'; g.fillRect(0, 0, s, s);
         for (let y = 0; y < s; y += 64) for (let x = 0; x < s; x += 64) { const t = Math.random() * 26; g.fillStyle = `rgb(${132 + t | 0},${124 + t | 0},${116 + t | 0})`; g.fillRect(x + 2, y + 2, 60, 60); }
       }, [10, 10]);
-      const ring = new T.Mesh(new T.CircleGeometry(22, 64), KIT.std({ map: pave, roughness: 0.8, relief: 0.02 }));
+      const ring = new T.Mesh(new T.CircleGeometry(22, 64), KIT.std({ map: pave, color: 0x9a8a78, roughness: 0.9, relief: 0.02 }));
       ring.rotation.x = -Math.PI / 2; ring.position.y = 0.04; S.add(ring);
       // a few oil lamps on posts round the courtyard
       const postMat = KIT.std({ map: KIT.wood(w, [1, 2], '#4a3424'), color: 0x8a7060 });
@@ -184,7 +194,8 @@
         const beam = new T.Mesh(new T.CylinderGeometry(HOLE_R * 0.95, HOLE_R * 0.95, 26, 24, 1, true), new T.MeshBasicMaterial({ map: beamTex, color: GOLD, transparent: true, opacity: 0, blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide, fog: false }));
         beam.position.set(HOLE_OFF, -13, 0); disc.add(beam);
         const dir = i % 2 ? -1 : 1;
-        return { disc, halo, beam, y: R0 + i * GAP, ang: Math.PI / 2 + 0.7 * dir, spin: 0.13 * dir * (1 + i * 0.05), passed: false, flash: 0, bloom: 0, h };
+        disc.rotation.y = Math.PI / 2 + (0.5 + i * 0.37) * dir;
+        return { disc, halo, beam, y: R0 + i * GAP, spin: 0.13 * dir * (1 + i * 0.05), passed: false, flash: 0, bloom: 0, h };
       });
 
       /* ---------- the tree of light, Sidrat al-Muntaha ---------- */
@@ -234,9 +245,11 @@
       w.followShadow(moon, 30, 1024); w.receiveAll();
       [this.column, this.colCore].forEach(m => { m.castShadow = false; m.receiveShadow = false; });
       this.rings.forEach(R => { R.disc.castShadow = false; R.disc.receiveShadow = false; R.beam.castShadow = false; });
+      // multi-group geometries (boxes, capped cylinders) would be skipped by the merge: flatten them first
+      S.traverse(m => { if (m.isMesh && !m.isInstancedMesh && !Array.isArray(m.material) && m.geometry.groups.length > 1) m.geometry.clearGroups(); });
       this.baked = w.bake();
       // everything of the earth, hidden once the night has swallowed it below
-      const heavenly = new Set([this.sky, this.column, this.colCore, this.tree, this.treeGlow, this.crown, this.fifty, this.falling, ...this.five, ...this.rings.map(R => R.disc)]);
+      const heavenly = new Set([this.sky, this.poleRig, this.column, this.colCore, this.tree, this.treeGlow, this.crown, this.fifty, this.falling, ...this.five, ...this.rings.map(R => R.disc)]);
       this.earth = S.children.filter(o => !heavenly.has(o) && (o.isMesh || o.isSprite || o.isPoints || o.isGroup));
 
       /* ---------- the activity ---------- */
@@ -307,7 +320,7 @@
       const w = this.w; if (!w) return;
       w.update(dt);
       const t = w.time, T = THREE, cam = w.camera;
-      this.sky.rotation.y += dt * 0.006;   // the stars turn slowly
+      this.starRig.rotation.y += dt * 0.012;   // the stars turn slowly
       KIT.driftDust(this.dust, dt, t, [0.04, 0.02]);
       // the motes in the column rise
       const cm = this.colMotes.geometry.attributes.position;
@@ -419,7 +432,8 @@
       const heaven = this.phase === 'arrive' ? U.smooth(0, 8, this.phaseT) : this.phase === 'tree' ? 1 : 0;
       top.lerp(new T.Color('#f6eedc'), heaven * 0.55); mid.lerp(new T.Color('#fff4e0'), heaven * 0.75);
       this.skyU.uTop.value.copy(top); this.skyU.uMid.value.copy(mid); this.skyU.uBot.value.copy(mid.clone().multiplyScalar(0.4));
-      this.skyU.uStars.value = 1.5 * (1 - heaven * 0.8);
+      this.skyU.uStars.value = 0.6 * (1 - heaven);
+      this.starRig.children.forEach((p, i) => { p.material.opacity = (i ? 0.95 : 0.75) * (1 - heaven); });
       w.scene.fog.color.copy(mid.clone().multiplyScalar(0.6));
       w.scene.fog.density = U.lerp(0.0042, 0.05, below);
       w.renderer.toneMappingExposure = 1.15 - heaven * 0.15;
@@ -473,7 +487,7 @@
       if (cross(0.5)) w.say('The Lote Tree of the Utmost Boundary', 'Above the seventh heaven he was raised to Sidrat al-Muntaha (Sahih al-Bukhari 3887), the tree the Qur’an names: <span class="q">“by the Lote Tree of the utmost boundary.”</span> (Qur’an 53:14)', { ar: 'عِندَ سِدْرَةِ الْمُنتَهَىٰ', ms: 12000 });
       if (cross(10)) {
         SND.glow(env.bus, 196, { gain: 0.05, dur: 12, vowel: 'o' });
-        w.say('The Gift of Prayer', 'Fifty prayers were prescribed. At Musa’s urging he asked again and again for them to be lightened, until they were five, with the reward of fifty. (Sahih al-Bukhari 3887; 349)', { ar: 'فَرْضُ الصَّلَوَاتِ الخَمْس', ms: 16000 });
+        w.say('The Gift of Prayer', 'Fifty prayers were prescribed. At Musa’s urging he asked again and again for them to be lightened, until they were five, with the reward of fifty (Sahih al-Bukhari 3887): <span class="q">“They are five, and they are fifty.”</span> (Sahih al-Bukhari 349)', { ar: 'هِيَ خَمْسٌ وَهِيَ خَمْسُونَ', ms: 16000 });
         w.step('Fifty prayers, lightened to five');
       }
       const appear = U.smooth(10, 12, T1), gather = U.ease(U.smooth(14, 23, T1));

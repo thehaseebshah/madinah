@@ -62,14 +62,14 @@
     enter(env) {
       const T = THREE, self = this;
       const w = this.w = WORLD.create(env, {
-        start: { x: START.x, z: START.z, yaw: 0, pitch: 0.16 }, exposure: 1.35, far: 1300, speed: 3.3, run: 6.2,
+        start: { x: START.x, z: START.z, yaw: 0, pitch: 0.16 }, exposure: 1.15, far: 1300, speed: 3.3, run: 6.2,
         fog: { color: 0x0b1128, density: 0.0062 }, bounds: [-90, -275, 90, 40], ground, surface: () => 'sand',
       });
       const S = w.scene;
       this.k = 0; this.kShown = 0; this.found = 0; this.phase = 'walk'; this.dawnT = 0;
 
       /* ---------- sky: night dome, stars, the Milky Way and the Pole Star ---------- */
-      this.skyM = w.sky({ top: '#02040c', mid: '#0a1028', bot: '#03050c', sunDir: [0.95, -0.25, -0.2], sun: '#000000', sunSize: 0.002, stars: 0.9 });
+      this.skyM = w.sky({ top: '#02040c', mid: '#0a1028', bot: '#03050c', sunDir: [0.95, -0.25, -0.2], sun: '#000000', sunSize: 0.002, stars: 0.3 });
       this.skyRoot = new T.Group(); this.skyRoot.userData.dynamic = true; S.add(this.skyRoot);
       const R = 880;
       const band = new T.Vector3(0.9, 0.22, 0.38).normalize(); // the band's pole: the Milky Way arches north–south overhead
@@ -97,32 +97,34 @@
         g.clearRect(0, 0, s, s);
         const r = U.seeded(7);
         for (let i = 0; i < 2600; i++) {
-          const x = r() * s, y = s / 2 + (r() + r() + r() - 1.5) * s * 0.16 * (0.6 + 0.6 * Math.sin(x / s * 12.566 + 1) ** 2), rad = 6 + r() * 34;
-          const gr = g.createRadialGradient(x, y, 0, x, y, rad);
+          const x = r() * s, y = s / 2 + (r() + r() + r() - 1.5) * s * 0.2 * (0.6 + 0.6 * Math.sin(x / s * 6.283 + 1) ** 2), rad = 8 + r() * 30;
           const c = r() < 0.3 ? '255,226,190' : '205,215,255';
-          gr.addColorStop(0, `rgba(${c},${0.05 + r() * 0.05})`); gr.addColorStop(1, `rgba(${c},0)`);
-          g.fillStyle = gr; g.fillRect(x - rad, y - rad, rad * 2, rad * 2);
+          g.save(); g.translate(x, y); g.scale(1, 3);
+          const gr = g.createRadialGradient(0, 0, 0, 0, 0, rad);
+          gr.addColorStop(0, `rgba(${c},${0.04 + r() * 0.05})`); gr.addColorStop(1, `rgba(${c},0)`);
+          g.fillStyle = gr; g.fillRect(-rad, -rad, rad * 2, rad * 2); g.restore();
         }
         g.globalCompositeOperation = 'destination-out';
-        for (let i = 0; i < 260; i++) {
-          const x = (0.15 + r() * 0.45) * s, y = s / 2 + Math.sin(x * 0.02) * 14 + (r() - 0.5) * 16, rad = 5 + r() * 16;
-          const gr = g.createRadialGradient(x, y, 0, x, y, rad); gr.addColorStop(0, 'rgba(0,0,0,0.35)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
-          g.fillStyle = gr; g.fillRect(x - rad, y - rad, rad * 2, rad * 2);
+        for (let i = 0; i < 200; i++) {
+          const x = (0.15 + r() * 0.45) * s, y = s / 2 + Math.sin(x * 0.02) * 30 + (r() - 0.5) * 40, rad = 5 + r() * 14;
+          g.save(); g.translate(x, y); g.scale(1, 3);
+          const gr = g.createRadialGradient(0, 0, 0, 0, 0, rad); gr.addColorStop(0, 'rgba(0,0,0,0.12)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+          g.fillStyle = gr; g.fillRect(-rad, -rad, rad * 2, rad * 2); g.restore();
         }
       });
-      mwTex.wrapT = T.ClampToEdgeWrapping;
-      this.milky = new T.Mesh(new T.CylinderGeometry(R * 0.99, R * 0.99, 300, 64, 1, true), new T.MeshBasicMaterial({ map: mwTex, transparent: true, opacity: 0.85, depthWrite: false, blending: T.AdditiveBlending, side: T.DoubleSide, fog: false }));
+      mwTex.wrapT = T.ClampToEdgeWrapping; mwTex.repeat.set(5, 1);
+      this.milky = new T.Mesh(new T.CylinderGeometry(R * 0.99, R * 0.99, 460, 64, 1, true), new T.MeshBasicMaterial({ map: mwTex, transparent: true, opacity: 0.7, depthWrite: false, blending: T.AdditiveBlending, side: T.DoubleSide, fog: false }));
       this.milky.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), band); this.milky.renderOrder = -6; this.milky.frustumCulled = false;
       this.skyRoot.add(this.milky);
       // the Pole Star: steady, a little brighter than everything else, due north
-      this.pole = KIT.glow(w, 0xeaf0ff, 30, 0.95); this.pole.material.fog = false; this.pole.position.copy(POLE).multiplyScalar(R * 0.97); this.skyRoot.add(this.pole);
-      this.poleCore = KIT.glow(w, 0xffffff, 9, 1); this.poleCore.material.fog = false; this.poleCore.position.copy(this.pole.position); this.skyRoot.add(this.poleCore);
+      this.pole = KIT.glow(w, 0xeaf0ff, 46, 0.95); this.pole.material.fog = false; this.pole.position.copy(POLE).multiplyScalar(R * 0.97); this.skyRoot.add(this.pole);
+      this.poleCore = KIT.glow(w, 0xffffff, 13, 1); this.poleCore.material.fog = false; this.poleCore.position.copy(this.pole.position); this.skyRoot.add(this.poleCore);
       // the glow of dawn on the eastern horizon
       this.dawnGlow = KIT.glow(w, 0xffb070, 900, 0); this.dawnGlow.material.fog = false; this.dawnGlow.position.set(R * 0.9, -40, -R * 0.25); this.skyRoot.add(this.dawnGlow);
 
       /* ---------- light: starlight, skyglow and a small hand lamp ---------- */
-      this.hemi = new T.HemisphereLight(0x5a6ca8, 0x1c1610, 0.55); S.add(this.hemi);
-      this.key = new T.DirectionalLight(0x8a9cd0, 0.55); this.key.position.set(-40, 50, -60); S.add(this.key);
+      this.hemi = new T.HemisphereLight(0x4a5c98, 0x14100c, 0.24); S.add(this.hemi);
+      this.keyL = new T.DirectionalLight(0x8a9cd0, 0.3); this.keyL.position.set(-40, 50, -60); S.add(this.keyL);
       this.lamp = new T.PointLight(0xffb868, 0.9, 11, 1.8); S.add(this.lamp);
 
       /* ---------- the dunes ---------- */
@@ -131,7 +133,7 @@
         const r = U.seeded(3);
         for (let y = 0; y < s + 10; y += 9) {
           const ph = r() * 6, amp = 2 + r() * 2;
-          g.beginPath(); for (let x = 0; x <= s; x += 8) { const yy = y + Math.sin(x * 0.045 + ph) * amp + Math.sin(x * 0.11 + ph * 2) * 1.2; x ? g.lineTo(x, yy) : g.moveTo(x, yy); }
+          g.beginPath(); for (let x = 0; x <= s; x += 8) { const yy = y + Math.sin(x * 0.04909 + ph) * amp + Math.sin(x * 0.11045 + ph * 2) * 1.2; x ? g.lineTo(x, yy) : g.moveTo(x, yy); }
           g.strokeStyle = 'rgba(240,214,170,0.55)'; g.lineWidth = 2.2; g.stroke();
           g.translate(0, 3); g.strokeStyle = 'rgba(120,88,56,0.45)'; g.lineWidth = 2; g.stroke(); g.translate(0, -3);
         }
@@ -288,7 +290,7 @@
       // the cairns
       const next = this.found < 5 ? CAIRNS[this.found] : null;
       CAIRNS.forEach((c, i) => {
-        if (c.lit) { c.litT += dt; const f = 0.85 + 0.15 * U.noise1(t * 5 + i * 9); c.glow.material.opacity = Math.min(1, c.litT * 1.5) * 0.75 * f; c.glow.scale.setScalar(2.4 + Math.max(0, 1 - c.litT) * 3); c.flame.material.opacity = Math.min(1, c.litT * 2) * f; }
+        if (c.lit) { c.litT += dt; const f = 0.85 + 0.15 * U.noise1(t * 5 + i * 9); c.glow.material.opacity = Math.min(1, c.litT * 1.5) * 0.75 * f; c.glow.scale.setScalar(1.5 + Math.max(0, 1 - c.litT) * 3); c.flame.material.opacity = Math.min(1, c.litT * 2) * f; }
         else if (c === next) { c.glow.material.opacity = 0.38 + 0.18 * Math.sin(t * 2.2); c.glow.scale.setScalar(3.4); c.flame.material.opacity = 0.5; }
         else { c.glow.material.opacity = 0; c.flame.material.opacity = 0; }
       });
@@ -307,6 +309,7 @@
         this.wind.set('gain', 0.015, 1); this.hiss.set('gain', 0.001, 1);
         if (this.dawnT > 3) { this.phase = 'dawn'; this.dawnT = 0; this.oasis.visible = true; SND.glow(env.bus, 146.83, { gain: 0.07, dur: 12, vowel: 'a' }); SND.glow(env.bus, 220, { gain: 0.05, dur: 12, delay: 1.5, vowel: 'o' }); }
       }
+      if (this.phase === 'still') target = 1;
       if (this.phase === 'dawn') {
         target = 0.72 + U.smooth(0, 9, this.dawnT) * 0.28;
         this.wind.set('gain', 0.04, 2);
@@ -350,19 +353,19 @@
       const sy = U.lerp(-0.3, 0.025, U.smooth(0.55, 1, k));
       u.uSunDir.value.set(0.95, sy, -0.25).normalize();
       u.uSun.value.copy(col([255, 150, 90])).multiplyScalar(U.smooth(0.5, 1, k) * 0.9);
-      u.uStars.value = 0.9 * (1 - U.smooth(0.7, 0.97, k));
+      u.uStars.value = 0.3 * (1 - U.smooth(0.7, 0.97, k));
       const sf = 1 - U.smooth(0.72, 0.98, k);
       this.stars.forEach(s => { s.material.opacity = sf; });
-      this.milky.material.opacity = 0.85 * (1 - U.smooth(0.55, 0.9, k));
+      this.milky.material.opacity = 0.7 * (1 - U.smooth(0.55, 0.9, k));
       this.dawnGlow.material.opacity = U.smooth(0.45, 1, k) * 0.55;
       w.scene.fog.color.copy(col(U.ramp(SKY.fog, k)));
       w.scene.fog.density = U.lerp(0.0062, 0.0021, U.smooth(0.6, 1, k));
       this.hemi.color.copy(col(U.mix([90, 108, 168], [255, 214, 180], U.smooth(0.6, 1, k))));
-      this.hemi.intensity = U.lerp(0.55, 0.85, U.smooth(0.6, 1, k));
-      this.key.color.copy(col(U.mix([138, 156, 208], [255, 180, 120], U.smooth(0.6, 1, k))));
-      this.key.position.copy(new THREE.Vector3(-40, 50, -60).lerp(new THREE.Vector3(120, 12, -30), U.smooth(0.6, 1, k)));
-      this.key.intensity = U.lerp(0.55, 1.5, U.smooth(0.7, 1, k));
-      w.renderer.toneMappingExposure = U.lerp(1.35, 1.05, U.smooth(0.7, 1, k));
+      this.hemi.intensity = U.lerp(0.24, 0.8, U.smooth(0.6, 1, k));
+      this.keyL.color.copy(col(U.mix([138, 156, 208], [255, 180, 120], U.smooth(0.6, 1, k))));
+      this.keyL.position.copy(new THREE.Vector3(-40, 50, -60).lerp(new THREE.Vector3(120, 12, -30), U.smooth(0.6, 1, k)));
+      this.keyL.intensity = U.lerp(0.3, 1.5, U.smooth(0.7, 1, k));
+      w.renderer.toneMappingExposure = U.lerp(1.15, 1.0, U.smooth(0.7, 1, k));
     },
   }));
 })();

@@ -102,7 +102,7 @@
         const fill = new T.Mesh(new T.ShapeGeometry(archShape(NW + 0.01, NH + 0.01)), new T.MeshStandardMaterial({ map: panelMat.map, color: 0xe2c8a6, roughness: 0.95, transparent: true, opacity: 1, side: T.DoubleSide }));
         fill.position.set(cx, 0, zc - side * (WT / 2 + 0.012)); fill.userData.dynamic = true; S.add(fill);
         // a little oil lamp glowing in the niche
-        const glow = KIT.glow(w, 0xffc878, 1.6, 0); glow.position.set(cx, 1.15, zc + out * 0.35); S.add(glow);
+        const glow = KIT.glow(w, 0xffc878, 1.2, 0); glow.position.set(cx, 1.15, zc + out * 0.35); S.add(glow);
         const flame = KIT.glow(w, 0xffe0a0, 0.28, 0); flame.position.set(cx, 0.32, zc + out * 0.3); S.add(flame);
         const lamp = new T.Mesh(new T.SphereGeometry(0.09, 10, 6), KIT.std({ color: 0x8a5a38 })); lamp.scale.y = 0.55; lamp.position.set(cx, 0.19, zc + out * 0.3); S.add(lamp);
         return { fill, glow, flame };
@@ -110,7 +110,7 @@
       this.oldNiche = niche(OLD_X, -1);
       this.newNiche = niche(NEW_X, 1);
       this.oldNiche.fill.material.opacity = 0; this.oldNiche.fill.visible = false;
-      this.oldNiche.glow.material.opacity = 0.7; this.oldNiche.flame.material.opacity = 1;
+      this.oldNiche.glow.material.opacity = 0.45; this.oldNiche.flame.material.opacity = 1;
       // a coping of palm-trunk along the wall tops
       const bark = KIT.bark(w), trunkMat = KIT.std({ map: bark, color: 0xc8b096 });
 
@@ -387,10 +387,10 @@
         const fade = U.smooth(1, 6, this.turnT);
         const on = U.smooth(this.mats.length * 0.55, this.mats.length * 0.55 + 4, this.turnT);
         const o = this.oldNiche, n = this.newNiche;
-        o.glow.material.opacity = 0.7 * (1 - fade); o.flame.material.opacity = 1 - fade;
+        o.glow.material.opacity = 0.45 * (1 - fade); o.flame.material.opacity = 1 - fade;
         o.fill.visible = fade > 0.01; o.fill.material.opacity = fade; o.fill.material.depthWrite = fade > 0.98;
         n.fill.material.opacity = 1 - on; n.fill.visible = on < 0.99; n.fill.material.depthWrite = on < 0.02;
-        n.glow.material.opacity = 0.8 * on; n.flame.material.opacity = on;
+        n.glow.material.opacity = 0.5 * on; n.flame.material.opacity = on;
         this.beam.material.opacity = 0.45 * on * (0.85 + 0.15 * Math.sin(t * 2));
         if (this.phase === 'swing' && all && on >= 1) {
           this.phase = 'walk';

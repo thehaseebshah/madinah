@@ -139,7 +139,7 @@
       S.add(new T.Mesh(tg, KIT.std({ map: granite, vertexColors: true, relief: 0.05 })));
 
       // boulders fallen along the foot of the walls; the bundles hide among them
-      const bmat = KIT.std({ map: granite, color: 0xa69a90, flatShading: true, relief: 0.06 });
+      const bmat = KIT.std({ map: granite, color: 0x8e8a92, flatShading: true, relief: 0.06 });
       const r = U.seeded(616);
       for (let i = 0; i < 90; i++) {
         const z = -46 + r() * 92, side = r() < 0.5 ? -1 : 1, s = 0.35 + Math.pow(r(), 2) * 2.2;
@@ -159,7 +159,7 @@
       /* the shelters of hide and cloth */
       const hideTex = w.tex(512, (g, s) => {
         g.fillStyle = '#6a4a32'; g.fillRect(0, 0, s, s);
-        const cols = ['#7a5638', '#5a3e2a', '#86684a', '#6e5a48', '#8a7a62'];
+        const cols = ['#6e4e36', '#5e432e', '#74583e', '#665040', '#6c5a48'];
         for (let i = 0; i < 16; i++) { const x = Math.random() * s, y = Math.random() * s, pw = 80 + Math.random() * 160, ph = 70 + Math.random() * 140; g.fillStyle = cols[i % cols.length]; g.fillRect(x, y, pw, ph); g.strokeStyle = 'rgba(30,20,12,0.65)'; g.setLineDash([5, 6]); g.lineWidth = 2; g.strokeRect(x + 3, y + 3, pw - 6, ph - 6); }
         g.setLineDash([]);
         for (let i = 0; i < 5000; i++) { g.fillStyle = Math.random() < 0.5 ? 'rgba(30,20,12,0.25)' : 'rgba(200,170,130,0.12)'; g.fillRect(Math.random() * s, Math.random() * s, 2, 2); }
@@ -222,7 +222,8 @@
       /* the bundles: cloth bundles knotted at the top, each marked by a faint glint */
       const linen = w.tex(128, (g, s) => { g.fillStyle = '#d8c8a4'; g.fillRect(0, 0, s, s); for (let i = 0; i < s; i += 2) { g.fillStyle = `rgba(90,70,40,${0.08 + Math.random() * 0.1})`; g.fillRect(i, 0, 1, s); g.fillRect(0, i, s, 1); } g.fillStyle = 'rgba(120,60,30,0.45)'; g.fillRect(0, s * 0.42, s, s * 0.08); }, [2, 1]);
       this.bundleMat = KIT.std({ map: linen, color: 0xcdbb98, roughness: 1, relief: 0.02 });
-      const bg = new T.SphereGeometry(0.32, 16, 10); bg.scale(1.1, 0.72, 0.95);
+      const bg = new T.SphereGeometry(0.3, 18, 12); bg.scale(1.1, 0.7, 0.95);
+      { const p = bg.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i), z = p.getZ(i), k = 1 + U.noise2(x * 14 + z * 9, y * 14) * 0.12 + Math.max(0, y) * 0.4; p.setXYZ(i, x * (y > 0 ? 1 - y * 1.1 : 1) * k, y * (y > 0 ? 1.25 : 0.8), z * (y > 0 ? 1 - y * 1.1 : 1) * k); } bg.computeVertexNormals(); }
       const kg = new T.SphereGeometry(0.11, 10, 8); kg.translate(0, 0.24, 0); kg.scale(1, 1.2, 1);
       this.bundleGeo = bg; this.knotGeo = kg;
       const makeBundle = () => { const g = new T.Group(); g.add(new T.Mesh(bg, this.bundleMat), new T.Mesh(kg, this.bundleMat)); g.userData.dynamic = true; return g; };
@@ -236,9 +237,9 @@
 
       /* the patrol torches on the rim: a flame, a cone of light and the pool it throws */
       const beamMat = new T.ShaderMaterial({
-        uniforms: { uColor: { value: new T.Color(TORCH) }, uOp: { value: 0.2 } },
+        uniforms: { uColor: { value: new T.Color(TORCH) }, uOp: { value: 0.16 } },
         vertexShader: 'varying float vA; varying vec3 vN; varying vec3 vV; void main(){ vA = position.z; vec4 mv = modelViewMatrix*vec4(position,1.); vN = normalize(normalMatrix*normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix*mv; }',
-        fragmentShader: 'uniform vec3 uColor; uniform float uOp; varying float vA; varying vec3 vN; varying vec3 vV; void main(){ float rim = abs(dot(normalize(vN), normalize(vV))); float a = uOp * pow(rim, 1.8) * (1.0 - 0.55*vA) * smoothstep(0.0, 0.06, vA); gl_FragColor = vec4(uColor, a); }',
+        fragmentShader: 'uniform vec3 uColor; uniform float uOp; varying float vA; varying vec3 vN; varying vec3 vV; void main(){ float rim = abs(dot(normalize(vN), normalize(vV))); float a = uOp * pow(rim, 3.2) * (1.0 - 0.35*vA) * smoothstep(0.0, 0.05, vA); gl_FragColor = vec4(uColor, a); }',
         transparent: true, depthWrite: false, blending: T.AdditiveBlending, side: T.DoubleSide,
       });
       this.beamMat = beamMat;
@@ -265,7 +266,7 @@
 
       /* carrying: the bundle is held low in front of you */
       this.carried = makeBundle(); this.carried.visible = false;
-      S.add(w.camera); w.camera.add(this.carried); this.carried.position.set(0.12, -0.5, -0.85); this.carried.rotation.set(0.25, 0.4, 0);
+      S.add(w.camera); w.camera.add(this.carried); this.carried.position.set(0.16, -0.52, -0.9); this.carried.rotation.set(0.25, 0.4, 0); this.carried.scale.setScalar(0.62);
       this.carryGlow = KIT.glow(w, GOLD, 0.8, 0.0); this.carryGlow.material.depthTest = false; w.camera.add(this.carryGlow); this.carryGlow.position.set(0.12, -0.42, -0.84);
 
       /* a vignette of torchlight when you are seen, and a curtain for the gentle return */
@@ -379,7 +380,7 @@
       if (this.carrying) {
         this.carryLift = Math.min(1, (this.carryLift || 0) + dt * 5);
         const k = U.easeOut(this.carryLift);
-        this.carried.position.set(0.12, -0.7 + k * 0.2 + Math.sin(w.bob * 2) * 0.012, -0.85);
+        this.carried.position.set(0.16, -0.68 + k * 0.16 + Math.sin(w.bob * 2) * 0.012, -0.9);
         this.carryGlow.material.opacity = 0.1 * k;
       } else this.carryGlow.material.opacity = 0;
 
@@ -388,9 +389,9 @@
         if (h.fed) {
           h.lit = Math.min(1, h.lit + dt * 0.6);
           const k = U.easeOut(h.lit), f = 0.9 + 0.1 * Math.sin(t * 5 + h.z) * Math.sin(t * 2.3 + h.x);
-          h.mat.emissiveIntensity = (0.04 + 0.5 * k) * f;
-          h.glow.material.opacity = (0.15 + 0.6 * k) * f; h.glow.scale.setScalar(2.2 + k * 2.6 + Math.sin(h.lit * Math.PI) * 1.5);
-          h.pool.material.opacity = 0.32 * k * f;
+          h.mat.emissiveIntensity = (0.03 + 0.2 * k) * f;
+          h.glow.material.opacity = (0.15 + 0.75 * k) * f; h.glow.scale.setScalar(2.2 + k * 3.2 + Math.sin(h.lit * Math.PI) * 2);
+          h.pool.material.opacity = 0.4 * k * f;
         } else {
           const want = this.carrying ? 0.12 + 0.08 * Math.sin(t * 2 + h.z) : 0.05;
           h.mat.emissiveIntensity = U.damp(h.mat.emissiveIntensity, want * 0.5, 3, dt);
@@ -415,13 +416,13 @@
         const dist = P.pos.distanceTo(P.tgt);
         P.beam.position.copy(P.pos); P.beam.scale.set(POOL_R, POOL_R, dist); P.beam.lookAt(P.tgt); P.beam.visible = fade > 0.01;
         P.spot.position.copy(P.pos); P.spot.target.position.copy(P.tgt); P.spot.angle = Math.atan(POOL_R * 1.25 / dist); P.spot.intensity = 2.6 * fk;
-        placeDecal(P.pool, sx, sz, 0.08); P.pool.material.opacity = 0.32 * fk;
+        placeDecal(P.pool, sx, sz, 0.08); P.pool.material.opacity = 0.42 * fk;
         const d = Math.hypot(w.pos.x - sx, w.pos.z - sz);
         if (d < POOL_R * 0.92 && fade > 0.5) lit = true;
         const sp = w.spatial(P.pos, 14); near = Math.max(near, sp.gain);
         P.crackle.set('gain', 0.035 * sp.gain * fade, 0.1);
       }
-      this.beamMat.uniforms.uOp.value = 0.2 * fade;
+      this.beamMat.uniforms.uOp.value = 0.16 * fade;
 
       // being seen while carrying: a warm vignette fills, the heart quickens, and then the night takes you back
       if (this.returnT < 0) {
@@ -482,7 +483,7 @@
         if (at(6)) {
           this.phase = 'reveal';
           const f = w.forward(), l = Math.hypot(f.x, f.z) || 1;
-          this.words.position.set(w.pos.x + f.x / l * 40, w.y + 17, w.pos.z + f.z / l * 40);
+          this.words.position.set(w.pos.x + f.x / l * 40, w.y + 22, w.pos.z + f.z / l * 40);
           SND.glow(b, 146.83, { gain: 0.05, dur: 12, vowel: 'o' });
         }
         if (at(7.5)) w.say('The Document', 'The sirah reports that the boycott document hung in the Ka‘bah was eaten by termites, all but the words <span class="q">“Bismika Allahumma”</span>, “In Your name, O God.” (sirah report, without a connected chain of narrators)', { ar: 'بِاسْمِكَ اللَّهُمَّ', ms: 12500 });
