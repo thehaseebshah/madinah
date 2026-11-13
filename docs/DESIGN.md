@@ -27,62 +27,50 @@ This guide distils what the most admired art games do, and turns it into rules f
 9. **Scale and silhouette.** Every scene has one great shape that defines it, such as the Ka'bah, Uhud, the cleft of Hira, a moon or a dome, framed against the sky. Keep the foreground for texture, the middle ground for play and the background for awe.
 10. **Respect.** No person is depicted. Presence is shown through light, sound, traces and words, and every quoted word names its source.
 
-## Cinematic entrances
+## Photoreal worlds
 
-Every station opens with its own shot, so arriving in each place is a small ceremony:
+Every station is a photoreal place, not a diorama:
 
-| Station | Entrance |
-|---|---|
-| The Ka‘bah Rebuilt | high crane over the valley, spiralling down to the scaffolding |
-| The Cave of Hira | rising from the night valley up the mountain face to the cleft |
-| The Call from as-Safa | low dawn glide from the Ka‘bah across the roofs to the hill |
-| The Boycott | down from the rim into the dark ravine, past the patrol torches |
-| The Night Journey | looking straight up at the turning stars, then down to the courtyard |
-| The Pledges of al-‘Aqabah | over the sleeping camps of Mina toward the ravine |
-| The Cave of Thawr | from the mountainside, pushing in through the mouth of the cave |
-| The Night Road | from the Milky Way down to the guide's footprints |
-| The Return to Makkah | from the northern heights with the banners, circling the Ka‘bah |
-| The Farewell Sermon | across the whole plain of Arafat in golden haze to the Mount of Mercy |
-| Quba | crane down through the palm crowns to the chalk foundation |
-| The Full Moon Rises | from the rising moon back across the rooftops |
-| The Mosque of Palm Trunks | down through the gaps in the frond roof |
-| The Two Qiblas | straight down from above the rows (the original top-down view), then into the hall |
-| Uhud | a lateral track along the red ridges to the archers' hill |
-| The Trench | along the trench line at dusk |
-| The Well of Rumah | up out of the well shaft into the garden |
-| The Palm Groves | down through the backlit fronds |
-| The Blessed Valley | low over the moonlit water, rising to the bank |
-| The Lanes of Old Madinah | from the Green Dome, backward down the lane |
-| The Hejaz Railway | along the rails from the train's approach |
-| The Sky Beneath the Domes | from the roof, down through an opening dome |
-| A Garden of Paradise | from a gilded capital down the column to the green carpet |
-| The City of Light | from the sky above the minarets down between the furled umbrellas |
+- **Photographed light.** Each outdoor scene is lit by a real HDRI sky from Poly Haven (dawn, morning, noon, late afternoon, sunset, dusk, moonrise, starry night). The sky is the background, it lights every surface through image-based lighting, and the sun or moon light is turned to where the photographed sun or moon actually is, so shadows agree with the sky (`PHOTO.sky`).
+- **Scanned surfaces.** Ground, rock, mud plaster, mud brick, rubble stone, marble, palm bark and timber are photo-scanned PBR materials with colour, normal and roughness maps (`PHOTO.mat`, `SCAPE.terrain({ photo })`).
+- **Scanned objects.** Boulders, rock sets, pebbles, shrubs, grass, dry branches, fallen trunks, a fire pit, baskets, clay vases, jugs, brass pots and lamps are scanned models, instanced by the hundred with light LODs (`SCAPE.scatter({ kind: 'model' })`, `PHOTO.place`).
+- **Scale and density.** Terrain reaches the horizon; rings of far mountains in aerial perspective give distance; thousands of instances give texture underfoot; birds, smoke and drifting motes give life.
+- **A camera's finish.** Bloom, sun and moon rays, a colour grade per station, vignette and fine grain (`SCAPE.post`).
+- **Graceful fallback.** Opened from disk, browsers forbid local images in WebGL, so the procedural materials remain and nothing breaks.
 
-## Mechanics: one verb per station
+## Entrance films
 
-| Station | Mechanic | Kind |
+Every station opens with a short cut-scene of four to eight shots, 30 to 50 seconds long, that passes through different parts of the world before it hands the camera to the player. Each film tells a story (setting, what is at stake, a turn, arrival). It has a title card in Arabic and English, sourced subtitles, dips to black or white between shots, lens changes, and events that happen on screen. It can be skipped, and narration starts when it ends (`w.film`).
+
+## One genre per station
+
+Every station is a different kind of game, borrowed from a well-known one, and the verb carries the meaning:
+
+| Station | Genre (after) | The verb |
 |---|---|---|
-| The Ka‘bah Rebuilt | carry and place, then a shared lift | 3D |
-| The Cave of Hira | climb and gather provisions | 3D |
-| The Call from as-Safa | ascend and call, then watch the response | 3D |
-| The Boycott | stealth: carry food unseen past sweeping torchlight | 3D |
-| The Night Journey | flight through rotating openings | 3D |
-| The Pledges of al-‘Aqabah | escort a trailing line of lights through shadow | 3D |
-| The Cave of Thawr | discover, then keep perfectly still | 3D |
-| The Night Road | navigate by the stars to cairns | 3D |
-| The Return to Makkah | clear the idols around the House | 3D |
-| The Farewell Sermon | courier: carry each line to those absent | 3D |
-| Quba | shape-matching: fit stones to their places | 3D puzzle |
-| The Full Moon Rises | rhythm: the welcome, line by line | 2D overlay |
-| The Mosque of Palm Trunks | exploration: find four stories | 3D |
-| The Two Qiblas | tune a dial by ear until two voices become one | audio puzzle |
-| Uhud | restraint: hold the hill | 3D |
-| The Trench | hold to dig, then strike | 3D |
-| The Well of Rumah | haul hand over hand, then give water | 2D gauge + 3D |
-| The Palm Groves | catch falling dates | 3D physics |
-| The Blessed Valley | skip stones | 3D physics |
-| The Lanes of Old Madinah | light the lamps of the lane | 3D |
-| The Hejaz Railway | ring the bell, meet the train | 3D event |
-| The Sky Beneath the Domes | light puzzle: open the domes that complete the star | 3D logic |
-| A Garden of Paradise | trace the arabesque | 2D drawing |
-| The City of Light | open the umbrellas, live through the day | 3D time-lapse |
+| The Ka‘bah Rebuilt | falling-block stacking (Tetris) and balance (Super Monkey Ball) | lay the courses; carry the Stone together |
+| The Cave of Hira | first-person parkour (Mirror's Edge, Celeste) | climb |
+| The Call from as-Safa | 2.5D side-scrolling platformer (Limbo, Inside, Journey) | run to the hill and call |
+| The Boycott | stealth (Metal Gear Solid, Mark of the Ninja) | carry food unseen |
+| The Night Journey | rail flyer (Star Fox, Rez, Sky) | rise through the heavens |
+| The Pledges of al-‘Aqabah | follower commands (Pikmin, Lemmings) | lead and protect |
+| The Cave of Thawr | hide and breathe (Alien: Isolation) | keep still |
+| The Night Road | endless runner (Temple Run, Alto's Adventure) | ride on through the night |
+| The Return to Makkah | first-person aiming (shooting gallery) | strike down the idols |
+| The Farewell Sermon | call and response (Simon, Patapon) | pass the words on |
+| Quba | push-block puzzles (Sokoban) | set the foundation |
+| The Full Moon Rises | rhythm highway (Guitar Hero, Beat Saber) | welcome |
+| The Mosque of Palm Trunks | construction (Townscaper, Minecraft) | build |
+| The Two Qiblas | perspective rotation (Fez, Monument Valley) | turn |
+| Uhud | viewpoint alignment (Viewfinder, Pokémon Snap) | look and remember |
+| The Trench | maze tower defence (Kingdom Rush) | dig and hold |
+| The Well of Rumah | flow puzzle (Pipe Mania) | give water |
+| The Palm Groves | farming (Stardew Valley) | tend and harvest |
+| The Blessed Valley | be the wind (Flower) | carry petals |
+| The Lanes of Old Madinah | maze and lamp oil (Pac-Man) | light the lanes |
+| The Hejaz Railway | train driving (Train Sim World) | drive the train home |
+| The Sky Beneath the Domes | light and mirrors (The Witness, Portal) | guide the sunlight |
+| A Garden of Paradise | celestial brush (Okami) | draw |
+| The City of Light | time management (Overcooked, Diner Dash) | keep the courtyard |
+
+Every game is 3 to 6 minutes long in escalating phases. Each one teaches by doing, never shows a fail screen, and works with touch as well as mouse and keyboard. Each world also hides five to eight discoveries: optional places with a short sourced fact that reward exploring.
