@@ -445,3 +445,31 @@ button:focus-visible { outline: 1px solid var(--sand); outline-offset: 3px; }
 .w-skip { position: absolute; right: calc(var(--gut-r) + 14px); bottom: calc(9vh + 12px); margin: 0; font-family: var(--f-display); text-transform: uppercase; letter-spacing: .2em; font-size: .62rem; color: rgba(242,233,214,.5); opacity: 0; transition: opacity .6s; z-index: 4; }
 .w-layer.cine .w-skip { opacity: 1; }
 .atlas.diving .atlas-head, .atlas.diving .atlas-listwrap, .atlas.diving .atlas-card, .atlas.diving .atlas-pins { opacity: 0; transition: opacity .6s; }
+
+/* ---------- entrance films ---------- */
+.w-layer.film .w-bars i { height: 11vh; }
+.w-layer.film .w-card, .w-layer.film .w-goal, .w-layer.film .w-joy, .w-layer.film .w-ebtn { opacity: 0 !important; }
+.w-fade { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; z-index: 2; }
+.w-titlecard { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); text-align: center; opacity: 0; transition: opacity 1.6s ease, letter-spacing 6s ease; pointer-events: none; z-index: 4; letter-spacing: .04em; }
+.w-titlecard.show { opacity: 1; letter-spacing: .1em; }
+.w-titlecard .wt-ar { margin: 0 0 .2em; font-family: var(--f-naskh); font-size: clamp(1.6rem, 4vw, 2.8rem); color: #f6dc9a; text-shadow: 0 2px 30px rgba(0,0,0,.6); letter-spacing: 0; }
+.w-titlecard .wt-en { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: clamp(1.4rem, 3.6vw, 2.6rem); color: #f2e9d6; text-transform: uppercase; text-shadow: 0 2px 30px rgba(0,0,0,.65); }
+.w-titlecard .wt-era { margin: .6em 0 0; font-family: var(--f-display); font-size: .72rem; letter-spacing: .3em; text-transform: uppercase; color: rgba(242,233,214,.72); }
+.w-sub { position: absolute; left: 50%; bottom: calc(11vh + 18px); transform: translateX(-50%); width: min(760px, 86vw); margin: 0; text-align: center; opacity: 0; transition: opacity .7s ease; pointer-events: none; z-index: 4; }
+.w-sub.show { opacity: 1; }
+.w-sub .ws-en { display: block; font-family: var(--f-body, serif); font-size: clamp(.95rem, 1.8vw, 1.18rem); line-height: 1.5; color: #f6efe2; text-shadow: 0 1px 2px rgba(0,0,0,.9), 0 0 18px rgba(0,0,0,.6); font-style: italic; }
+.w-sub .ws-ar { display: block; margin-top: .25em; font-family: var(--f-naskh); font-size: clamp(.95rem, 1.8vw, 1.15rem); color: #f6dc9a; text-shadow: 0 1px 2px rgba(0,0,0,.9); }
+.w-sub .ws-ar:empty, .w-sub .ws-en:empty { display: none; }
+@media (max-height: 520px) { .w-sub { bottom: calc(11vh + 6px); } .w-titlecard .wt-era { display: none; } }
+
+/* ---------- goal marker and discoveries ---------- */
+.w-goal { position: absolute; left: 0; top: 0; width: 0; height: 0; opacity: 0; pointer-events: none; z-index: 2; transition: opacity .5s; }
+.w-goal:not(.show), .w-goal:not(.on) { visibility: hidden; }
+.w-goal i { position: absolute; left: -7px; top: -7px; width: 14px; height: 14px; border: 1.5px solid #f6dc9a; background: rgba(246,220,154,.18); transform: rotate(45deg); box-shadow: 0 0 14px rgba(246,220,154,.5); }
+.w-goal.edge i { border-right-color: transparent; border-bottom-color: transparent; background: none; }
+.w-goal span { position: absolute; left: -40px; width: 80px; top: 12px; text-align: center; font-family: var(--f-display); font-size: .62rem; letter-spacing: .14em; color: rgba(246,220,154,.85); text-shadow: 0 1px 3px rgba(0,0,0,.8); }
+.wq-disc { font-family: var(--f-display); font-size: .66rem; letter-spacing: .16em; text-transform: uppercase; color: rgba(246,220,154,.8); margin-top: 6px !important; }
+.wq-disc:empty { display: none; }
+body.filming #story, body.filming #hint, body.filming #caption, body.filming .titlecard { opacity: 0 !important; pointer-events: none; transition: opacity .6s; }
+body.filming #hud { opacity: .28; transition: opacity .8s; }
+body.filming #hud:hover { opacity: 1; }

@@ -175,16 +175,27 @@
     $('hint').classList.add('off');
     updateProgress();
     const tc = $('titlecard');
-    tc.classList.remove('show'); void tc.offsetWidth; tc.classList.add('show');
+    tc.classList.remove('show'); void tc.offsetWidth; if (!s.film) tc.classList.add('show');
     clearTimeout(tcTimer); clearTimeout(hintTimer);
     tcTimer = setTimeout(() => { tc.classList.remove('show'); $('story').style.opacity = 1; }, 4200);
-    if (window.NARRATOR) { NARRATOR.stop(); clearTimeout(voiceTimer); voiceTimer = setTimeout(() => { if (E.cur !== s) return; NARRATOR.play(s.id || s.key); if (NARRATOR.lang !== 'off' && !storyPinned) { $('story').classList.add('collapsed'); $('story-toggle').setAttribute('aria-expanded', 'false'); } }, 3600); }
+    if (window.NARRATOR) { NARRATOR.stop(); clearTimeout(voiceTimer); voiceTimer = afterFilm(s, () => { NARRATOR.play(s.id || s.key); if (NARRATOR.lang !== 'off' && !storyPinned) { $('story').classList.add('collapsed'); $('story-toggle').setAttribute('aria-expanded', 'false'); } }, 3600); }
     clearTimeout(storyTimer);
     if (!storyPinned) { $('story').classList.remove('collapsed'); $('story-toggle').setAttribute('aria-expanded', 'true'); }
     if (E.h < 640 || E.w < 520) { $('story').classList.add('collapsed'); $('story-toggle').setAttribute('aria-expanded', 'false'); }
     storyTimer = setTimeout(() => { if (!storyPinned) { $('story').classList.add('collapsed'); $('story-toggle').setAttribute('aria-expanded', 'false'); } }, 22000);
     const coarse = matchMedia('(pointer: coarse)').matches;
-    hintTimer = setTimeout(() => { if (E.env && E.env.stage === s) E.env.hint((coarse && s.hintTouch) || s.hint); }, 4800);
+    hintTimer = afterFilm(s, () => { if (E.env && E.env.stage === s) E.env.hint((coarse && s.hintTouch) || s.hint); }, 4800);
+  }
+
+  // run fn once the station's entrance film (if any) has finished, at least `ms` after arrival
+  function afterFilm(s, fn, ms) {
+    return setTimeout(function check() {
+      if (E.cur !== s) return;
+      if (s.w && (s.w.filmS || s.w.cine)) { s._waited = true; setTimeout(check, 400); return; }
+      if (s._waited && !s._grace) { s._grace = true; setTimeout(check, 900); return; }
+      s._waited = s._grace = false;
+      fn();
+    }, ms);
   }
 
   function updateProgress() {

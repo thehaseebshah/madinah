@@ -11,9 +11,13 @@
 
   const SKY_VERT = `varying vec3 vDir; void main(){ vDir = normalize((modelMatrix*vec4(position,1.)).xyz - cameraPosition); gl_Position = projectionMatrix*viewMatrix*modelMatrix*vec4(position,1.); }`;
   const SKY_FRAG = `
-uniform vec3 uTop; uniform vec3 uMid; uniform vec3 uBot; uniform vec3 uSunDir; uniform vec3 uSun; uniform float uStars; uniform float uTime; uniform float uSunSize;
+uniform vec3 uTop; uniform vec3 uMid; uniform vec3 uBot; uniform vec3 uSunDir; uniform vec3 uSun; uniform float uStars; uniform float uTime; uniform float uSunSize; uniform float uClouds; uniform vec3 uCloudCol; uniform vec3 uCloudShade; uniform float uHaze;
 varying vec3 vDir;
 float h(vec3 p){ p = fract(p*0.3183099+.1); p *= 17.0; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
+float n2(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.-2.*f);
+  float a = h(vec3(i,1.)), b = h(vec3(i+vec2(1.,0.),1.)), c = h(vec3(i+vec2(0.,1.),1.)), d = h(vec3(i+1.,1.));
+  return mix(mix(a,b,f.x), mix(c,d,f.x), f.y); }
+float cfbm(vec2 p){ float s = 0., a = .5; for (int i = 0; i < 5; i++) { s += a*n2(p); p = p*2.03 + 7.1; a *= .5; } return s; }
 void main(){
   vec3 d = normalize(vDir);
   float y = d.y;
@@ -29,6 +33,15 @@ void main(){
     float band = exp(-pow(dot(d, normalize(vec3(0.3,0.5,-0.8)))*3.2, 2.));
     col += vec3(0.5,0.52,0.7) * band * 0.06 * uStars * (0.6 + 0.4*h(floor(d*90.)));
   }
+  if (uClouds > 0. && y > 0.) {
+    vec2 cp = d.xz / (y + 0.09) * 0.9 + vec2(uTime * 0.006, uTime * 0.002);
+    float c = cfbm(cp) + cfbm(cp * 3.1) * 0.25;
+    float cov = smoothstep(1.05 - uClouds, 1.35 - uClouds * 0.6, c);
+    float lit = 0.55 + 0.45 * cfbm(cp * 1.7 + 3.);
+    vec3 cc = mix(uCloudShade, uCloudCol, lit) + uSun * pow(sd, 5.) * 0.5;
+    col = mix(col, cc, cov * smoothstep(0.0, 0.18, y) * 0.92);
+  }
+  col = mix(col, uMid, uHaze * exp(-abs(y) * 9.));
   gl_FragColor = vec4(col, 1.);
 }`;
 
@@ -58,10 +71,24 @@ void main(){
       joy: null, look: null, locked: false, onStep: null, onUse: null, ui: {}, time: 0, enabled: true,
     };
     w.y = w.ground(w.pos.x, w.pos.z);
+    // 1 on a desktop, lower on phones and small machines: scatter counts and shadow sizes scale with it
+    w.quality = /[?&]q=low/.test(location.search) ? 0.5 : (matchMedia('(pointer: coarse)').matches || (navigator.hardwareConcurrency || 8) <= 4) ? 0.55 : 1;
+    w.ticks = [];
+    w.tick = fn => { w.ticks.push(fn); return fn; };
 
     /* ---------- colliders ---------- */
     w.addBox = (x0, z0, x1, z1) => { w.boxes.push([Math.min(x0, x1), Math.min(z0, z1), Math.max(x0, x1), Math.max(z0, z1)]); };
     w.addCircle = (x, z, r) => { w.circles.push([x, z, r]); };
+    /* Platforms: walkable tops you can step or jump onto (rooftops, ledges, rocks).
+       A platform is solid from the side only when you are below its top. */
+    w.platforms = [];
+    w.addPlatform = (x0, z0, x1, z1, top, opt) => { const p = { x0: Math.min(x0, x1), z0: Math.min(z0, z1), x1: Math.max(x0, x1), z1: Math.max(z0, z1), top, solid: !opt || opt.solid !== false }; w.platforms.push(p); return p; };
+    w.floorAt = (x, z, feet) => {
+      let y = w.ground(x, z);
+      for (const p of w.platforms) if (x > p.x0 && x < p.x1 && z > p.z0 && z < p.z1 && p.top <= feet + 0.45 && p.top > y) y = p.top;
+      return y;
+    };
+    w.jump = !!o.jump; w.vy = 0; w.air = false; w.gravity = o.gravity || 22; w.jumpV = o.jumpV || 7.2;
     function collide(p) {
       const r = w.radius;
       for (const [x0, z0, x1, z1] of w.boxes) {
@@ -69,6 +96,14 @@ void main(){
           const dl = p.x - (x0 - r), dr = (x1 + r) - p.x, dn = p.z - (z0 - r), df = (z1 + r) - p.z;
           const m = Math.min(dl, dr, dn, df);
           if (m === dl) p.x = x0 - r; else if (m === dr) p.x = x1 + r; else if (m === dn) p.z = z0 - r; else p.z = z1 + r;
+        }
+      }
+      for (const pl of w.platforms) {
+        if (!pl.solid || pl.top <= w.y + 0.45) continue;
+        if (p.x > pl.x0 - r && p.x < pl.x1 + r && p.z > pl.z0 - r && p.z < pl.z1 + r) {
+          const dl = p.x - (pl.x0 - r), dr = (pl.x1 + r) - p.x, dn = p.z - (pl.z0 - r), df = (pl.z1 + r) - p.z;
+          const m = Math.min(dl, dr, dn, df);
+          if (m === dl) p.x = pl.x0 - r; else if (m === dr) p.x = pl.x1 + r; else if (m === dn) p.z = pl.z0 - r; else p.z = pl.z1 + r;
         }
       }
       for (const [x, z, cr] of w.circles) {
@@ -94,10 +129,14 @@ void main(){
       <div class="w-prompt" aria-live="polite"><span class="w-key"><i></i>E</span><span class="w-label"></span></div>
       <div class="w-card" aria-live="polite"><p class="w-card-ar" lang="ar" dir="rtl"></p><h3 class="w-card-title"></h3><p class="w-card-text"></p></div>
       <div class="w-count"></div>
-      <div class="w-quest" aria-live="polite"><p class="wq-kicker">Activity</p><p class="wq-title"></p><p class="wq-step"></p><div class="wq-bar"><i></i></div></div>
+      <div class="w-quest" aria-live="polite"><p class="wq-kicker">Activity</p><p class="wq-title"></p><p class="wq-step"></p><div class="wq-bar"><i></i></div><p class="wq-disc"></p></div>
       <div class="w-done" aria-live="assertive"><p class="wd-kicker">Activity complete</p><p class="wd-title"></p></div>
       <div class="w-bars" aria-hidden="true"><i></i><i></i></div>
       <p class="w-skip">Press any key to skip</p>
+      <div class="w-fade" aria-hidden="true"></div>
+      <div class="w-titlecard" aria-hidden="true"><p class="wt-ar" lang="ar" dir="rtl"></p><h2 class="wt-en"></h2><p class="wt-era"></p></div>
+      <p class="w-sub" aria-live="polite"><span class="ws-en"></span><span class="ws-ar" lang="ar" dir="rtl"></span></p>
+      <div class="w-goal" aria-hidden="true"><i></i><span></span></div>
       <div class="w-joy" aria-hidden="true"><div class="w-joy-knob"></div></div>
       <button class="w-ebtn" type="button" aria-label="Interact">E</button>`;
     document.body.appendChild(layer);
@@ -153,7 +192,7 @@ void main(){
       w.cine = { P, L, t: 0, dur: dur || 7.5 };
       w.enabled = false; layer.classList.add('cine');
     };
-    w.skipCinematic = () => { if (w.cine) w.cine.t = w.cine.dur; };
+    w.skipCinematic = () => { if (w.filmS) { if (w.filmS.i > 0 || w.filmS.t > 1) endFilm(true); return; } if (w.cine) w.cine.t = w.cine.dur; };
     function endCinematic() { w.cine = null; w.enabled = true; layer.classList.remove('cine'); }
     // A default flight: from high and far behind the start, swinging round and down to the eyes.
     w.autoCinematic = (o) => {
@@ -169,6 +208,123 @@ void main(){
         { p: eye.toArray(), l: eye.clone().addScaledVector(f, 10).toArray() },
       ], o.dur || 7.5);
     };
+    /* ---------- the entrance film ----------
+       A short cut-scene in several shots that travel through the station before control is handed over.
+       shots: [{ dur, path: [[p, l], ...], ease: 'inout'|'linear'|'in'|'out', fov: [a, b], shake,
+                 fade: 'cut'|'dip'|'white' (how this shot begins), title: true (show the title card),
+                 line: 'subtitle', ar: 'Arabic subtitle', lineAt: s, lines: [[t, en, ar], ...],
+                 start(w), during(w, k, dt) }]
+       The last shot ends at the walker's eyes. opts: { title, arabic, era, end(w) } — end() runs when the
+       film finishes or is skipped, so it must leave the world in the state play begins in. */
+    const fadeEl = $('.w-fade'), titleEl = $('.w-titlecard'), subEl = $('.w-sub');
+    w.film = (shots, opts) => {
+      opts = opts || {};
+      shots.forEach(s => { s.P = s.path.map(k => new T.Vector3(...k[0])); s.L = s.path.map(k => new T.Vector3(...k[1])); s.dur = s.dur || 5; });
+      const last = shots[shots.length - 1];
+      last.P.push(new T.Vector3()); last.L.push(new T.Vector3()); last.handoff = true;
+      w.filmS = { shots, i: -1, t: 0, opts, total: shots.reduce((a, s) => a + s.dur, 0) };
+      titleEl.querySelector('.wt-en').textContent = opts.title || '';
+      titleEl.querySelector('.wt-ar').textContent = opts.arabic || '';
+      titleEl.querySelector('.wt-era').textContent = opts.era || '';
+      w.enabled = false; layer.classList.add('cine', 'film'); document.body.classList.add('filming');
+      w.cine = { film: true, t: 0, dur: 1e9 };
+      nextShot();
+    };
+    function nextShot() {
+      const F = w.filmS; F.i++; F.t = 0;
+      const s = F.shots[F.i]; if (!s) return endFilm();
+      s._done = false;
+      titleEl.classList.toggle('show', !!s.title);
+      setSub('', '');
+      s.start && s.start(w);
+    }
+    function setSub(en, ar) {
+      subEl.querySelector('.ws-en').textContent = en || ''; subEl.querySelector('.ws-ar').textContent = ar || '';
+      subEl.classList.toggle('show', !!(en || ar));
+    }
+    function endFilm(skipped) {
+      const F = w.filmS; if (!F) return;
+      w.filmS = null; titleEl.classList.remove('show'); setSub('', ''); fadeEl.style.opacity = 0;
+      if (skipped) F.shots.slice(Math.max(0, F.i)).forEach(s => s.skip && s.skip(w));
+      F.opts.end && F.opts.end(w, skipped);
+      camera.fov = o.fov || 68; camera.updateProjectionMatrix();
+      layer.classList.remove('film'); document.body.classList.remove('filming');
+      endCinematic();
+    }
+    const ez = { inout: U.ease, linear: x => x, in: x => x * x * x, out: U.easeOut, glide: x => x * x * (3 - 2 * x) };
+    function filmStep(dt) {
+      const F = w.filmS, s = F.shots[F.i];
+      F.t += dt;
+      const k = U.clamp(F.t / s.dur), kk = (ez[s.ease] || ez.glide)(k);
+      if (s.handoff) {
+        s.P[s.P.length - 1].set(w.pos.x, w.y + w.eye, w.pos.z);
+        s.L[s.L.length - 1].set(w.pos.x - Math.sin(w.yaw) * 10 * Math.cos(w.pitch), w.y + w.eye + Math.sin(w.pitch) * 10, w.pos.z - Math.cos(w.yaw) * 10 * Math.cos(w.pitch));
+      }
+      camera.position.copy(spline(s.P, kk, cA));
+      if (s.shake) camera.position.add(cB.set(U.noise1(w.time * 1.3) , U.noise1(w.time * 1.1 + 7), U.noise1(w.time * 1.2 + 3)).multiplyScalar(s.shake));
+      camera.lookAt(spline(s.L, kk, cB));
+      if (s.fov) { camera.fov = U.lerp(s.fov[0], s.fov[1] == null ? s.fov[0] : s.fov[1], kk); camera.updateProjectionMatrix(); }
+      else if (camera.fov !== (o.fov || 68)) { camera.fov = o.fov || 68; camera.updateProjectionMatrix(); }
+      // fades: a shot fades in when it begins with a dip, and the shot before it fades out
+      const next = F.shots[F.i + 1], D = 0.65;
+      let fa = 0;
+      if ((s.fade === 'dip' || s.fade === 'white' || (F.i === 0 && s.fade !== 'cut')) && F.t < D) fa = 1 - F.t / D;
+      if (next && (next.fade === 'dip' || next.fade === 'white') && F.t > s.dur - D) fa = Math.max(fa, (F.t - (s.dur - D)) / D);
+      fadeEl.style.opacity = fa.toFixed(3);
+      fadeEl.style.background = (s.fade === 'white' && F.t < D) || (next && next.fade === 'white' && F.t > s.dur - D) ? '#f6efe2' : '#000';
+      // subtitles
+      if (s.lines) {
+        let cur = null; for (const L of s.lines) if (F.t >= L[0]) cur = L;
+        setSub(cur ? cur[1] : '', cur ? cur[2] : '');
+      } else if (s.line || s.ar) setSub(F.t >= (s.lineAt == null ? 0.5 : s.lineAt) && F.t < s.dur - 0.3 ? s.line : '', F.t >= (s.lineAt == null ? 0.5 : s.lineAt) && F.t < s.dur - 0.3 ? s.ar : '');
+      s.during && s.during(w, k, dt);
+      if (F.t >= s.dur) nextShot();
+    }
+    w.skipFilm = () => { if (w.filmS) endFilm(true); };
+
+    /* ---------- discoveries: optional places to find across a large scene ---------- */
+    const Dsc = { list: [], found: 0 };
+    w.discover = d => {
+      const pos = new T.Vector3(...d.pos);
+      const mote = KIT.glow(w, d.color || 0xfff0c8, d.size || 1.6, 0.9);
+      mote.position.copy(pos); mote.userData.dynamic = true; scene.add(mote);
+      const it = w.interact({
+        key: 'disc-' + Dsc.list.length, pos, r: d.r || 3.2, once: true, label: d.label || 'Look closer',
+        onUse: () => {
+          Dsc.found++; it.found = true;
+          w.say(d.title, d.text, { ar: d.ar, ms: d.ms || 11000 });
+          SND.bell(env.bus, 880, { gain: 0.035 }); SND.bell(env.bus, 1174.66, { gain: 0.03, delay: 0.25 });
+          updDisc();
+          d.onFind && d.onFind(w, d);
+          if (Dsc.found === Dsc.list.length) setTimeout(() => w.say('Every place found', `You have found all ${Dsc.found} discoveries in this place.`, { ms: 6000 }), 11500);
+        },
+      });
+      Dsc.list.push({ d, it, mote });
+      updDisc();
+      return it;
+    };
+    function updDisc() { const el = layer.querySelector('.wq-disc'); el.textContent = Dsc.list.length ? `Discoveries · ${Dsc.found} / ${Dsc.list.length}` : ''; }
+    w.discoveries = () => ({ found: Dsc.found, total: Dsc.list.length });
+
+    /* ---------- the goal marker: a small diamond that points the way in a big scene ---------- */
+    const goalEl = $('.w-goal'), gv = new T.Vector3();
+    w.goal = (p, label) => { w._goal = p ? (Array.isArray(p) ? new T.Vector3(...p) : p) : null; goalEl.querySelector('span').dataset.label = label || ''; goalEl.classList.toggle('show', !!p); };
+    function goalStep() {
+      if (!w._goal || w.cine) { goalEl.classList.remove('on'); return; }
+      goalEl.classList.add('on');
+      gv.copy(w._goal).project(camera);
+      const behind = gv.z > 1;
+      let x = gv.x, y = gv.y; if (behind) { x = -x; y = -y; }
+      const off = behind || Math.abs(x) > 0.92 || Math.abs(y) > 0.86;
+      if (off) { const m = Math.max(Math.abs(x) / 0.92, Math.abs(y) / 0.86); x /= m; y /= m; }
+      const d = Math.hypot(w._goal.x - w.pos.x, w._goal.z - w.pos.z);
+      goalEl.style.transform = `translate(${(x * 0.5 + 0.5) * env.w}px, ${(-y * 0.5 + 0.5) * env.h}px)`;
+      goalEl.classList.toggle('edge', off);
+      goalEl.querySelector('i').style.transform = off ? `rotate(${Math.atan2(-y, x) * 180 / Math.PI + 45}deg)` : 'rotate(45deg)';
+      goalEl.querySelector('span').textContent = d > 6 ? `${Math.round(d)} m` : '';
+      goalEl.style.opacity = d < 3 ? 0 : 1;
+    }
+
     const touchy = matchMedia('(pointer: coarse)').matches;
     if (touchy) layer.classList.add('touch');
     w.ui.ebtn.addEventListener('pointerdown', e => { e.stopPropagation(); w.keys.add('e'); press(); });
@@ -192,12 +348,15 @@ void main(){
       if (w.cine) { w.skipCinematic(); return; }
       const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
       if (k === 'e' && !w.keys.has('e')) { w.keys.add('e'); press(); return; }
+      if (k === ' ' && w.jump && !w.air && w.enabled && !w.mode) { w.vy = w.jumpV; w.air = true; SND.step(env.bus, { gain: 0.05, f: 600 }); }
       w.keys.add(k);
     };
     w.keyup = e => { const k = e.key.length === 1 ? e.key.toLowerCase() : e.key; w.keys.delete(k); };
     w.blur = () => w.keys.clear();
     w.down = (p, e) => {
       if (w.cine) { w.skipCinematic(); return; }
+      // a station's own pointer handling (aiming, drawing, dragging); return true to consume the event
+      if (w.onPointer && w.onPointer(e, p, 'down') === true) return;
       if (e.pointerType === 'mouse' || !e.pointerType) {
         if (!w.locked && o.pointerLock !== false && host.requestPointerLock) {
           try { const r = host.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (_) {}
@@ -226,6 +385,7 @@ void main(){
       }
     };
     w.up = (p, e) => {
+      if (w.onPointer) w.onPointer(e, p, 'up');
       if (w.joy && e.pointerId === w.joy.id) { w.joy = null; w.ui.knob.style.transform = ''; w.ui.joy.classList.remove('on'); }
       if (w.look && e.pointerId === w.look.id) w.look = null;
     };
@@ -250,6 +410,7 @@ void main(){
           uTop: { value: new T.Color(so.top) }, uMid: { value: new T.Color(so.mid) }, uBot: { value: new T.Color(so.bot || so.mid) },
           uSunDir: { value: new T.Vector3(...(so.sunDir || [0, 1, 0])).normalize() }, uSun: { value: new T.Color(so.sun || '#000000') },
           uStars: { value: so.stars || 0 }, uTime: { value: 0 }, uSunSize: { value: so.sunSize || 0.0012 },
+          uClouds: { value: so.clouds || 0 }, uCloudCol: { value: new T.Color(so.cloudColor || '#fff6ea') }, uCloudShade: { value: new T.Color(so.cloudShade || '#b8aaa0') }, uHaze: { value: so.haze || 0 },
         },
       });
       const m = new T.Mesh(new T.SphereGeometry(o.far ? o.far * 0.9 : 1000, 32, 16), mat);
@@ -327,7 +488,7 @@ void main(){
     };
     w.receiveAll = () => scene.traverse(o => { if (o.isMesh && !o.material.isShaderMaterial) { o.receiveShadow = true; if (!o.userData.noCast) o.castShadow = true; } });
     w.forward = () => new T.Vector3(-Math.sin(w.yaw) * Math.cos(w.pitch), Math.sin(w.pitch), -Math.cos(w.yaw) * Math.cos(w.pitch));
-    w.resize = () => { renderer.setSize(env.w, env.h, false); camera.aspect = env.w / env.h; camera.updateProjectionMatrix(); };
+    w.resize = () => { renderer.setSize(env.w, env.h, false); camera.aspect = env.w / env.h; camera.updateProjectionMatrix(); w._post && w._post.resize(); };
 
     /* ---------- the step ---------- */
     const fwd = new T.Vector3(), right = new T.Vector3(), want = new T.Vector3(), next = new T.Vector3();
@@ -343,6 +504,16 @@ void main(){
     };
     w.update = dt => {
       w.time += dt;
+      if (window.SCAPE) SCAPE.time.value = w.time;
+      for (let i = 0; i < w.ticks.length; i++) w.ticks[i](dt, w);
+      goalStep();
+      if (w.filmS) {
+        filmStep(dt);
+        w.y = w.ground(w.pos.x, w.pos.z);
+        if (w.skyMesh) w.skyMesh.material.uniforms.uTime.value = w.time;
+        w.ui.prompt.classList.remove('show');
+        return;
+      }
       if (w.cine) {
         const c = w.cine; c.t += dt;
         const k = U.ease(U.clamp(c.t / c.dur));
@@ -358,6 +529,8 @@ void main(){
         return;
       }
       if (w.skyMesh) w.skyMesh.material.uniforms.uTime.value = w.time;
+      // a station can take over movement and camera entirely (side-scroller, rail flight, top-down...)
+      if (w.mode) { w.ui.prompt.classList.remove('show'); w.mode(dt, w); return; }
       const k = w.keys;
       let mx = 0, mz = 0;
       if (w.enabled) {
@@ -379,8 +552,14 @@ void main(){
       const moved = Math.hypot(next.x - w.pos.x, next.z - w.pos.z);
       w.pos.copy(next);
       w.moving = moved / Math.max(dt, 1e-4);
-      const gy = w.ground(w.pos.x, w.pos.z);
-      w.y = U.damp(w.y, gy, 14, dt);
+      const gy = w.platforms.length || w.jump ? w.floorAt(w.pos.x, w.pos.z, w.y) : w.ground(w.pos.x, w.pos.z);
+      if (w.jump || w.air) {
+        w.vy -= w.gravity * dt; w.y += w.vy * dt;
+        if (w.y <= gy) { if (w.air && w.vy < -4) { SND.thump && SND.thump(env.bus, { gain: 0.05 }); } w.y = w.air ? gy : U.damp(w.y, gy, 14, dt); w.vy = 0; w.air = false; }
+        else if (w.y > gy + 0.06) w.air = true;
+        if (!w.air && gy < w.y - 0.5) w.air = true; // walked off an edge
+        if (w.y < gy) w.y = gy;
+      } else w.y = U.damp(w.y, gy, 14, dt);
       // head bob and footsteps
       const before = w.bob;
       w.bob += moved * 1.75;
@@ -426,7 +605,25 @@ void main(){
       } else { w.ui.prompt.classList.remove('show'); w.ui.ebtn.classList.remove('show'); }
     };
     // the sky dome travels with the camera, so high cinematic shots never leave it
-    w.render = () => { if (w.skyMesh) w.skyMesh.position.copy(camera.position); renderer.render(scene, camera); };
+    const maxPR = Math.min(env.dpr, o.pixelRatio || 1.5);
+    let pr = maxPR, frames = 0, acc = 0, lastT = 0, cool = 0;
+    w.render = () => {
+      if (w.skyMesh) w.skyMesh.position.copy(camera.position);
+      if (w._post && w._post.enabled) w._post.render(); else { renderer.setRenderTarget(null); renderer.render(scene, camera); }
+      // adaptive resolution: hold the frame rate by trading pixels when a scene is heavy
+      const now = performance.now();
+      if (lastT && !window.FIXEDRES) {
+        acc += Math.min(now - lastT, 100); frames++;
+        if (frames >= 45 && now > cool) {
+          const ms = acc / frames; frames = 0; acc = 0;
+          let np = pr;
+          if (ms > 30 && pr > 0.6) np = Math.max(0.6, pr - 0.15); else if (ms < 17 && pr < maxPR) np = Math.min(maxPR, pr + 0.1);
+          if (np !== pr) { pr = np; renderer.setPixelRatio(pr); renderer.setSize(env.w, env.h, false); w._post && w._post.resize(); cool = now + 1500; }
+        }
+      }
+      lastT = now;
+    };
+    w.post = opts => window.SCAPE ? SCAPE.post(w, opts) : null;
 
     function footstep(surf, intensity) {
       const g = 0.06 + 0.06 * U.clamp(intensity, 0, 1.5);
@@ -450,6 +647,9 @@ void main(){
         mats.forEach(m => { for (const key in m) { const v = m[key]; if (v && v.isTexture) v.dispose(); } m.dispose(); });
       });
       if (w._envRT) w._envRT.dispose(); if (w._pmrem) w._pmrem.dispose();
+      if (w._post) w._post.dispose();
+      document.body.classList.remove('filming');
+      w.ticks.length = 0;
       renderer.dispose();
       try { renderer.forceContextLoss(); } catch (_) {}
     };
@@ -465,7 +665,8 @@ void main(){
       enter.call(this, env);
       if (this.w && !this.w.cine && this.cinematic !== false) {
         // a station may script its own entrance as a list of camera shots
-        if (this.shots) this.w.cinematic(this.shots(env, this.w).map(([p, l]) => ({ p, l })), this.shotDur || 9.5);
+        if (this.film) this.w.film(this.film(env, this.w), Object.assign({ title: this.title, arabic: this.arabic, era: this.era }, this.filmOpts || {}));
+        else if (this.shots) this.w.cinematic(this.shots(env, this.w).map(([p, l]) => ({ p, l })), this.shotDur || 9.5);
         else this.w.autoCinematic(this.intro || {});
       }
     };
