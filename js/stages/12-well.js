@@ -70,6 +70,33 @@
     return SCAPE.merge(list);
   }
 
+
+  /* Mud-brick houses with real form: a body, a parapet round the flat roof, a stair-house, roof beams
+     that stand out of the wall, a plank door. Instanced: three draw calls for the whole town. */
+  function mudHouses(w, o) {
+    const T = THREE, r = U.seeded(o.seed || 5), list = [];
+    for (let k = 0; list.length < o.n && k < o.n * 60; k++) {
+      const x = U.lerp(o.area[0], o.area[2], r()), z = U.lerp(o.area[1], o.area[3], r());
+      if (o.avoid && o.avoid(x, z)) continue; if (o.density && r() > o.density(x, z)) continue;
+      const sx = 5 + r() * 5, sz = 5 + r() * 5, sy = 2.8 + r() * (r() < 0.25 ? 3.2 : 1.2);
+      if (list.some(h => Math.abs(h.x - x) < (h.sx + sx) / 2 + 1.5 && Math.abs(h.z - z) < (h.sz + sz) / 2 + 1.5)) continue;
+      list.push({ x, z, sx, sy, sz, ry: Math.round(r() * 4) * Math.PI / 2 + (r() - 0.5) * 0.1, col: U.pick(['#ffffff', '#f4e4d0', '#e8d4bc', '#dcc4a8']) });
+    }
+    const body = new T.BoxGeometry(1, 1, 1, 2, 2, 2); body.translate(0, 0.5, 0);
+    const par = [[0, 1.04, 0.48, 1, 0.08, 0.04], [0, 1.04, -0.48, 1, 0.08, 0.04], [0.48, 1.04, 0, 0.04, 0.08, 1], [-0.48, 1.04, 0, 0.04, 0.08, 1]].map(([x, y, z, a, b, c]) => new T.BoxGeometry(a, b, c).translate(x, y, z));
+    const houseG = SCAPE.merge([body, ...par, new T.BoxGeometry(0.28, 0.28, 0.28).translate(0.3, 1.14, -0.3)]);
+    const beamsG = SCAPE.merge([-0.36, -0.18, 0, 0.18, 0.36].map(x => new T.CylinderGeometry(0.018, 0.02, 0.12, 5).rotateX(Math.PI / 2).translate(x, 0.93, 0.53)));
+    const doorG = new T.BoxGeometry(0.16, 0.42, 0.03).translate(-0.18, 0.21, 0.505);
+    const inst = (geo, mat) => {
+      const im = new T.InstancedMesh(geo, mat, list.length), m4 = new T.Matrix4(), q = new T.Quaternion(), c = new T.Color();
+      list.forEach((h, i) => { m4.compose(new T.Vector3(h.x, w.ground(h.x, h.z) - 0.15, h.z), q.setFromAxisAngle(new T.Vector3(0, 1, 0), h.ry), new T.Vector3(h.sx, h.sy, h.sz)); im.setMatrixAt(i, m4); im.setColorAt(i, c.set(h.col)); });
+      im.castShadow = true; im.receiveShadow = true; im.frustumCulled = false; im.userData.dynamic = true; w.scene.add(im); return im;
+    };
+    inst(houseG, o.plaster); inst(beamsG, o.beam); inst(doorG, o.door);
+    list.forEach(h => { const c = Math.abs(Math.cos(h.ry)) > 0.5, hx = (c ? h.sx : h.sz) / 2, hz = (c ? h.sz : h.sx) / 2; w.addBox(h.x - hx, h.z - hz, h.x + hx, h.z + hz); });
+    return list;
+  }
+
   ENGINE.register(WORLD.stage({
     key: 'well',
     arabic: 'بِئْرُ رُومَة',
@@ -83,7 +110,7 @@
 
     enter(env) {
       const w = this.w = WORLD.create(env, {
-        start: { x: 0, z: 8, yaw: 0, pitch: -0.1 }, exposure: 0.8, far: 2600, speed: 3.2, run: 6.4,
+        start: { x: 0, z: 8, yaw: 0, pitch: -0.1 }, exposure: 0.72, far: 2600, speed: 3.2, run: 6.4,
         fog: { color: 0xd8ccb8, density: 0.0011 }, bounds: [-150, -150, 150, 150], ground: H,
         surface: (x, z) => (Math.hypot(x, z) < 3 ? 'stone' : 'sand'),
       });
@@ -93,33 +120,33 @@
 
       /* ---------- sky: a clear, hot day ---------- */
       w.sky({ top: '#5a88c8', mid: '#e8dcc8', bot: '#d8ccb8', sunDir: [0.5, 0.68, 0.4], sun: '#fff0d8', sunSize: 0.0014, clouds: 0.15, haze: 0.35 });
-      this.sun = new T.DirectionalLight(0xfff0dc, 2.0); this.sun.position.set(50, 68, 40); S.add(this.sun);
+      this.sun = new T.DirectionalLight(0xfff0dc, 1.7); this.sun.position.set(50, 68, 40); S.add(this.sun);
       S.add(new T.HemisphereLight(0xc8d8f0, 0x9a7a5a, PHOTO.enabled ? 0.06 : 0.6));
       w.followShadow(this.sun, 36, 2048);
       PHOTO.sky(w, 'kloofendal_43d_clear_puresky', { sun: this.sun, intensity: 0.7, rotation: 0.67 - 0.629, haze: '#d8ccb8', horizon: 0.4, ground: '#b89a78', bounce: 0.5 });
 
       /* ---------- the land ---------- */
-      SCAPE.terrain(w, { size: 1600, seg: 300, height: H, rock: [0.82, 0.94], rockHeight: [5, 16], colors: { low: '#ccb08a', high: '#b89a74', rock: '#4a3e3a', dark: '#2a2422' },
+      SCAPE.terrain(w, { size: 1600, seg: 300, height: H, rock: [0.82, 0.94], rockHeight: [5, 16], colors: { low: '#bc9e78', high: '#a88a66', rock: '#4a3e3a', dark: '#2a2422' },
         tex: 'dune', rockTex: 'lava', photo: { ground: 'dense_sand', rock: 'dark_rock', normal: 1 }, rep: 0.22, rockRep: 0.06 });
       SCAPE.horizon(w, { haze: '#d8ccb8', layers: [{ r: 1000, h: 80, color: '#6e5e54', seed: 6 }, { r: 1450, h: 120, color: '#948478', seed: 10 }, { r: 2050, h: 150, color: '#b6aaa0', seed: 14 }] });
       const inGrid = (x, z, pad) => LEVELS.some(L => { const c = Math.cos(-L.ang), s = Math.sin(-L.ang), lx = x * c + z * s, lz = -x * s + z * c; return Math.abs(lx) < L.nx * CS / 2 + (pad || 3) && lz < 0 && lz > -(D0 + L.nz * CS + (pad || 3) + 5); }) || Math.hypot(x, z) < 6 + (pad || 0);
       const wadi = (x, z) => Math.abs(x + 70 + Math.sin(z * 0.012) * 18) < 26;
-      SCAPE.scatter(w, { kind: 'palm', n: 280, area: [-200, -220, 200, 60], scale: [7, 13], density: (x, z) => (z < -10 ? 1 : 0.3) * U.smooth(-0.3, 0.2, SCAPE.fbm(x * 0.012 + 9, z * 0.012, 2)) * (wadi(x, z) ? 0.15 : 1), avoid: (x, z) => inGrid(x, z, 5), seed: 81, collide: 0.03 });
+      const palms = SCAPE.scatter(w, { kind: 'palm', n: 280, area: [-200, -220, 200, 60], scale: [7, 13], density: (x, z) => (z < -10 ? 1 : 0.3) * U.smooth(-0.3, 0.2, SCAPE.fbm(x * 0.012 + 9, z * 0.012, 2)) * (wadi(x, z) ? 0.15 : 1), avoid: (x, z) => inGrid(x, z, 5), seed: 81, collide: 0.03 });
+      if (palms.meshes[0]) palms.meshes[0].material = PHOTO.mat(w, 'palm_tree_bark', { triplanar: 1.6, color: 0xa89480, fallback: KIT.bark(w) });
       SCAPE.scatter(w, { kind: 'palm', n: 240, area: [-650, -650, 650, 650], scale: [8, 13], density: (x, z) => U.smooth(210, 250, Math.hypot(x, z)) * (1 - U.smooth(380, 460, Math.hypot(x, z))), seed: 82, castShadow: false });
       SCAPE.scatter(w, { kind: 'acacia', n: 40, area: [-140, -150, -10, 150], scale: [0.9, 1.5], density: (x, z) => (wadi(x, z) ? 1 : 0.1), avoid: (x, z) => inGrid(x, z, 6), seed: 83, collide: true });
       SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_02', fallback: 'boulder', n: 50, area: [60, -150, 150, 150], scale: [0.8, 2.4], avoid: (x, z) => inGrid(x, z, 6), seed: 84, collide: 0.4 });
       SCAPE.scatter(w, { kind: 'boulder', tex: 'lava', n: 300, area: [80, -600, 700, 600], density: (x, z) => U.smooth(100, 160, x), scale: [1, 5], seed: 85 });
       SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_stones_01', variant: 0, fallback: 'pebble', n: 1300, area: [-150, -150, 150, 150], scale: [0.8, 1.6], avoid: (x, z) => inGrid(x, z, 0), seed: 86 });
       SCAPE.scatter(w, { kind: 'rock', n: 500, area: [-150, -150, 150, 150], scale: [0.2, 0.9], avoid: (x, z) => inGrid(x, z, 1), seed: 87 });
-      SCAPE.scatter(w, { kind: 'model', model: 'grass_medium_01', variant: 2, fallback: 'grass', n: 600, area: [-150, -150, 150, 150], scale: [0.8, 1.5], avoid: (x, z) => inGrid(x, z, 1), seed: 88 });
+      SCAPE.scatter(w, { kind: 'model', model: 'grass_medium_01', variant: 2, fallback: 'grass', n: 300, area: [-150, -150, 150, 150], scale: [0.8, 1.5], avoid: (x, z) => inGrid(x, z, 1), seed: 88 });
       SCAPE.scatter(w, { kind: 'grass', n: 1300, area: [-150, -150, 150, 150], scale: [0.4, 0.9], color: '#d8cc9a', avoid: (x, z) => inGrid(x, z, 1), seed: 89, castShadow: false });
       SCAPE.scatter(w, { kind: 'model', model: 'wild_rooibos_bush', variant: 0, fallback: 'shrub', n: 120, area: [-150, -150, 150, 150], scale: [0.7, 1.3], avoid: (x, z) => inGrid(x, z, 3), seed: 90 });
       SCAPE.scatter(w, { kind: 'thorn', n: 80, area: [-150, -150, 150, 150], scale: [0.6, 1.2], avoid: (x, z) => inGrid(x, z, 3), seed: 91 });
       SCAPE.birds(w, { n: 9, x: 0, z: -30, y: 45, r: 70 });
       // the edge of the town, beyond the southern network
       const plaster = PHOTO.mat(w, 'clay_plaster', { triplanar: 0.35, color: 0xffeedd, fallback: SCAPE.tex.mud(w) });
-      const hs = SCAPE.scatter(w, { kind: 'house', n: 40, area: [-80, 30, 80, 140], scale: [5, 9], avoid: (x, z) => inGrid(x, z, 8), density: (x, z) => U.smooth(150, 40, Math.hypot(x, z - 40)), seed: 92, collide: true });
-      hs.meshes.forEach(m => { m.material = plaster; });
+      mudHouses(w, { n: 40, area: [-80, 30, 80, 140], avoid: (x, z) => inGrid(x, z, 8), density: (x, z) => U.smooth(150, 40, Math.hypot(x, z - 40)), seed: 92, plaster, beam: PHOTO.mat(w, 'medieval_wood', { triplanar: 1.2, color: 0xc8b4a0, fallback: KIT.wood(w) }), door: PHOTO.mat(w, 'old_planks_02', { rep: [1, 1], fallback: KIT.wood(w) }) });
       SCAPE.smoke(w, { sources: [[-30, H(-30, 70) + 3, 70], [40, H(40, 90) + 3, 90]], height: 14, opacity: 0.12 });
 
       /* ---------- materials ---------- */
@@ -127,8 +154,8 @@
       this.oldStone = PHOTO.mat(w, 'dry_riverbed_rock', { triplanar: 0.9, color: 0xc8bca8, fallback: SCAPE.tex.granite(w) });
       const wood = PHOTO.mat(w, 'medieval_wood', { triplanar: 1.2, color: 0xc8b4a0, fallback: KIT.wood(w) });
       const leather = PHOTO.mat(w, 'brown_leather', { rep: [1, 1], fallback: KIT.wood(w, [1, 1], '#6a4430') });
-      this.waterMat = new T.MeshStandardMaterial({ color: 0x5a8ca4, roughness: 0.08, metalness: 0.1, transparent: true, opacity: 0.86, emissive: 0x0a2230, emissiveIntensity: 0.4 });
-      const cracked = PHOTO.mat(w, 'mud_cracked_dry_03', { rep: [3, 3], fallback: SCAPE.tex.gravel(w) });
+      this.waterMat = new T.MeshStandardMaterial({ color: 0x2a5a74, roughness: 0.12, metalness: 0.05, transparent: true, opacity: 0.9, emissive: 0x06202c, emissiveIntensity: 0.5 });
+      const cracked = PHOTO.mat(w, 'mud_cracked_dry_03', { rep: [3, 3], color: 0xc8b49c, fallback: SCAPE.tex.gravel(w) });
 
       /* ---------- the well ---------- */
       const wy = H(0, 0);
@@ -170,6 +197,17 @@
         // the dry earth under the network
         const c = toWorld(L, 0, -(D0 + L.nz * CS / 2)), ground = new T.Mesh(new T.PlaneGeometry(L.nx * CS + 1.2, L.nz * CS + 1.2).rotateX(-Math.PI / 2), cracked);
         ground.position.set(c.x, gy + 0.02, c.z); ground.rotation.y = L.ang; ground.receiveShadow = true; S.add(ground);
+        // the grid scratched in the earth: cells, the inlet from the well, and the outlets to reach
+        { const cw = 128, cv = document.createElement('canvas'); cv.width = L.nx * cw; cv.height = L.nz * cw; const g = cv.getContext('2d');
+          g.strokeStyle = 'rgba(255,248,230,0.28)'; g.lineWidth = 3; g.setLineDash([10, 8]);
+          for (let i = 0; i <= L.nx; i++) { g.beginPath(); g.moveTo(i * cw, 0); g.lineTo(i * cw, L.nz * cw); g.stroke(); }
+          for (let j = 0; j <= L.nz; j++) { g.beginPath(); g.moveTo(0, j * cw); g.lineTo(L.nx * cw, j * cw); g.stroke(); }
+          g.setLineDash([]);
+          const mark = (i, j, d, col) => { const cx = (i + 0.5) * cw, cy = (L.nz - 1 - j + 0.5) * cw, dd = DIRS.find(x => x[0] === d), ex = cx + dd[1] * cw * 0.5, ey = cy - dd[2] * cw * 0.5; g.strokeStyle = col; g.lineWidth = 10; g.lineCap = 'round'; g.beginPath(); g.moveTo(ex - dd[1] * 30, ey + dd[2] * 30); g.lineTo(ex, ey); g.stroke(); g.fillStyle = col; g.beginPath(); g.arc(ex, ey, 12, 0, 6.3); g.fill(); };
+          mark(L.src, 0, S, 'rgba(160,215,255,0.9)'); L.targets.forEach(t => mark(t.i, t.j, t.d, 'rgba(255,214,120,0.95)'));
+          const tex = new T.CanvasTexture(cv); tex.encoding = T.sRGBEncoding; tex.anisotropy = 4;
+          const pl = new T.Mesh(new T.PlaneGeometry(L.nx * CS, L.nz * CS).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, toneMapped: false }));
+          const cc = toWorld(L, 0, -(D0 + L.nz * CS / 2)); pl.position.set(cc.x, gy + 0.035, cc.z); pl.rotation.y = L.ang; pl.renderOrder = 2; pl.userData.dynamic = true; S.add(pl); }
         // obstacles: rocks and old stumps where no channel can go
         L.rocks.forEach(([i, j], k) => { const p = cellWorld(L, i, j); PHOTO.place(w, k % 2 ? 'namaqualand_boulder_05' : 'rock_07', { pos: [p.x, gy - 0.1, p.z], s: k % 2 ? 0.9 : 0.55, ry: k * 1.7 }); if (!PHOTO.enabled) { const m = new T.Mesh(new T.DodecahedronGeometry(0.7, 1), stone); m.position.set(p.x, gy + 0.3, p.z); S.add(m); } });
         // the old channels that cannot be moved
@@ -295,7 +333,7 @@
     turnHand() { this.hand = { type: this.hand.type, m: rot(this.hand.m) }; this.renderQueue(); this.ghostSpin = 1; SND.knock(ENGINE.env.bus, { f: 300, gain: 0.08, click: 2400 }); },
     enterBuild() {
       const w = this.w; this.mode = 'build'; if (!this.camFn) this.camFn = dt => this.buildCam(dt);
-      w.mode = this.camFn; w.focus = null; this.bar.style.opacity = 1; Array.from(this.bar.children).forEach(ch => { ch.style.visibility = ''; });
+      w.mode = this.camFn; w.focus = null; this.bar.style.opacity = 1; Array.from(this.bar.children).forEach(ch => { if (ch.dataset.d != null) { ch.style.display = ch.dataset.d; delete ch.dataset.d; } });
       this.walkBtn.innerHTML = '🚶';
     },
     toggleWalk() {
@@ -303,7 +341,7 @@
       if (this.mode === 'build') {
         this.mode = 'walk'; w.mode = null; this.ghost.visible = false;
         w.pos.set(0, 0, 6); w.yaw = 0; w.pitch = -0.05;
-        Array.from(this.bar.children).forEach(ch => { if (ch !== this.walkBtn) ch.style.visibility = 'hidden'; });
+        Array.from(this.bar.children).forEach(ch => { if (ch !== this.walkBtn) ch.dataset.d = ch.style.display, ch.style.display = 'none'; });
         this.walkBtn.innerHTML = '⌂'; w.step('Walking the land · press V (or ⌂) to return to the channels');
       } else { this.enterBuild(); w.step(this.lv.L.step); }
     },
@@ -469,7 +507,7 @@
       const w = this.w, cam = w.camera, g = this.camGoal; if (!g) return;
       this.camT = this.camT || g.tgt.clone(); this.camA = this.camA == null ? g.ang : this.camA;
       this.camT.lerp(g.tgt, 1 - Math.exp(-dt * 2)); let da = g.ang - this.camA; da = Math.atan2(Math.sin(da), Math.cos(da)); this.camA += da * (1 - Math.exp(-dt * 2));
-      const dist = U.damp(this.camD || 26, g.dist || 24, 2, dt); this.camD = dist;
+      const dist = U.damp(this.camD || 22, g.dist || (12 + (this.lv ? this.lv.L.nz : 5) * 1.9), 2, dt); this.camD = dist;
       // looking outward from behind the well, down onto the network
       const back = new T.Vector3(Math.sin(this.camA), 0, Math.cos(this.camA));
       const want = this.camT.clone().addScaledVector(back, dist * 0.62).add(new T.Vector3(0, dist * 0.78, 0));

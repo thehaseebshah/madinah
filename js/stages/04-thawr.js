@@ -41,8 +41,8 @@
   }
   function Hraw(x, z) {
     const r = Math.hypot(x, (z - 40) * 0.85);
-    let y = -440 + 482 * Math.exp(-Math.pow(r / 430, 1.5));
-    y += SCAPE.ridge(x * 0.0055 + 3, z * 0.0055, 5) * 95 * U.smooth(40, 320, r);
+    let y = -440 + 482 * Math.exp(-Math.pow(r / 300, 1.2));
+    y += SCAPE.ridge(x * 0.0055 + 3, z * 0.0055, 5) * 120 * U.smooth(40, 320, r);
     y += SCAPE.fbm(x * 0.02, z * 0.02, 4) * 10 * U.smooth(20, 120, r);
     // the hills that ring the valley, lower toward Makkah in the north
     const rv = Math.hypot(x - 20, (z + 500) * 0.7);
@@ -50,23 +50,27 @@
     y = Math.max(y, -452 + SCAPE.fbm(x * 0.01, z * 0.01, 3) * 6);
     return y;
   }
-  function H(x, z) {
+  function Hbase(x, z) {
     let y = Hraw(x, z);
     // the summit plateau before the mouth, flattened, with the rocks of the summit rising behind
     const dp = Math.hypot(x * 0.9, z + 9);
-    const plateau = 0.4 * SCAPE.fbm(x * 0.15, z * 0.15, 2);
+    const plateau = -0.32 + 0.22 * SCAPE.fbm(x * 0.15, z * 0.15, 2) + U.smooth(10, 20, dp) * 0.5;
     let kp = U.smooth(20, 38, dp); if (z > 4) kp = Math.max(kp, U.smooth(4, 16, z));
     y = U.lerp(plateau, y, kp);
     y = Math.max(y, plateau + (U.smooth(6, 18, z) * 16 + U.smooth(12, 30, Math.abs(x)) * 6) * U.smooth(2, 7, z));
+    return y;
+  }
+  function H(x, z) {
+    let y = Hbase(x, z);
     // the path: a shelf cut along the slope
     const pd = pathDist(x, z);
     if (pd < 3.5 && z < -18) { const s = U.smooth(3.5, 1.4, pd); y = U.lerp(y, pathY(x, z), s); }
     // under the cave the ground sinks a little, so the cave's own floor shows
-    if (Math.abs(x) < 4.2 && z > -0.5 && z < CL + 1) y = Math.min(y, -0.35);
+    if (Math.abs(x) < 4.2 && z > -0.5 && z < CL + 1) y = Math.min(y, -0.45);
     return y;
   }
   // the path follows the slope but smoothly
-  function pathY(x, z) { let a = 0; for (const [dx, dz] of [[0, 0], [2, 0], [-2, 0], [0, 2], [0, -2]]) a += Hraw(x + dx, z + dz); return a / 5 + 0.05; }
+  function pathY(x, z) { let a = 0; for (const [dx, dz] of [[0, 0], [2, 0], [-2, 0], [0, 2], [0, -2]]) a += Hbase(x + dx, z + dz); return a / 5 + 0.05; }
   function ground(x, z) { return inCave(x, z) ? 0.02 * Math.sin(x * 3 + z * 2) : H(x, z); }
 
   const PASSES = [
@@ -149,7 +153,7 @@
       const self = this;
       const w = this.w = WORLD.create(env, {
         start: { x: 0.2, z: 5.6, yaw: 0, pitch: 0.02 }, eye: 1.05, speed: 1.6, run: 2.6, exposure: 0.85, far: 4200,
-        fog: { color: 0x0a0e1a, density: 0.0011 }, ground,
+        fog: { color: 0x1a2236, density: 0.0006 }, ground,
         surface: (x, z) => (inCave(x, z) ? 'gravel' : 'gravel'),
       });
       const S = w.scene;
@@ -167,7 +171,7 @@
       const disk = KIT.glow(w, 0xffffff, 46, 0.95); disk.position.copy(moonDir).multiplyScalar(2590); disk.material.fog = false; S.add(disk);
 
       /* ---------- the mountain and the valleys ---------- */
-      const wz = v => -6 + (v < 0 ? 1360 : 800) * (0.05 * v + 0.95 * v * v * v);
+      const wz = v => -6 + (v < 0 ? 1360 : 800) * (0.1 * v + 0.9 * v * v * v);
       warpTerrain(w, { nx: 300, nz: 320, fx: u => 1300 * (0.05 * u + 0.95 * u * u * u), fz: wz, height: H, rock: [0.78, 0.92], colors: { low: '#a49884', high: '#968a76', rock: '#8a7e74', dark: '#4e443c' },
         tex: 'gravel', rockTex: 'granite', photo: { ground: 'dry_ground_rocks', rock: 'rock_face', normal: 1 }, rep: 0.2, rockRep: 0.03 });
       SCAPE.horizon(w, { cz: -380, haze: '#141a2c', layers: [{ r: 1500, h: 180, color: '#232634', seed: 3 }, { r: 2100, h: 230, color: '#30344a', seed: 7 }, { r: 3000, h: 260, color: '#414864', seed: 11 }] });
@@ -181,7 +185,7 @@
           if (i) { const a = (i - 1) * 2; I.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
         });
         const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(P, 3)); g.setAttribute('uv', new T.Float32BufferAttribute(UV, 2)); g.setIndex(I); g.computeVertexNormals();
-        const m = new T.Mesh(g, PHOTO.mat(w, 'gravelly_sand', { rep: [1, 1], color: 0xb0a490, fallback: SCAPE.tex.gravel(w), side: T.DoubleSide })); m.receiveShadow = true; m.material.polygonOffset = true; m.material.polygonOffsetFactor = -2; S.add(m); }
+        const m = new T.Mesh(g, PHOTO.mat(w, 'gravelly_sand', { rep: [1, 1], color: 0xd0c4b0, fallback: SCAPE.tex.gravel(w), side: T.DoubleSide })); m.receiveShadow = true; Object.assign(m.material, { polygonOffset: true, polygonOffsetFactor: -2, transparent: true, opacity: 0.5, depthWrite: false }); m.userData.dynamic = true; S.add(m); }
 
       /* ---------- the cave: a low tunnel of granite under piled boulders ---------- */
       const rockM = PHOTO.mat(w, 'rock_face', { triplanar: 0.55, color: 0x9a8e86, side: T.DoubleSide, fallback: SCAPE.tex.granite(w) });
@@ -209,10 +213,10 @@
       const pile = [
         ['namaqualand_boulder_04', [0, 1.55, 4.6], 2.4, 0.5], ['namaqualand_boulder_04', [-4.4, -0.3, 2.6], 2.2, 1.9], ['namaqualand_boulder_04', [4.5, -0.3, 3.2], 2.3, 2.6],
         ['namaqualand_boulder_04', [-3.8, -0.2, 7.2], 2.6, 0.9], ['namaqualand_boulder_04', [3.9, -0.2, 7.6], 2.5, 3.9], ['namaqualand_boulder_04', [0.4, 0.6, 10.6], 3.4, 1.2],
-        ['namaqualand_cliff_01', [-6.6, -0.6, -0.4], 1.1, 0.25], ['namaqualand_cliff_01', [6.8, -0.6, 0.2], 1.0, Math.PI - 0.2], ['namaqualand_boulder_02', [-2.6, 1.7, 1.1], 1.6, 0.4], ['namaqualand_boulder_02', [2.5, 1.6, 0.9], 1.5, 2.2],
+        ['namaqualand_cliff_01', [-6.6, -0.6, -0.4], 1.1, 0.25], ['namaqualand_cliff_01', [6.8, -0.6, 0.2], 1.0, Math.PI - 0.2], ['namaqualand_boulder_02', [-2.9, 1.9, 1.6], 1.5, 0.4], ['namaqualand_boulder_02', [2.9, 1.9, 1.8], 1.4, 2.2],
         ['namaqualand_boulder_04', [-9, -0.4, 9], 3.2, 0.3], ['namaqualand_boulder_04', [9.5, -0.4, 10], 3.0, 2.0], ['namaqualand_cliff_01', [0, 1.0, 14], 1.6, 0],
       ];
-      pile.forEach(([id, pos, s, ry]) => PHOTO.place(w, id, { pos, s, ry, cast: true }));
+      pile.forEach(([id, pos, s, ry]) => PHOTO.place(w, id, { pos, s, ry, cast: true }).then(g => g.traverse(m => { if (m.isMesh) { m.material = m.material.clone(); m.material.color.set(0xa8a6a8); } })));
       if (!PHOTO.enabled) pile.forEach(([id, pos, s]) => { const m = new T.Mesh(new T.DodecahedronGeometry(1.2 * s, 1), rockM); m.position.set(pos[0], pos[1] + s * 0.6, pos[2]); m.scale.y = 0.75; S.add(m); });
       [[-4.4, 2.6, 3.6], [4.5, 3.2, 3.6], [-3.8, 7.2, 3.8], [3.9, 7.6, 3.8], [-6.6, -0.4, 3], [6.8, 0.2, 3]].forEach(([x, z, r]) => w.addCircle(x, z, r));
       // small rocks and stones on the cave floor, along its walls
@@ -270,7 +274,7 @@
       // footprints in the sand of the valley, leading south toward the mountain
       { const fpT = w.tex(64, (c, s) => { c.clearRect(0, 0, s, s); c.fillStyle = 'rgba(40,30,22,0.75)'; c.beginPath(); c.ellipse(s / 2, s * 0.38, s * 0.16, s * 0.24, 0, 0, 6.3); c.fill(); c.beginPath(); c.ellipse(s / 2, s * 0.8, s * 0.12, s * 0.13, 0, 0, 6.3); c.fill(); }, null);
         const mat = new T.MeshBasicMaterial({ map: fpT, transparent: true, depthWrite: false, opacity: 0.7, polygonOffset: true, polygonOffsetFactor: -4 });
-        const geos = [], a0 = new T.Vector2(DOOR.x, DOOR.z + 3), a1 = new T.Vector2(PATH[PATH.length - 1][0], PATH[PATH.length - 1][1]);
+        const geos = [], a0 = new T.Vector2(DOOR.x, DOOR.z + 3), a1 = new T.Vector2(PATH[PATH.length - 1][0], PATH[PATH.length - 1][1] - 70);
         const n = Math.floor(a0.distanceTo(a1) / 0.75), dir = a1.clone().sub(a0).normalize(), ry = Math.atan2(dir.x, dir.y);
         for (let i = 0; i < Math.min(n, 700); i++) {
           for (const lane of [-0.45, 0.45]) {
@@ -290,7 +294,7 @@
       // torchlight thrown into the mouth: what the searchers would see by
       this.mouthLight = new T.SpotLight(0xff8a44, 0, 16, 0.7, 0.6, 1.4); this.mouthLight.position.set(0, 1.4, -3.5); this.mouthLight.target.position.set(0, 0.4, 4); S.add(this.mouthLight, this.mouthLight.target);
       // a faint cold fill inside, so the cave is not black
-      this.fill = new T.PointLight(0x7a8cc0, 0.35, 9, 1.8); this.fill.position.set(0, 1.2, 2.6); S.add(this.fill);
+      this.fill = new T.PointLight(0x7a8cc0, 0.8, 10, 1.6); this.fill.position.set(0, 1.2, 2.6); S.add(this.fill);
       // the web and the doves (shown when tradition places them: at the third search)
       this.web = new T.Mesh(new T.PlaneGeometry(1.7, 1.5), new T.MeshBasicMaterial({ map: webTex(w), transparent: true, opacity: 0, depthWrite: false, side: T.DoubleSide, blending: T.AdditiveBlending }));
       this.web.position.set(-0.9, 1.0, -0.15); this.web.rotation.set(0, 0.12, 0.05); this.web.userData.dynamic = true; S.add(this.web);
@@ -356,13 +360,13 @@
           path: [[[D.x - 7, dy + 2.2, D.z + 10], [D.x, dy + 1, D.z]], [[D.x - 2, dy + 1.4, D.z + 6], [D.x + 1, dy + 0.6, D.z + 40]]],
           start: () => { SND.swell(env.bus, { f0: 300, f1: 900, dur: 1.2, gain: 0.03 }); } },
         { dur: 7, fade: 'cut', ease: 'linear', lines: [[0.6, 'Madinah lies to the north.', 'والمدينة إلى الشمال.'], [3.4, 'They went south, to Mount Thawr.', 'فاتّجها جنوبًا إلى جبل ثور.']],
-          path: [[[foot[0] + 6, fy + 1.4, foot[1] - 60], [foot[0], fy + 20, foot[1] + 200]], [[foot[0] + 3, fy + 3, foot[1] - 14], [0, 0, 0]]],
+          path: [[[foot[0] + 10, fy + 14, foot[1] - 90], [foot[0], fy + 30, foot[1] + 200]], [[foot[0] + 6, fy + 12, foot[1] - 30], [0, 0, 0]]],
           start: () => { let n = 0; const f = () => { if (n++ < 9 && self.w && self.w.filmS) { SND.step(env.bus, { gain: 0.07, f: 600 }); setTimeout(f, 620); } }; f(); } },
         { dur: 7, fade: 'dip', ease: 'glide', line: 'Near its summit they hid in a cave, three nights.', ar: 'واختبآ في غارٍ قرب قمّته ثلاث ليال.', lineAt: 1.2, fov: [44, 38],
-          path: [[[40, -60, -110], [0, 0, 2]], [[22, -12, -50], [0, 0.6, 2]], [[5, 2.2, -14], [0, 0.8, 3]]],
+          path: [[[40, H(40, -110) + 30, -110], [0, 0, 2]], [[22, H(22, -50) + 12, -50], [0, 0.6, 2]], [[5, 2.2, -14], [0, 0.8, 3]]],
           start: () => SND.sing(env.bus, 110, { vowel: 'm', dur: 6, gain: 0.03, voices: 2, attack: 1.5 }) },
         { dur: 7, fade: 'cut', ease: 'inout', line: 'The pursuers came as far as the cave.', ar: 'وبلغ الطالبون الغار.', lineAt: 1.4, fov: [34, 30],
-          path: [[[-2, 2.6, -24], [30, -40, -110]], [[-1, 2.2, -26], [36, -70, -170]]],
+          path: [[[-6, 9, -12], [18, H(18, -190), -190]], [[-3, 6, -20], [24, H(24, -205), -205]]],
           start: () => { self.filmTorches = true; SND.thump(env.bus, { f: 46, gain: 0.08, dur: 0.5 }); },
           during: () => { self.filmTorches = true; } },
         { dur: 6, fade: 'dip', ease: 'glide',
@@ -469,7 +473,8 @@
         tr.on = U.damp(tr.on, on, 3, dt);
         if (x != null) { tr.pos.set(x, H(x, z) + 1.65 + Math.abs(Math.sin(t * 3 + k)) * 0.05, z); }
         const fk = tr.on * (0.86 + 0.14 * Math.sin(t * 13 + k * 5) * Math.sin(t * 7 + k));
-        tr.flame.position.copy(tr.pos); tr.flame.material.opacity = 0.9 * fk; tr.flame.scale.setScalar(2.3 + 0.4 * Math.sin(t * 11 + k));
+        const far = Math.max(1, tr.pos.distanceTo(w.camera.position) / 50);
+        tr.flame.position.copy(tr.pos); tr.flame.material.opacity = 0.9 * fk; tr.flame.scale.setScalar((2.3 + 0.4 * Math.sin(t * 11 + k)) * far); tr.core.scale.setScalar(0.7 * far);
         tr.core.position.copy(tr.pos); tr.core.material.opacity = fk;
         tr.stick.position.set(tr.pos.x, tr.pos.y - 0.32, tr.pos.z); tr.stick.visible = tr.on > 0.05;
         if (tr.on > 0.3) { const d = Math.hypot(tr.pos.x, tr.pos.z + 1); prox = Math.max(prox, U.smooth(150, 4, d)); if (d < nd) { nd = d; nearPos = tr.pos; } }
@@ -487,7 +492,7 @@
       if (pass && w.pos.z < 0 && S.prox > 0.2) seen = Math.max(seen, 1.5 * S.prox);
       // your sound
       const zDeep = U.smooth(1, 6, w.pos.z);
-      const breathN = S.holding ? 0 : (S.gasp > 0 ? 0.25 : 0.16) * (1 - 0.5 * zDeep);
+      const breathN = S.holding ? 0 : (S.gasp > 0 ? 0.28 : 0.2) * (1 - 0.5 * zDeep);
       const moveN = Math.min(1, w.moving / 1.4) * 0.6;
       const lookN = U.clamp((S.look - 0.25) / 1.2) * 0.5;
       S.noise = Math.min(1.2, breathN + moveN + lookN + S.gaspNoise);
@@ -563,7 +568,7 @@
           w.discover({ pos: [-0.9, 1.0, -0.4], title: 'The Web', label: 'Look at the web', text: 'Musnad Ahmad (3251) reports from Ibn ‘Abbas that the pursuers saw a spider’s web over the mouth and said that had anyone gone in, the web would not be there. Scholars dispute the report; al-Albani judged that no sound hadith mentions the spider or the doves.' });
           w.discover({ pos: [1.95, 1.7, -0.55], title: 'The Doves', label: 'Look at the nest', text: 'Later reports add a pair of wild doves nesting at the entrance. They are weaker still than the report of the web, and are told as tradition. (al-Bazzar; Ibn ‘Asakir)' }); }
         // the light: moonlight brightens through the mouth, the cold lifts
-        this.moon.intensity = U.lerp(0.5, 0.8, U.smooth(12, 30, T1)); this.fill.color.lerp(new T.Color(0xc8c0a8), dt * 0.05); this.fill.intensity = 0.35 + U.smooth(12, 30, T1) * 0.4;
+        this.moon.intensity = U.lerp(0.5, 0.8, U.smooth(12, 30, T1)); this.fill.color.lerp(new T.Color(0xc8c0a8), dt * 0.05); this.fill.intensity = 0.8 + U.smooth(12, 30, T1) * 0.5;
       }
 
       /* ---------- HUD ---------- */

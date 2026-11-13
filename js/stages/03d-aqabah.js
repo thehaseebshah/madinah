@@ -158,11 +158,11 @@
 
       /* ---------- materials ---------- */
       const M = {
-        tent: PHOTO.mat(w, 'rough_linen', { rep: [3, 2], color: 0x7a604c, side: T.DoubleSide, fallback: SCAPE.tex.mud(w) }),
-        tent2: PHOTO.mat(w, 'rough_linen', { rep: [3, 2], color: 0xa89474, side: T.DoubleSide, fallback: SCAPE.tex.mud(w) }),
+        tent: PHOTO.mat(w, 'rough_linen', { rep: [3, 2], color: 0x5a4434, side: T.DoubleSide, fallback: SCAPE.tex.mud(w) }),
+        tent2: PHOTO.mat(w, 'rough_linen', { rep: [3, 2], color: 0x7a6248, side: T.DoubleSide, fallback: SCAPE.tex.mud(w) }),
         hide: PHOTO.mat(w, 'brown_leather', { rep: [2, 2], color: 0x9a7a60, side: T.DoubleSide, fallback: KIT.wood(w, [1, 1], '#5a3a24') }),
         pole: PHOTO.mat(w, 'medieval_wood', { rep: [1, 2], color: 0x7a6656, fallback: KIT.wood(w) }),
-        camel: new T.MeshStandardMaterial({ color: 0x9a7a58, roughness: 0.95 }),
+        camel: new T.MeshStandardMaterial({ color: 0x5e4630, roughness: 1, envMapIntensity: 0.4 }),
       };
 
       /* ---------- the camps of Mina: tents, a fire, camels at rest ---------- */
@@ -446,14 +446,14 @@
       for (let i = 0; i < fol.length; i++) for (let j = i + 1; j < fol.length; j++) { const a = fol[i].p, c = fol[j].p, dx = c.x - a.x, dz = c.z - a.z, d = Math.hypot(dx, dz); if (d < 0.75 && d > 1e-4) { const push = (0.75 - d) * 0.5; a.x -= dx / d * push; a.z -= dz / d * push; c.x += dx / d * push; c.z += dz / d * push; } }
       // draw: glows and lantern bodies
       const lead = this.lan.length;
-      const writeGlow = (i, p, size, alpha, warm) => { g.P.set([p.x, p.y + 0.12, p.z], i * 3); g.Sz[i] = size; g.A[i] = alpha; g.C.set(warm ? [1, 0.82, 0.5] : [1, 0.9, 0.7], i * 3); };
+      const writeGlow = (i, p, size, alpha, warm) => { g.P.set([p.x, p.y + 0.12, p.z], i * 3); g.Sz[i] = size; g.A[i] = alpha * 0.75; g.C.set(warm ? [1, 0.72, 0.38] : [1, 0.86, 0.6], i * 3); };
       this.lan.forEach((l, i) => {
         if (l.state === 'hidden' || (l.state === 'come' && l.delay > 0)) { g.A[i] = 0; g.Sz[i] = 0; return; }
         const shaded = S.shade && (l.state === 'follow');
         const base = l.state === 'idle' ? 0.55 + 0.25 * Math.pow(Math.max(0, Math.sin(t * 1.4 + l.ph)), 6) : l.state === 'home' ? 0.35 : 1;
-        writeGlow(i, l.p, (shaded ? 0.9 : 2.2 + l.flash * 2.5) * (l.state === 'wait' ? 0.8 : 1), (shaded ? 0.35 : base) * (S.phase === 'end' ? 1.2 : 1), true);
+        writeGlow(i, l.p, (shaded ? 0.6 : 1.3 + l.flash * 1.8) * (l.state === 'wait' ? 0.8 : 1), (shaded ? 0.35 : base) * (S.phase === 'end' ? 1.2 : 1), true);
       });
-      writeGlow(lead, L, S.shade ? 1.4 : 3.2, S.shade ? 0.5 : 1, false);
+      writeGlow(lead, L, S.shade ? 0.9 : 1.8, S.shade ? 0.5 : 0.95, false);
       g.dirty();
       if (this.lanInst.length) {
         const q = new T.Quaternion(), s = new T.Vector3(1.3, 1.3, 1.3), pv = new T.Vector3();

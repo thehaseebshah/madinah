@@ -15,7 +15,7 @@
   const FULL_H = 8.6;                                              // eighteen cubits
   const START = { x: 3, z: -HD - 15, yaw: Math.PI };
   const CRANE_A = { x: 0, z: -HD - 3.4 }, CRANE_B = { x: HW + 3.4, z: 0 };
-  const CLOAK0 = { x: HW + 5.2, z: -HD - 5.2 }, CORNER = { x: HW, z: -HD };
+  const CLOAK0 = { x: HW + 6.6, z: -HD - 6.6 }, CORNER = { x: HW, z: -HD };
   const FACES = {
     A: { o: [HW, -HD], u: [-1, 0], n: [0, -1], len: KW, niche: [[0, 2], [0, 3]], teak: [], name: 'north-east' },
     B: { o: [HW, HD], u: [0, -1], n: [1, 0], len: KD, niche: [[9, 2], [9, 3]], teak: [1, 3], name: 'south-east' },
@@ -25,7 +25,7 @@
     O: [[0, 0], [1, 0], [0, 1], [1, 1]], L: [[0, 0], [1, 0], [2, 0], [2, 1]], J: [[0, 0], [1, 0], [2, 0], [0, 1]],
     T: [[0, 0], [1, 0], [2, 0], [1, 1]], S: [[0, 0], [1, 0], [1, 1], [2, 1]], Z: [[1, 0], [2, 0], [0, 1], [1, 1]],
   };
-  const TINTS = ['#d2cabe', '#c0b8ac', '#ddd2c2', '#b8afa4', '#cbbca6', '#c8c0b6'];
+  const TINTS = ['#bdb4a8', '#aea69c', '#c6baa8', '#a89e94', '#b8aa96', '#b4ada4'];
   const CLANS = [0x8a2a22, 0x2a4a7a, 0x3a6a3a, 0xb8902e];
 
   /* ---------------- small helpers (local to this station) ---------------- */
@@ -109,14 +109,14 @@
       const self = this;
       return [
         { dur: 7, fade: 'dip', title: true, ease: 'glide', fov: [50, 42],
-          path: [[[230, 62, -190], [-60, 18, 80]], [[150, 40, -125], [-20, 4, 40]]],
+          path: [[[110, 70, -104], [-90, 64, 90]], [[76, 46, -74], [-60, 34, 60]]],
           start: () => { SND.swell(env.bus, { f0: 160, f1: 420, dur: 6, gain: 0.04 }); } },
         { dur: 6, fade: 'dip', line: 'Its walls were loose stones, roofless, a little above a man’s height.', ar: 'كانت جدرانُه حجارةً مرصوفةً بلا سقف، فوق القامة بقليل.',
           path: [[[-24, 1.9, -19], [-9, 0.8, -7]], [[-15, 1.4, -23], [-3, 0.9, -6]]], ease: 'linear' },
         { dur: 6, fade: 'cut', line: 'The sea cast a merchant’s ship ashore at Jeddah. Its timber will roof the House.', ar: 'ألقى البحرُ سفينةً لتاجرٍ روميٍّ بجُدّة، فأخذوا خشبها لسقف البيت.',
           path: [[[-40, 3.2, 26], [-26, 0.8, 14]], [[-33, 2.2, 4], [-24, 0.8, 15]]], ease: 'linear' },
         { dur: 7, fade: 'dip', lines: [[0.3, 'Al-Walid ibn al-Mughirah struck first. The city waited a night.', 'بدأ الوليدُ بنُ المغيرة الهدم، وتربّص الناسُ ليلة.'], [3.6, 'Beneath lay Ibrahim’s foundation: green stones like camel humps.', 'وتحته أساسُ إبراهيم: حجارةٌ خضرٌ كالأسنمة.']],
-          path: [[[-5, 2.4, -HD - 9], [0, 0.2, -HD]], [[-1.5, 1.1, -HD - 4.2], [1, 0.1, -HD]]], ease: 'glide' },
+          path: [[[-6, 3.2, -HD - 10], [0, 0.3, -HD - 1]], [[-2.5, 2.0, -HD - 5.5], [0.5, 0.3, -HD - 1]]], ease: 'glide' },
         { dur: 6, fade: 'cut', line: 'Each clan gathered its own stones and raised its own part.', ar: 'جمعت كلُّ قبيلةٍ حجارتها، وبنت كلٌّ منها ناحيتها.',
           path: [[[28, 11, 26], [0, 2, 0]], [[34, 9, -16], [0, 2, 0]], [[14, 8, -32], [0, 2, 0]]], ease: 'linear',
           start: () => { self.banners.forEach(b => { b.rise = 0; }); },
@@ -136,9 +136,9 @@
       /* ---------------- the valley of Makkah ---------------- */
       const H = (x, z) => {
         const d = Math.hypot(x * 0.92, z * 0.72);
-        let y = Math.max(0, d - 135); y = y * 0.95 * (0.55 + 0.9 * (SCAPE.fbm(x * 0.006 + 3, z * 0.006, 3) * 0.5 + 0.5));
-        if (y > 120) y = 120 + (y - 120) * 0.25;
-        y += SCAPE.ridge(x * 0.014, z * 0.014, 5) * 55 * U.smooth(125, 200, d) + SCAPE.ridge(x * 0.05, z * 0.05, 3) * 7 * U.smooth(128, 160, d);
+        let y = Math.max(0, d - 135); y = y * 0.72 * (0.55 + 0.9 * (SCAPE.fbm(x * 0.006 + 3, z * 0.006, 3) * 0.5 + 0.5));
+        if (y > 90) y = 90 + (y - 90) * 0.25;
+        y += SCAPE.ridge(x * 0.014, z * 0.014, 5) * 42 * U.smooth(125, 200, d) + SCAPE.ridge(x * 0.05, z * 0.05, 3) * 7 * U.smooth(128, 160, d);
         y += 80 * Math.exp(-((x - 230) ** 2 + (z + 20) ** 2) / (2 * 70 * 70));        // Abu Qubays to the east
         y += 26 * U.smooth(95, 150, x) * (0.6 + 0.4 * SCAPE.fbm(x * 0.03, z * 0.03, 3)); // its first slopes, the quarry
         const wadi = Math.exp(-((x + 78 + Math.sin(z * 0.02) * 10) ** 2) / (2 * 9 * 9));  // the dry wadi to the west
@@ -317,9 +317,9 @@
       // rubble of the demolished walls round the House
       SCAPE.scatter(w, { kind: 'model', model: 'rock_07', n: 46, area: { x: 0, z: 0, r: 16 }, scale: [0.25, 0.6], seed: 33, fallback: 'rock', fallbackScale: 0.8,
         density: (x, z) => (Math.abs(x) < HW + 2.5 && Math.abs(z) < HD + 2.5 ? 0 : 1), avoid: (x, z) => Math.hypot(x - CLOAK0.x, z - CLOAK0.z) < 3.5 || Math.hypot(x - START.x, z - START.z) < 3 });
-      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_02', n: 110, area: { x: 0, z: 0, r: 200 }, scale: [1.2, 3.2], seed: 34, collide: true, fallback: 'boulder', sink: 0.3, color: '#9a8c84',
-        density: (x, z) => { const d = Math.hypot(x * 0.92, z * 0.72); return U.smooth(112, 122, d) * (1 - U.smooth(132, 140, d)) + (x > 95 && d < 136 ? 0.8 : 0); } });
-      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_04', n: 60, area: [96, -60, 128, 60], scale: [1.2, 3], seed: 35, collide: true, fallback: 'boulder', color: '#a09088' });
+      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_02', n: 110, area: { x: 0, z: 0, r: 200 }, scale: [1.2, 3.2], seed: 34, collide: true, fallback: 'boulder', sink: 0.3, color: '#7a6e68', slopeMax: 0.3,
+        density: (x, z) => { const d = Math.hypot(x * 0.92, z * 0.72); return U.smooth(112, 122, d) * (1 - U.smooth(132, 140, d)) + (x > 95 && x < 120 && d < 132 ? 0.8 : 0); } });
+      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_04', n: 60, area: [96, -60, 128, 60], scale: [1.2, 3], seed: 35, collide: true, fallback: 'boulder', color: '#7e726a', slopeMax: 0.3 });
       PHOTO.place(w, 'namaqualand_cliff_01', { pos: [126, undefined, -22], s: 1.4, ry: -1.4 }); PHOTO.place(w, 'namaqualand_cliff_01', { pos: [124, undefined, 26], s: 1.2, ry: -1.9 });
       SCAPE.scatter(w, { kind: 'boulder', n: 120, area: { x: 0, z: 0, r: 520 }, scale: [3, 8], seed: 3, sink: 0.45, slopeMax: 0.7, density: (x, z) => U.smooth(150, 220, Math.hypot(x * 0.92, z * 0.72)) });
       SCAPE.scatter(w, { kind: 'rock', n: 700, area: { x: 0, z: 0, r: 420 }, scale: [0.4, 2.2], seed: 5, density: (x, z) => U.smooth(110, 170, Math.hypot(x, z)) });
@@ -334,7 +334,7 @@
       SCAPE.scatter(w, { kind: 'model', model: 'dry_branches_medium_01', variant: 0, n: 40, area: [-104, -128, -52, 128], scale: [0.8, 1.4], seed: 40, density: (x, z) => (inWadi(x, z) ? 1 : 0), fallback: 'thorn' });
       SCAPE.scatter(w, { kind: 'palm', n: 9, area: [-70, 60, -40, 100], scale: [8, 12], seed: 12 });
       // the green stones of the foundation, showing at the south-west corner
-      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_05', points: [[-3.6, -HD - 1.0, 0.62], [-1.2, -HD - 0.9, 0.55], [1.4, -HD - 1.1, 0.6], [3.9, -HD - 0.9, 0.5], [-HW + 0.4, HD + 0.9, 0.55], [-HW - 0.9, HD - 0.4, 0.5]], color: '#8ea488', seed: 41, sink: 0.35, fallback: 'boulder', fallbackScale: 0.5 });
+      SCAPE.scatter(w, { kind: 'boulder', tex: 'granite', points: [[-3.6, -HD - 1.2, 0.55], [-1.3, -HD - 1.1, 0.5], [1.2, -HD - 1.25, 0.55], [3.7, -HD - 1.1, 0.48], [-HW + 0.4, HD + 0.9, 0.5], [-HW - 0.9, HD - 0.4, 0.45]].map(([x, z, sc]) => [x, z, sc * 1.3]), color: '#7c9a76', vary: 0.1, seed: 41, sink: 0.05 });
       // vessels and baskets of the work
       [['wicker_basket_01', -15.5, -12, 1.4], ['wicker_basket_01', 15, 12.5, 1.3], ['jug_01', -19.8, -9.4, 1.3], ['ceramic_vase_01', -20.6, -8.2, 1.4], ['wooden_bowl_01', -19.6, -7.6, 1.3],
         ['stone_fire_pit', 21, -17, 1], ['brass_pot_01', 21.2, -17.1, 1.1], ['jug_01', 19.4, -9.2, 1.2], ['wicker_basket_01', -22, 14, 1.2], ['ceramic_vase_01', 4, 22, 1.3]].forEach(([id, x, z, s]) => PHOTO.place(w, id, { pos: [x, undefined, z], s, ry: x * 0.7 }));
@@ -365,10 +365,10 @@
       { const p = geoStone.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i), z = p.getZ(i); p.setXYZ(i, x * (1 - Math.abs(y) * 0.05), y * (1 - Math.abs(x) * 0.04), z); } geoStone.computeVertexNormals(); }
       this.imStone = new T.InstancedMesh(geoStone, M.blockStone, 260); this.imTeak = new T.InstancedMesh(new T.BoxGeometry(1, 1, 1), M.blockTeak, 120);
       this.imGhost = new T.InstancedMesh(new T.BoxGeometry(1, 1, 1), new T.MeshBasicMaterial({ color: 0xffe2a0, transparent: true, opacity: 0.22, depthWrite: false }), 8);
-      [this.imStone, this.imTeak, this.imGhost].forEach(m => { m.userData.dynamic = true; m.frustumCulled = false; m.count = 0; S.add(m); });
-      this.imStone.castShadow = this.imTeak.castShadow = true; this.imStone.receiveShadow = this.imTeak.receiveShadow = true;
       for (let i = 0; i < 260; i++) this.imStone.setColorAt(i, new T.Color(1, 1, 1));
       for (let i = 0; i < 120; i++) this.imTeak.setColorAt(i, new T.Color(1, 1, 1));
+      [this.imStone, this.imTeak, this.imGhost].forEach(m => { m.userData.dynamic = true; m.frustumCulled = false; m.count = 0; S.add(m); });
+      this.imStone.castShadow = this.imTeak.castShadow = true; this.imStone.receiveShadow = this.imTeak.receiveShadow = true;
       this.rope = new T.Mesh(new T.CylinderGeometry(0.018, 0.018, 1, 4), new T.MeshStandardMaterial({ color: 0x8a7458, roughness: 1 })); this.rope.userData.dynamic = true; this.rope.visible = false; S.add(this.rope);
       this.blocks = [];       // set and loose stones: { f, c, r, kind, tint, set, flash, squash, fall }
       this.grid = { A: this.emptyGrid('A'), B: this.emptyGrid('B') };
@@ -385,7 +385,7 @@
       const ringG = new T.RingGeometry(0.5, 0.56, 40); ringG.rotateX(-Math.PI / 2);
       this.ring = new T.Mesh(ringG, new T.MeshBasicMaterial({ color: 0xffe6b0, transparent: true, opacity: 0.0, depthWrite: false })); this.ring.position.y = 0.03; this.cloakRig.add(this.ring);
       const bsG = new T.SphereGeometry(0.27, 28, 18); { const p = bsG.attributes.position; for (let i = 0; i < p.count; i++) { const v = new T.Vector3().fromBufferAttribute(p, i); v.multiplyScalar(1 + 0.08 * U.noise2(v.x * 9, v.z * 9 + v.y * 5)); v.y *= 0.72; v.x *= 1.15; p.setXYZ(i, v.x, v.y, v.z); } bsG.computeVertexNormals(); }
-      this.stone = new T.Mesh(bsG, new T.MeshStandardMaterial({ color: 0x17120f, roughness: 0.28, metalness: 0.05, envMapIntensity: 1.2 }));
+      this.stone = new T.Mesh(bsG, new T.MeshStandardMaterial({ color: 0x0e0b0a, roughness: 0.42, metalness: 0.05, envMapIntensity: 0.6 }));
       this.stone.castShadow = true; this.stone.userData.dynamic = true; this.cloakRig.add(this.stone);
       this.stoneGlow = KIT.glow(w, 0xfff2d6, 1.6, 0.25); this.cloakRig.add(this.stoneGlow);
       this.cornerLights = CLANS.map(c => { const g = KIT.glow(w, new T.Color(c).lerp(new T.Color(0xffd8a0), 0.6), 1.3, 0.85); this.cloakRig.add(g); return g; });
@@ -954,7 +954,7 @@
           w.finish('The Black Stone is set in its place');
           setTimeout(() => {
             if (!this.w) return; w.say('Eighteen cubits', 'The walls rose to eighteen cubits, twice their old height, in courses of stone and teak, under a roof of the ship’s timber. Five years later, the man they trusted would receive the first revelation, at forty. (al-Sirah al-Halabiyyah; Sahih al-Bukhari 3902)', { ms: 14000 });
-            this.mode = null; w.mode = null; w.pos.set(11, 0, -17); w.yaw = Math.atan2(11, -17); w.pitch = 0.16;
+            this.mode = null; w.mode = null; w.pos.set(11, 0, -17); w.yaw = Math.atan2(11, -17); w.pitch = 0.16; this.env.hint('WASD walk · the valley is yours to explore · find the places that glow');
             this.lines.A.visible = this.lines.B.visible = false;
           }, 2500);
         }

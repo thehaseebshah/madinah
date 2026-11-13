@@ -1,429 +1,565 @@
-/* Station — The Full Moon Rises (walkable + rhythm), 1 AH.
-   Feeling: joy, and gratitude for a long-awaited arrival.
-   Yathrib at night from a flat rooftop: mud-brick houses, palms and lanes below, and a huge moon
-   low on the hills of the south. Join the welcome: four rounds, one for each line of the song.
-   Stars glide along a track at the bottom of the screen; tap as each crosses the line. Every line
-   completed is written in light in the sky, raises the moon, wakes more windows and lanterns
-   across the city, and is answered by wordless voices from the rooftops.
-   Colour script: night indigo, with warm moon-gold kept for the moon, the lamps and the beats.
-   No person is shown: the city is present in its lights and its voices. */
+/* Station — The Full Moon Rises (the welcome in Yathrib), 1 AH / 622 CE.
+   Genre: rhythm highway (Guitar Hero / Beat Saber).
+   A moonlit night. The road comes up from the black lava field (the harrah) where the people of
+   Yathrib had watched for him every morning, runs through the walled palm gardens, and enters the
+   lanes of the city to the open place where his she-camel knelt. The road is a note highway:
+   small clay lamps lie in four lanes; as each reaches the line of light, strike its key in time with
+   the sung welcome, and the lamp rises to a roof, a doorway or a palm and stays lit. Three parts:
+   two lanes on the lava field, four through the gardens, four with held notes and chords in the
+   lanes. At the end the whole city answers in voices and light, and the moon stands over it.
+   No person is shown: the city is present in its lamps, opening doors and wordless voices.
+   The song "Tala'a al-badru 'alayna" is a loved tradition with a weak report (al-Bayhaqi;
+   al-Albani, al-Silsilah al-Da'ifah 598); the welcome itself is sahih (al-Bukhari 3906, 3925).
+   The melody sung here is newly composed in its spirit, not a claim about the original tune.
+   Colour script: night indigo with moon-gold kept for the moon, the lamps and the line. */
 (function () {
   'use strict';
   if (!window.WORLD) return;
-  // boxes without per-face groups, so that WORLD.bake can merge them
-  const BOX = (...a) => { const g = new THREE.BoxGeometry(...a); g.clearGroups(); return g; };
-  const VERSES = [
-    ['طَلَعَ الْبَدْرُ عَلَيْنَا', 'The full moon has risen over us'],
-    ['مِنْ ثَنِيَّاتِ الْوَدَاعْ', 'from the hills of al-Wada‘'],
-    ['وَجَبَ الشُّكْرُ عَلَيْنَا', 'Gratitude is owed by us'],
-    ['مَا دَعَا لِلهِ دَاعْ', 'for as long as anyone calls to God'],
+  const T = THREE;
+
+  /* ---------------- the road: from the harrah north through the gardens into the city ---------------- */
+  const KEYS = [[-110, 640], [-60, 470], [-20, 320], [10, 180], [-10, 40], [20, -100], [30, -240], [0, -380], [10, -520], [40, -640], [60, -720]];
+  const CURVE = new T.CatmullRomCurve3(KEYS.map(([x, z]) => new T.Vector3(x, 0, z)), false, 'centripetal');
+  const LEN = CURVE.getLength();
+  const at = (s, o) => {
+    o = o || {}; const u = U.clamp(s / LEN, 0, 1), p = CURVE.getPointAt(u), t = CURVE.getTangentAt(u);
+    const ex = s < 0 ? s : s > LEN ? s - LEN : 0;
+    o.x = p.x + t.x * ex; o.z = p.z + t.z * ex; o.tx = t.x; o.tz = t.z; o.rx = -t.z; o.rz = t.x; return o;
+  };
+  const SAMP = []; for (let s = 0; s <= LEN; s += 4) { const p = at(s); SAMP.push([p.x, p.z, s]); }
+  // distance from the road and the nearest arc length (coarse, then refined)
+  // the road runs steadily north (z falls along it), so search outward from the sample nearest in z
+  function roadInfo(x, z) {
+    let lo = 0, hi = SAMP.length - 1; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (SAMP[m][1] > z) lo = m; else hi = m; }
+    let bd = 1e18, bs = 0;
+    const test = i => { const q = SAMP[i], d = (q[0] - x) * (q[0] - x) + (q[1] - z) * (q[1] - z); if (d < bd) { bd = d; bs = q[2]; } return (q[1] - z) * (q[1] - z); };
+    for (let i = lo; i >= 0; i--) if (test(i) > bd) break;
+    for (let i = hi; i < SAMP.length; i++) if (test(i) > bd) break;
+    return { d: Math.sqrt(bd), s: bs };
+  }
+  // stretches of the road (metres along it)
+  const SPEED = 5, BPM = 84, BEAT = 60 / BPM, STRIKE = 6.5;
+  const S_PALMS = 255, S_CITY = 505, S_PLACE = 900;
+
+  /* ---------------- the land ---------------- */
+  // zone weights by arc length along the road: harrah, gardens, city
+  const zoneOf = s => ({ h: 1 - U.smooth(S_PALMS - 50, S_PALMS + 20, s), c: U.smooth(S_CITY - 30, S_CITY + 30, s) });
+  const HCache = new Map();
+  function H(x, z) {
+    const R = roadInfo(x, z), Z = zoneOf(R.s), g = 1 - Z.h - Z.c * 0.0;
+    let y = 0.4 + SCAPE.fbm(x * 0.01, z * 0.01, 3) * 1.5;
+    // the lava field: broken black ground, flattened along the road
+    y += Z.h * (SCAPE.ridge(x * 0.03, z * 0.03, 4) * 3.2 + SCAPE.fbm(x * 0.12, z * 0.12, 2) * 0.6) * U.smooth(5, 18, R.d);
+    // far hills: Sal' to the north-west, the lava ridges east and west
+    const dc = Math.hypot(x + 20, z + 40);
+    y += U.smooth(650, 1300, dc) * (40 + SCAPE.ridge(x * 0.003, z * 0.003, 5) * 160);
+    y += 90 * Math.exp(-((x + 520) * (x + 520) + (z + 820) * (z + 820)) / (2 * 160 * 160));
+    // the road itself, smooth
+    y = U.lerp(0.35 + SCAPE.fbm(x * 0.02, z * 0.02, 2) * 0.4, y, U.smooth(4.5, 12, R.d));
+    return y;
+  }
+
+  /* ---------------- helpers ---------------- */
+  const PV = `attribute float aSize; attribute float aAlpha; varying float vA; uniform float uScale;
+    void main(){ vA = aAlpha; vec4 mv = modelViewMatrix * vec4(position,1.); gl_PointSize = aSize * uScale / -mv.z; gl_Position = projectionMatrix * mv; }`;
+  const PF = `uniform sampler2D tMap; uniform vec3 uColor; varying float vA;
+    void main(){ vec4 t = texture2D(tMap, gl_PointCoord); gl_FragColor = vec4(uColor, t.a * vA); if (gl_FragColor.a < 0.004) discard; }`;
+  function sprites(w, n, color, additive) {
+    const geo = new T.BufferGeometry(), P = new Float32Array(n * 3), S = new Float32Array(n), A = new Float32Array(n);
+    geo.setAttribute('position', new T.BufferAttribute(P, 3)); geo.setAttribute('aSize', new T.BufferAttribute(S, 1)); geo.setAttribute('aAlpha', new T.BufferAttribute(A, 1));
+    const mat = new T.ShaderMaterial({ vertexShader: PV, fragmentShader: PF, transparent: true, depthWrite: false, blending: additive ? T.AdditiveBlending : T.NormalBlending,
+      uniforms: { tMap: { value: SCAPE.tex.soft(w) }, uColor: { value: new T.Color(color) }, uScale: { value: w.env.h * 0.9 } } });
+    const pts = new T.Points(geo, mat); pts.frustumCulled = false; pts.userData.dynamic = true; w.scene.add(pts);
+    return { pts, P, S, A, geo, n, mat, upd() { geo.attributes.position.needsUpdate = geo.attributes.aSize.needsUpdate = geo.attributes.aAlpha.needsUpdate = true; } };
+  }
+  function burstPool(w, n, color, additive) {
+    const sp = sprites(w, n, color, additive), V = new Float32Array(n * 3), L = new Float32Array(n), L0 = new Float32Array(n), S0 = new Float32Array(n), A0 = new Float32Array(n);
+    let k = 0;
+    return {
+      emit(x, y, z, vx, vy, vz, life, size, alpha) { const i = k++ % n; sp.P.set([x, y, z], i * 3); V.set([vx, vy, vz], i * 3); L[i] = L0[i] = life; S0[i] = size; A0[i] = alpha; },
+      step(dt, drag, grav) {
+        for (let i = 0; i < n; i++) {
+          if (L[i] <= 0) { sp.A[i] = 0; continue; }
+          L[i] -= dt; const t = 1 - Math.max(0, L[i]) / L0[i], f = 1 - drag * dt;
+          V[i * 3] *= f; V[i * 3 + 1] = V[i * 3 + 1] * f - grav * dt; V[i * 3 + 2] *= f;
+          sp.P[i * 3] += V[i * 3] * dt; sp.P[i * 3 + 1] += V[i * 3 + 1] * dt; sp.P[i * 3 + 2] += V[i * 3 + 2] * dt;
+          sp.S[i] = S0[i] * (0.6 + t); sp.A[i] = A0[i] * Math.sin(Math.PI * Math.pow(t, 0.45));
+        }
+        sp.upd();
+      },
+    };
+  }
+  function cullable(w, res, list) {
+    const fix = () => res.meshes.forEach(m => {
+      if (!m.isInstancedMesh || !m.count) return;
+      const m4 = new T.Matrix4(), p = new T.Vector3(), c = new T.Vector3(); let sMax = 0, r = 0;
+      for (let i = 0; i < m.count; i++) { m.getMatrixAt(i, m4); c.add(p.setFromMatrixPosition(m4)); }
+      c.divideScalar(m.count);
+      for (let i = 0; i < m.count; i++) { m.getMatrixAt(i, m4); r = Math.max(r, p.setFromMatrixPosition(m4).distanceTo(c)); sMax = Math.max(sMax, m4.getMaxScaleOnAxis()); }
+      if (!m.geometry.boundingSphere) m.geometry.computeBoundingSphere();
+      m.geometry = m.geometry.clone(); m.geometry.boundingSphere = new T.Sphere(c, r + (m.geometry.boundingSphere ? m.geometry.boundingSphere.radius : 2) * sMax + 2);
+      m.frustumCulled = true; list.push(m);
+    });
+    if (res.ready) res.ready.then(fix); else fix();
+  }
+
+  /* ---------------- the song: four lines, sung, newly composed in the spirit of the welcome ---------------- */
+  const D4 = 293.66, E4 = 329.63, F4 = 349.23, G4 = 392, A4 = 440, Bb4 = 466.16, C5 = 523.25;
+  const RANK = new Map([[D4, 0], [E4, 1], [F4, 2], [G4, 3], [A4, 4], [Bb4, 5], [C5, 6]]);
+  const LINES = [
+    { ar: 'طَلَعَ الْبَدْرُ عَلَيْنَا', en: 'The full moon has risen over us', n: [[0, 0.5, D4], [0.5, 0.5, F4], [1, 1, G4], [2, 1, A4], [3, 1, A4], [4, 1, G4], [5, 1, F4], [6, 2, G4]] },
+    { ar: 'مِنْ ثَنِيَّاتِ الْوَدَاعْ', en: 'from the hills of al-Wada‘', n: [[0, 1, A4], [1, 1, Bb4], [2, 1, A4], [3, 1, G4], [4, 1, F4], [5, 1, E4], [6, 2, D4]] },
+    { ar: 'وَجَبَ الشُّكْرُ عَلَيْنَا', en: 'Gratitude is owed by us', n: [[0, 0.5, D4], [0.5, 0.5, F4], [1, 1, G4], [2, 1, A4], [3, 1, C5], [4, 1, Bb4], [5, 1, A4], [6, 2, G4]] },
+    { ar: 'مَا دَعَا لِلهِ دَاعْ', en: 'for as long as anyone calls to God', n: [[0, 1, A4], [1, 1, G4], [2, 1, F4], [3, 1, G4], [4, 1, E4], [5, 1, F4], [6, 2, D4]] },
   ];
-  const BEAT = 0.72, LEAD = 2.6, WIN = 0.32;
-  const PATTERNS = [[0, 1, 2, 3, 4.5, 5.5, 6.5], [0, 1, 2, 3, 4, 5, 6.5], [0, 1, 2, 3, 4.5, 5.5, 6.5], [0, 1, 2, 3, 4, 5, 6.5]];
-  const MELODY = [
-    [293.66, 329.63, 369.99, 392, 369.99, 329.63, 293.66],
-    [329.63, 369.99, 392, 440, 392, 369.99, 329.63],
-    [293.66, 329.63, 369.99, 392, 440, 392, 369.99],
-    [329.63, 293.66, 277.18, 293.66, 329.63, 277.18, 293.66],
+  const LANE_X = [-2.4, -0.8, 0.8, 2.4];
+  // the chart: phase 1 two lanes on the beat, phase 2 four lanes, phase 3 four lanes with held notes and chords
+  const CHART = (() => {
+    const notes = [], song = [], lines = [];
+    let beat = 4;
+    const phases = [{ reps: 2, lanes: [1, 2] }, { reps: 2, lanes: [0, 1, 2, 3] }, { reps: 3, lanes: [0, 1, 2, 3], holds: true, chords: true }];
+    const starts = [];
+    phases.forEach((P, pi) => {
+      starts.push(beat);
+      for (let r = 0; r < P.reps; r++) LINES.forEach((L, li) => {
+        lines.push({ t: beat * BEAT, li, pi });
+        L.n.forEach(([b0, d, f], k) => {
+          const t = (beat + b0) * BEAT; song.push({ t, f, d: d * BEAT });
+          if (pi === 0 && b0 % 1) return;
+          const lane = P.lanes[Math.min(P.lanes.length - 1, Math.floor(RANK.get(f) / 7 * P.lanes.length))];
+          const hold = P.holds && d >= 2 ? d * BEAT * 0.8 : 0;
+          notes.push({ t, lane, hold, f, pi });
+          if (P.chords && k === 3 && r % 2 === 0) notes.push({ t, lane: (lane + 2) % 4, hold: 0, f: f * 1.25, pi });
+        });
+        beat += 8;
+      });
+      beat += 4;
+    });
+    return { notes: notes.sort((a, b) => a.t - b.t), song, lines, starts, end: beat * BEAT };
+  })();
+  // golden lamps: discoveries carried by the rhythm itself
+  const GOLD = [
+    [6, 1, 'Watching the Road', 'Every morning the people of Madinah went out to the harrah, the lava field, to wait for him, until the heat of midday drove them home. (Sahih al-Bukhari 3906)', 'كَانُوا يَغْدُونَ كُلَّ غَدَاةٍ إِلَى الْحَرَّةِ'],
+    [22, 2, 'From a Fort’s Roof', 'A man on the roof of one of the forts saw them coming, dressed in white, and called out that the one they waited for had come. The Muslims went out to meet him on the harrah. (Sahih al-Bukhari 3906)', 'يَا مَعَاشِرَ الْعَرَبِ هَذَا جَدُّكُمُ الَّذِي تَنْتَظِرُونَ'],
+    [38, 0, 'Ten Nights at Quba', 'He stayed some ten nights with Banu ‘Amr ibn ‘Awf at Quba and founded the mosque there, then rode on into the city. (Sahih al-Bukhari 3906)', 'بِضْعَ عَشْرَةَ لَيْلَةً'],
+    [54, 3, 'Such Joy', 'Al-Bara’ said: <span class="q">“I never saw the people of Madinah rejoice at anything as they rejoiced at the Messenger of God”</span>; even the young girls were saying, “The Messenger of God has come.” (Sahih al-Bukhari 3925)', 'مَا رَأَيْتُ أَهْلَ الْمَدِينَةِ فَرِحُوا بِشَيْءٍ فَرَحَهُمْ بِرَسُولِ اللَّهِ'],
+    [76, 1, 'Taybah', '<span class="q">“Allah named Madinah Tabah.”</span> They called it Yathrib; it is al-Madinah, the City. (Sahih Muslim 1385; Sahih al-Bukhari 1871)', 'إِنَّ اللَّهَ تَعَالَى سَمَّى الْمَدِينَةَ طَابَةَ'],
+    [92, 2, 'Where the Camel Knelt', 'He rode on his she-camel, the people walking with him, until it knelt at the place of his mosque in Madinah. (Sahih al-Bukhari 3906)', 'حَتَّى بَرَكَتْ عِنْدَ مَسْجِدِ الرَّسُولِ'],
   ];
-  const ELEV = [0.07, 0.15, 0.25, 0.37, 0.52];   // the moon's height (radians) before and after each line
-  const ROOF = 4.6, TER = { x0: -5.6, z0: -4.1, x1: 5.6, z1: 4.1 };
-  const MOON_AZ = 0.42;                          // a little west of due south (+z is south)
+  // golden lamps sit on notes of their own, a little after the given note index of each part
+  GOLD.forEach((g, k) => { const n = CHART.notes[Math.min(CHART.notes.length - 1, g[0] * 2 + k)]; n.gold = g; });
+
+  function houseBuilder(w, M, rnd, parent) {
+    return (x, z, ry, wd, dp, ht, kind, slots) => {
+      const g = new T.Group(); g.position.set(x, H(x, z) - 0.2, z); g.rotation.y = ry; parent.add(g);
+      const box = (a, b, c, mat, px, py, pz) => { const m = new T.Mesh(new T.BoxGeometry(a, b, c), mat); m.position.set(px, py, pz); m.castShadow = m.receiveShadow = true; g.add(m); return m; };
+      const wm = [M.plaster, M.brick, M.mud, M.stone][kind % 4];
+      box(wd, ht, dp, wm, 0, ht / 2, 0);
+      const ph = 0.6, pt = 0.22;
+      box(wd, ph, pt, wm, 0, ht + ph / 2, dp / 2 - pt / 2); box(wd, ph, pt, wm, 0, ht + ph / 2, -dp / 2 + pt / 2);
+      box(pt, ph, dp, wm, wd / 2 - pt / 2, ht + ph / 2, 0); box(pt, ph, dp, wm, -wd / 2 + pt / 2, ht + ph / 2, 0);
+      for (let bx = -wd / 2 + 0.6; bx < wd / 2 - 0.3; bx += 0.8 + rnd() * 0.3) { const b = new T.Mesh(new T.CylinderGeometry(0.075, 0.09, dp + 0.7, 6), M.wood); b.rotation.x = Math.PI / 2; b.position.set(bx, ht - 0.3, 0); b.castShadow = true; g.add(b); }
+      const dx = (rnd() - 0.5) * (wd - 2.4);
+      box(1.0, 1.95, 0.12, M.door, dx, 0.98 + 0.2, dp / 2 + 0.03); box(1.3, 0.14, 0.18, M.wood, dx, 2.3, dp / 2 + 0.06);
+      for (let k = 0; k < 2; k++) box(0.45, 0.55, 0.06, M.dark, (k ? 1 : -1) * wd * 0.3, ht * 0.7, dp / 2 + 0.01);
+      if (rnd() < 0.4) box(wd * 0.45, 2.2, dp * 0.4, wm, wd * 0.2, ht + 1.1, -dp * 0.2);
+      g.updateMatrixWorld(true);
+      if (slots) {
+        [[-wd / 2 + 0.3, ht + ph + 0.15, dp / 2 - 0.1], [wd / 2 - 0.3, ht + ph + 0.15, dp / 2 - 0.1], [dx, 2.5, dp / 2 + 0.25], [0, ht + ph + 0.15, dp / 2 - 0.1]]
+          .forEach(p => slots.push(new T.Vector3(...p).applyMatrix4(g.matrixWorld)));
+      }
+      return g;
+    };
+  }
 
   ENGINE.register(WORLD.stage({
     key: 'badr',
     arabic: 'طَلَعَ البَدْر',
     title: 'The Full Moon Rises',
-    era: 'Arrival in Yathrib, 1 AH',
-    hint: 'WASD to walk the roof · E at the lamp to join · then E, Space or click on each star',
+    era: 'Arrival in Yathrib, 1 AH · 622 CE',
+    hint: 'Strike the lamps as they reach the line: D F J K (or ← ↓ ↑ →) · hold the key for a long lamp',
+    hintTouch: 'Tap the four pads as the lamps reach the line · hold for a long lamp',
     sound: { reverb: 0.55 },
-    story: `<p>The people of Yathrib went out to the lava fields every morning to watch the southern road, until the midday heat drove them home (Sahih al-Bukhari 3906). When the Prophet ﷺ finally arrived, the city rejoiced as it had never rejoiced at anything (Sahih al-Bukhari 3925). The song of welcome sung here, <i>Tala‘a al-Badru</i>, is loved and still sung, though its report is weak and some scholars place it at the return from Tabuk.</p>
-            <p>Yathrib became known as <i>al-Madinah</i>, the City; the Prophet ﷺ called it <i>Taybah</i>, the good (Sahih Muslim 1385). Later generations named it <i>al-Madinah al-Munawwarah</i>, the Illuminated City.</p>`,
+    story: `<p>The people of Yathrib went out to the lava fields every morning to watch the southern road, until the midday heat drove them home (Sahih al-Bukhari 3906). When the Prophet ﷺ finally arrived, the city rejoiced as it had never rejoiced at anything (Sahih al-Bukhari 3925).</p>
+            <p>The song of welcome, <i>Tala‘a al-Badru</i>, is loved and still sung, though its report is weak and some scholars place it at the return from Tabuk; the melody sung here is newly made. Yathrib became known as al-Madinah, the City, and the Prophet ﷺ said that God named it <i>Tabah</i> (Sahih Muslim 1385).</p>`,
 
     enter(env) {
-      const T = THREE, self = this;
-      const w = this.w = WORLD.create(env, {
-        start: { x: 0, z: -1.5, yaw: Math.PI + 0.25, pitch: 0.06 }, exposure: 1.25, far: 1600, speed: 2.2, run: 3.4,
-        fog: { color: 0x0c1230, density: 0.0042 }, bounds: [TER.x0, TER.z0, TER.x1, TER.z1],
-        ground: () => ROOF, surface: () => 'gravel',
-      });
-      const S = w.scene;
-      this.round = -1; this.phase = 'explore'; this.markers = []; this.glowCity = 0; this.elev = ELEV[0]; this.elevT = ELEV[0];
-      this.hits = 0; this.bursts = []; this.flash = 0;
+      const w = this.w = WORLD.create(env, { start: { x: KEYS[0][0], z: KEYS[0][1], yaw: 0 }, exposure: 0.9, far: 3600, near: 0.15, fov: 62,
+        fog: { color: 0x182038, density: 0.0016 } });
+      const S = w.scene, Q = w.quality, rnd = U.seeded(622);
+      w.renderer.setClearColor(0x0c1226);
+      // ground heights are slow to compute near the road; cache them on a grid
+      const hc = new Map(); const Hc = (x, z) => { const k = Math.round(x * 2) + ',' + Math.round(z * 2); let v = hc.get(k); if (v == null) { v = H(Math.round(x * 2) / 2, Math.round(z * 2) / 2); hc.set(k, v); } return v; };
+      this.H = Hc;
 
-      /* ---------- sky, moon and light ---------- */
-      this.moonDir = new T.Vector3();
-      this.setMoonDir(this.elev);
-      this.skyM = w.sky({ top: '#03050f', mid: '#141c44', bot: '#06080f', sunDir: this.moonDir.toArray(), sun: '#3a4268', sunSize: 0.0004, stars: 0.35 });
-      this.hemi = new T.HemisphereLight(0x2c3870, 0x120c08, 0.42); S.add(this.hemi);
-      this.moonL = new T.DirectionalLight(0xd0d8ff, 0.35); S.add(this.moonL);
-      const moonTex = w.tex(512, (g, s) => {
-        const c = s / 2, R = s * 0.3;
-        const halo = g.createRadialGradient(c, c, R * 0.9, c, c, s / 2); halo.addColorStop(0, 'rgba(255,236,200,0.35)'); halo.addColorStop(1, 'rgba(255,236,200,0)');
-        g.fillStyle = halo; g.fillRect(0, 0, s, s);
-        const disc = g.createRadialGradient(c - R * 0.2, c - R * 0.2, R * 0.1, c, c, R); disc.addColorStop(0, '#fff8e8'); disc.addColorStop(1, '#f0d8a8');
-        g.fillStyle = disc; g.beginPath(); g.arc(c, c, R, 0, 6.283); g.fill();
-        g.save(); g.beginPath(); g.arc(c, c, R, 0, 6.283); g.clip();
-        const r = U.seeded(14);
-        [[-0.25, -0.2, 0.32], [0.18, -0.3, 0.22], [0.3, 0.1, 0.26], [-0.1, 0.25, 0.2], [-0.35, 0.2, 0.14], [0.05, -0.05, 0.12]].forEach(([x, y, rr]) => {
-          const gr = g.createRadialGradient(c + x * R, c + y * R, 0, c + x * R, c + y * R, rr * R); gr.addColorStop(0, 'rgba(150,130,110,0.45)'); gr.addColorStop(1, 'rgba(150,130,110,0)');
-          g.fillStyle = gr; g.fillRect(0, 0, s, s);
+      /* ---------- terrain, sky, moon ---------- */
+      const ter = SCAPE.terrain(w, { size: 2600, seg: Q < 1 ? 300 : 380, cz: -40, height: H, rock: [0.78, 0.92],
+        colors: { low: '#8a7a68', high: '#9a8872', rock: '#4a4442', dark: '#2a2624' }, tex: 'gravel', rockTex: 'lava',
+        photo: { ground: 'dry_ground_rocks', rock: 'dark_rock', normal: 1 }, rep: 0.22, rockRep: 0.06 });
+      // the lava field reads black, the gardens and city earth brown
+      { const p = ter.mesh.geometry.attributes.position, c = ter.mesh.geometry.attributes.color;
+        for (let i = 0; i < p.count; i++) { const R = roadInfo(p.getX(i), p.getZ(i)), Z = zoneOf(R.s), k = U.lerp(1, 0.42, Z.h * U.smooth(4, 14, R.d) * U.smooth(400, 50, R.d)); c.setXYZ(i, c.getX(i) * k, c.getY(i) * k, c.getZ(i) * k); } c.needsUpdate = true; }
+      w.ground = ter.ground;
+      this.moonL = new T.DirectionalLight(0xc0d0ff, 0.42); this.moonL.position.set(0, 60, -100); S.add(this.moonL);
+      S.add(new T.HemisphereLight(0x5a6aa0, 0x1a1612, PHOTO.enabled ? 0.08 : 0.4));
+      w.followShadow(this.moonL, 50, Q < 1 ? 1024 : 2048);
+      // the moon ahead, a little east of the road's end
+      const end = at(LEN), mdir = new T.Vector3(end.x - KEYS[0][0] + 260, 0, end.z - KEYS[0][1]).normalize(); this.mdir = mdir;
+      if (PHOTO.enabled) {
+        PHOTO.sky(w, 'qwantani_moonrise_puresky', { rotation: 0, intensity: 0.42, haze: '#1a2440', horizon: 0.5, ground: '#2a2a34', bounce: 0.25 }).then(o => {
+          if (!o || !o.sunDir || this.w !== w) return;
+          // turn the photographed sky so that its moon rises over the end of the road
+          const want = Math.atan2(mdir.z, mdir.x), have = Math.atan2(o.sunDir.z, o.sunDir.x);
+          if (o.material) o.material.uniforms.uRot.value += want - have;
+          this.moonDir = new T.Vector3(mdir.x * Math.cos(Math.asin(o.sunDir.y)), o.sunDir.y, mdir.z * Math.cos(Math.asin(o.sunDir.y))).normalize();
+          this.skyRotated = want - have;
         });
-        for (let i = 0; i < 60; i++) { g.fillStyle = `rgba(120,100,80,${r() * 0.15})`; g.beginPath(); g.arc(c + (r() - 0.5) * 2 * R, c + (r() - 0.5) * 2 * R, r() * 6, 0, 6.283); g.fill(); }
-        g.restore();
-      });
-      moonTex.wrapS = moonTex.wrapT = T.ClampToEdgeWrapping;
-      this.moon = new T.Sprite(new T.SpriteMaterial({ map: moonTex, transparent: true, depthWrite: false, fog: false, color: 0xfff0d8, toneMapped: false }));
-      this.moon.scale.set(190, 190, 1); S.add(this.moon);
-      this.moonHalo = KIT.glow(w, 0xffe0b0, 520, 0.28); this.moonHalo.material.fog = false; S.add(this.moonHalo);
+      } else w.sky({ top: '#0a1230', mid: '#2a3a68', bot: '#141a30', sunDir: [mdir.x, 0.25, mdir.z], sun: '#fff4d8', sunSize: 0.0016, stars: 0.6, haze: 0.3 });
+      this.moon = KIT.glow(w, 0xfff2d0, 120, 0.0); this.moon.material.fog = false; S.add(this.moon);
+      SCAPE.horizon(w, { cz: -40, haze: '#1a2440', layers: [{ r: 1500, h: 70, color: '#20283c', seed: 5, fade: 0.88 }, { r: 2000, h: 110, color: '#1c2436', seed: 11, fade: 0.88 }, { r: 2700, h: 150, color: '#1a2032', seed: 17, fade: 0.9 }] });
 
-      /* ---------- the hills of the south ---------- */
-      const hillMat = KIT.std({ color: 0x0c0e18, flatShading: true });
-      const hg = new T.SphereGeometry(1, 20, 8, 0, 6.283, 0, Math.PI / 2), hp = hg.attributes.position;
-      for (let i = 0; i < hp.count; i++) { const x = hp.getX(i), z = hp.getZ(i), n = 1 + U.noise2(x * 3 + 2, z * 3) * 0.3; hp.setXYZ(i, x * n, hp.getY(i) * (0.7 + 0.5 * (U.noise2(x * 4, z * 4) * 0.5 + 0.5)), z * n); }
-      hg.computeVertexNormals();
-      for (let i = 0; i < 16; i++) {
-        const a = -1.1 + i * 0.15, d = 420 + (i % 3) * 60;
-        const h = new T.Mesh(hg, hillMat); h.position.set(Math.sin(a) * d, -2, Math.cos(a) * d);
-        h.scale.set(70 + (i % 4) * 22, 26 + (i % 5) * 9, 40); h.rotation.y = a; S.add(h);
-      }
-      for (let i = 0; i < 12; i++) { const a = 2.2 + i * 0.16, d = 520; const h = new T.Mesh(hg, hillMat); h.position.set(Math.sin(a) * d, -2, Math.cos(a) * d); h.scale.set(90, 18 + (i % 3) * 8, 50); S.add(h); }
-
-      /* ---------- the city ---------- */
-      const earth = KIT.std({ map: KIT.sand(w, [80, 80]), color: 0x8a7c70 });
-      const gnd = new T.Mesh(new T.PlaneGeometry(900, 900), earth); gnd.rotation.x = -Math.PI / 2; S.add(gnd);
-      const plasterTex = KIT.plaster(w, [1, 1], '#a88a68');
-      const mats = ['#d8c0a0', '#c8ae8c', '#e0ccb0', '#bca486'].map(c => KIT.std({ map: plasterTex, color: new T.Color(c), relief: 0.02 }));
-      const doorM = KIT.std({ color: 0x1a120c });
-      const r = U.seeded(622);
-      this.roofs = []; const wins = [];
-      const house = (x, z, hw, hd, hh, mi, parapet) => {
-        const m = new T.Mesh(BOX(hw, hh, hd), mats[mi % 4]); m.position.set(x, hh / 2, z); S.add(m);
-        if (parapet) {
-          const ph = 0.55, pt = 0.22;
-          [[0, -hd / 2 + pt / 2, hw, pt], [0, hd / 2 - pt / 2, hw, pt], [-hw / 2 + pt / 2, 0, pt, hd], [hw / 2 - pt / 2, 0, pt, hd]].forEach(([dx, dz, lx, lz]) => { const p = new T.Mesh(BOX(lx, ph, lz), mats[mi % 4]); p.position.set(x + dx, hh + ph / 2, z + dz); S.add(p); });
-        }
-        const face = Math.floor(r() * 4), dw = new T.Mesh(BOX(0.9, 1.9, 0.08), doorM);
-        const fx = [0, 0, -1, 1][face], fz = [-1, 1, 0, 0][face];
-        dw.position.set(x + fx * (hw / 2 + 0.03), 0.95, z + fz * (hd / 2 + 0.03)); dw.rotation.y = fx ? Math.PI / 2 : 0; S.add(dw);
-        const nw = 2 + Math.floor(r() * 3);
-        for (let k = 0; k < nw; k++) {
-          const f = Math.floor(r() * 4), wx = [0, 0, -1, 1][f], wz = [-1, 1, 0, 0][f], along = (r() - 0.5) * (f < 2 ? hw : hd) * 0.6, y = 1.6 + r() * Math.max(0.2, hh - 2.6);
-          wins.push({ x: x + wx * (hw / 2 + 0.05) + (f < 2 ? along : 0), y, z: z + wz * (hd / 2 + 0.05) + (f >= 2 ? along : 0), rot: f >= 2 ? Math.PI / 2 : 0, th: r(), d: Math.hypot(x, z) });
-        }
-        this.roofs.push({ x, y: hh + 0.3, z, d: Math.hypot(x, z) });
+      /* ---------- materials ---------- */
+      const M = {
+        plaster: PHOTO.mat(w, 'clay_plaster', { triplanar: 0.32, color: '#d8c8b0', fallback: KIT.plaster(w, [1, 1], '#cbbca4') }),
+        brick: PHOTO.mat(w, 'clay_block_wall', { triplanar: 0.3, color: '#ccb898', fallback: KIT.mudBrick(w, [1, 1]) }),
+        mud: PHOTO.mat(w, 'brown_mud_dry', { triplanar: 0.35, color: '#c8b090', fallback: SCAPE.tex.mud(w) }),
+        stone: PHOTO.mat(w, 'old_stone_wall', { triplanar: 0.3, color: '#b8aa98', fallback: SCAPE.tex.granite(w) }),
+        wood: PHOTO.mat(w, 'medieval_wood', { triplanar: 0.9, color: '#a08870', fallback: KIT.wood(w, [1, 1]) }),
+        door: PHOTO.mat(w, 'old_planks_02', { rep: [1, 1], color: '#9a8068', fallback: KIT.wood(w, [1, 2], '#5a4030') }),
+        dark: new T.MeshStandardMaterial({ color: 0x120e0a, roughness: 1 }),
+        lit: new T.MeshBasicMaterial({ color: 0xffb860 }),
       };
-      // the house you stand on, with a parapet all round
-      house(0, 0, TER.x1 - TER.x0 + 0.8, TER.z1 - TER.z0 + 0.8, ROOF, 0, true);
-      // a lane runs south from below you toward the edge of town
-      const CELL = 9.5;
-      for (let gx = -12; gx <= 12; gx++) for (let gz = -12; gz <= 12; gz++) {
-        const x = gx * CELL + (r() - 0.5) * 3, z = gz * CELL + (r() - 0.5) * 3, d = Math.hypot(x, z);
-        if (d < 9 || d > 120 || r() < 0.22) continue;
-        if (Math.abs(x - 1.5 * Math.sin(z * 0.05)) < 4.5 && z > 0) continue; // the southern lane
-        if (Math.abs(z + 2) < 3.2 && Math.abs(x) > 12) continue;              // the cross lane
-        const hh = d < 18 ? 2.8 + r() * 0.9 : 3 + r() * 3.2;
-        house(x, z, 5 + r() * 3.2, 5 + r() * 3.2, hh, Math.floor(r() * 4), d < 60 && r() < 0.6);
+      this.M = M;
+
+      /* ---------- the city lanes, the garden walls, the fort ---------- */
+      const town = new T.Group(); S.add(town);
+      const house = houseBuilder(w, M, rnd, town);
+      const slots = this.slots = [];
+      const p = {};
+      for (let s = S_CITY + 6; s < S_PLACE - 20; ) {
+        const wd = 7 + rnd() * 3;
+        [-1, 1].forEach(side => {
+          if (rnd() < 0.12) return;
+          at(s + wd / 2, p); const dp = 7 + rnd() * 3, off = 6 + dp / 2;
+          const x = p.x + p.rx * off * side, z = p.z + p.rz * off * side, ry = Math.atan2(-p.rx * side, -p.rz * side);
+          house(x, z, ry, wd - 0.3, dp, 4.8 + rnd() * 2.4, (rnd() * 4) | 0, slots);
+        });
+        s += wd;
       }
-      // palms in the courtyards and gardens
-      for (let i = 0; i < 46; i++) {
-        const a = r() * 6.283, d = 12 + r() * 110, px = Math.cos(a) * d + 4.7, pz = Math.sin(a) * d + 4.7;
-        const along = px * Math.sin(MOON_AZ) + pz * Math.cos(MOON_AZ), across = Math.abs(px * Math.cos(MOON_AZ) - pz * Math.sin(MOON_AZ));
-        if (along > -5 && along < 110 && across < 12) continue; // keep the line of the entrance shot clear
-        const p = KIT.palm(w, 8 + r() * 6); p.position.set(px, 0, pz); S.add(p);
+      // houses further back, two or three rows deep
+      for (let i = 0; i < 90; i++) {
+        const s = U.lerp(S_CITY - 40, S_PLACE + 60, rnd()), side = rnd() < 0.5 ? -1 : 1, off = 22 + rnd() * 70; at(s, p);
+        const x = p.x + p.rx * off * side, z = p.z + p.rz * off * side; house(x, z, Math.atan2(-p.rx * side, -p.rz * side) + (rnd() - 0.5) * 0.3, 7 + rnd() * 4, 7 + rnd() * 4, 4.5 + rnd() * 3, (rnd() * 4) | 0, null);
       }
-      // windows: one instanced set whose colour wakes with the welcome
-      this.wins = wins;
-      const wg = new T.PlaneGeometry(0.62, 0.8);
-      this.winMesh = new T.InstancedMesh(wg, new T.MeshBasicMaterial({ color: 0xffffff, fog: true }), wins.length);
-      const M = new T.Matrix4(), Q = new T.Quaternion(), V = new T.Vector3(), ONE = new T.Vector3(1, 1, 1);
-      wins.forEach((wn, i) => { Q.setFromAxisAngle(T.Object3D.DefaultUp, wn.rot); M.compose(V.set(wn.x, wn.y, wn.z), Q, ONE); this.winMesh.setMatrixAt(i, M); this.winMesh.setColorAt(i, new T.Color(0x140e0a)); });
-      this.winMesh.userData.dynamic = true; S.add(this.winMesh);
-      this.winLit = new Float32Array(wins.length);
+      // garden walls of mud along the road through the palms
+      for (let s = S_PALMS; s < S_CITY - 10; s += 7.2) {
+        [-1, 1].forEach(side => {
+          if (rnd() < 0.18) return; at(s, p);
+          const x = p.x + p.rx * 6.2 * side, z = p.z + p.rz * 6.2 * side, wall = new T.Mesh(new T.BoxGeometry(7, 1.7 + rnd() * 0.3, 0.6), M.mud);
+          wall.position.set(x, H(x, z) + 0.75, z); wall.rotation.y = Math.atan2(p.tx, p.tz) + Math.PI / 2; wall.castShadow = wall.receiveShadow = true; town.add(wall);
+          if (rnd() < 0.5) slots.push(new T.Vector3(x, wall.position.y + 1.05, z));
+        });
+      }
+      // a fort (utum) of stone by the edge of the lava field, with a lamp on its roof
+      at(S_PALMS - 40, p); const fx = p.x + p.rx * 24, fz = p.z + p.rz * 24; this.fort = new T.Vector3(fx, H(fx, fz), fz);
+      { const g = new T.Group(); g.position.copy(this.fort); town.add(g);
+        const tower = new T.Mesh(new T.BoxGeometry(8, 13, 8), M.stone); tower.position.y = 6.5; tower.castShadow = tower.receiveShadow = true; g.add(tower);
+        for (let k = 0; k < 4; k++) { const c = new T.Mesh(new T.BoxGeometry(1.4, 1.0, 1.4), M.stone); c.position.set(k % 2 ? 3.3 : -3.3, 13.5, k < 2 ? 3.3 : -3.3); g.add(c); }
+        const dr = new T.Mesh(new T.BoxGeometry(1.1, 2.0, 0.15), M.door); dr.position.set(0, 1.0, 4.05); g.add(dr);
+        for (let k = 0; k < 3; k++) { const wi = new T.Mesh(new T.BoxGeometry(0.4, 0.7, 0.1), M.dark); wi.position.set(-1.5 + k * 1.5, 9, 4.02); g.add(wi); } }
+      this.fortLamp = KIT.glow(w, 0xffb060, 3, 0.9); this.fortLamp.position.set(fx, this.fort.y + 14.4, fz); S.add(this.fortLamp);
+      // lamps of watchers on the lava field
+      const waiting = []; for (let k = 0; k < 14; k++) { const s = 20 + k * 16, side = k % 2 ? 1 : -1; at(s, p); const off = 10 + rnd() * 30, x = p.x + p.rx * off * side, z = p.z + p.rz * off * side; waiting.push([x, H(x, z) + 0.6, z]); }
+      this.waiting = sprites(w, waiting.length, '#ffb466', true); waiting.forEach((q, i) => { this.waiting.P.set(q, i * 3); this.waiting.S[i] = 1.4; this.waiting.A[i] = 0.8; }); this.waiting.upd();
+      // the open place at the end of the road
+      at(S_PLACE + 20, p); this.place = new T.Vector3(p.x, H(p.x, p.z), p.z);
+      w.bake(town); S.add(town);
 
-      // the lamp on the south parapet, where you join the welcome
-      this.lampPos = new T.Vector3(0.4, ROOF + 0.85, TER.z1 + 0.2);
-      const lampBody = new T.Mesh(new T.CylinderGeometry(0.12, 0.09, 0.1, 10), KIT.std({ color: 0x7a5034 })); lampBody.position.copy(this.lampPos).y -= 0.08; S.add(lampBody);
-      this.lampGlow = KIT.glow(w, 0xffc070, 1.6, 0.9); this.lampGlow.position.copy(this.lampPos); S.add(this.lampGlow);
-      this.lampL = new T.PointLight(0xffb060, 1.2, 9, 1.8); this.lampL.position.copy(this.lampPos).y += 0.2; S.add(this.lampL);
-      // a few rooftop fires across the city that kindle with each line
-      this.fires = [];
-      this.roofs.filter(q => q.d > 14 && q.d < 70).sort(() => r() - 0.5).slice(0, 40).forEach((q, i) => {
-        const g = KIT.glow(w, 0xffa850, 2.2, 0); g.position.set(q.x, q.y + 0.4, q.z); g.material.fog = false; S.add(g); this.fires.push({ g, th: i / 40, ph: r() * 6 });
+      /* ---------- scattered life ---------- */
+      this.cullList = [];
+      const notRoad = m => (x, z) => roadInfo(x, z).d < m;
+      const zoneD = k => (x, z) => { const R = roadInfo(x, z), Z = zoneOf(R.s); return (Z.h * k[0] + (1 - Z.h - Z.c) * k[1] + Z.c * k[2]) * U.smooth(260, 60, R.d); };
+      const tiles = []; for (let a = 0; a < 3; a++) for (let c = 0; c < 4; c++) tiles.push([-460 + a * 320, 760 - (c + 1) * 400, -460 + (a + 1) * 320, 760 - c * 400]);
+      const sc = o => tiles.forEach((A, k) => cullable(w, SCAPE.scatter(w, Object.assign({}, o, { area: A, n: Math.max(1, Math.round(o.n / tiles.length)), seed: o.seed * 31 + k })), this.cullList));
+      sc({ kind: 'boulder', n: 900, scale: [0.6, 3.2], seed: 1, tex: 'lava', color: '#6a6460', avoid: notRoad(6), density: zoneD([1, 0.05, 0]) });
+      sc({ kind: 'rock', n: 1200, scale: [0.3, 1.1], seed: 2, tex: 'lava', color: '#6a6460', avoid: notRoad(4.8), density: zoneD([1, 0.2, 0.1]) });
+      sc({ kind: 'model', model: 'namaqualand_boulder_05', fallback: 'boulder', n: 140, scale: [0.6, 1.6], seed: 3, color: '#4a4644', avoid: notRoad(7), density: zoneD([1, 0.1, 0]) });
+      sc({ kind: 'model', model: 'namaqualand_stones_01', fallback: 'pebble', fallbackScale: 0.6, n: 1300, scale: [0.6, 1.4], seed: 4, castShadow: false, color: '#6a6460', avoid: notRoad(4.2), density: zoneD([1, 0.5, 0.3]) });
+      sc({ kind: 'model', model: 'shrub_03', fallback: 'shrub', n: 220, scale: [0.6, 1.3], seed: 5, avoid: notRoad(5), density: zoneD([0.4, 1, 0.3]) });
+      sc({ kind: 'model', model: 'wild_rooibos_bush', fallback: 'shrub', n: 130, scale: [0.6, 1.2], seed: 6, avoid: notRoad(5), density: zoneD([0.6, 0.8, 0.2]) });
+      sc({ kind: 'grass', n: 1800, scale: [0.4, 0.9], seed: 7, avoid: notRoad(4.4), density: zoneD([0.3, 1, 0.4]) });
+      sc({ kind: 'thorn', n: 240, scale: [0.7, 1.3], seed: 8, avoid: notRoad(5), density: zoneD([1, 0.4, 0.1]) });
+      sc({ kind: 'acacia', n: 80, scale: [0.9, 1.4], seed: 9, avoid: notRoad(10), density: zoneD([0.8, 0.3, 0]) });
+      sc({ kind: 'palm', n: 520, scale: [7, 13], seed: 10, avoid: (x, z) => { const R = roadInfo(x, z); return R.d < 9 || (R.s > S_CITY - 10 && R.d < 110); }, density: zoneD([0.08, 1, 0.5]) });
+      const far = SCAPE.scatter(w, { kind: 'house', n: 220, area: { x: at(S_PLACE).x, z: at(S_PLACE).z, r: 520 }, scale: [6, 10], seed: 11, avoid: (x, z) => { const R = roadInfo(x, z); return R.d < 100 || R.s < S_CITY - 60; } });
+      far.meshes.forEach(m => { m.material = PHOTO.mat(w, 'clay_plaster', { triplanar: 0.22, fallback: m.material.map, color: '#cbbca4' }); });
+      SCAPE.motes(w, { n: 70, area: [-140, 0.5, -500, 140, 8, 300], color: '#ffe0a0', size: 0.2, additive: true, blink: true, opacity: 0.6 });
+      SCAPE.smoke(w, [0, 1, 2].reduce((o, k) => { at(S_CITY + 80 + k * 120, p); o.sources.push([p.x + p.rx * 30, H(p.x, p.z) + 7, p.z + p.rz * 30]); return o; }, { sources: [], n: 14, height: 14, size: 3, opacity: 0.08, color: '#8890a8' }));
+
+      /* ---------- the highway: lane lines, the line of light, the lamps ---------- */
+      const laneGeo = (lanes, s0, s1) => {
+        const P = [], I = []; let v = 0;
+        lanes.forEach(l => {
+          for (let s = s0; s <= s1; s += 2) { at(s, p); const x = LANE_X[l]; [-0.05, 0.05].forEach(dx => { const xx = p.x + p.rx * (x + dx), zz = p.z + p.rz * (x + dx); P.push(xx, Hc(xx, zz) + 0.03, zz); }); if (s > s0) I.push(v - 2, v, v - 1, v - 1, v, v + 1); v += 2; }
+        });
+        const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(P, 3)); g.setIndex(I); return g;
+      };
+      const lm = new T.MeshBasicMaterial({ color: 0xffd08a, transparent: true, opacity: 0.22, blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide });
+      [[[1, 2], 0, S_PALMS - 10], [[0, 1, 2, 3], S_PALMS - 10, S_PLACE + 10]].forEach(([l, a, b]) => { const m = new T.Mesh(laneGeo(l, a, b), lm); m.userData.dynamic = true; S.add(m); });
+      const barG = new T.PlaneGeometry(6.6, 0.22); barG.rotateX(-Math.PI / 2);
+      this.bar = new T.Mesh(barG, new T.MeshBasicMaterial({ color: 0xffe0a0, transparent: true, opacity: 0.6, blending: T.AdditiveBlending, depthWrite: false })); this.bar.userData.dynamic = true; S.add(this.bar);
+      this.pads = sprites(w, 4, '#ffd890', true);
+      this.lineL = new T.PointLight(0xffb060, 1.2, 14, 2); S.add(this.lineL);
+      // the lamps: little clay lamps lying on the road
+      const NN = CHART.notes.length;
+      const lampG = new T.LatheGeometry([[0, 0], [0.16, 0.02], [0.2, 0.08], [0.17, 0.12], [0.06, 0.12], [0.05, 0.16], [0, 0.16]].map(([a, b]) => new T.Vector2(a, b)), 12);
+      const clay = PHOTO.mat(w, 'brown_mud_dry', { rep: [1, 1], color: '#b07848', fallbackColor: '#8a5a38' });
+      this.lampMesh = new T.InstancedMesh(lampG, clay, NN); this.lampMesh.userData.dynamic = true; this.lampMesh.frustumCulled = false; this.lampMesh.castShadow = true; this.lampMesh.instanceMatrix.setUsage(T.DynamicDrawUsage); S.add(this.lampMesh);
+      this.flames = sprites(w, NN, '#ffc070', true); this.goldFl = sprites(w, GOLD.length, '#ffe27a', true);
+      this.trails = sprites(w, NN, '#ffd890', true);
+      CHART.notes.forEach((n, i) => {
+        n.s = n.t * SPEED + STRIKE; at(n.s, p); n.x = p.x + p.rx * LANE_X[n.lane]; n.z = p.z + p.rz * LANE_X[n.lane]; n.y = Hc(n.x, n.z) + 0.02; n.state = 0;
+        if (n.hold) { const q = at(n.s + n.hold * SPEED); n.ex = q.x + q.rx * LANE_X[n.lane]; n.ez = q.z + q.rz * LANE_X[n.lane]; }
       });
+      this.sparks = burstPool(w, 160, '#ffe2a0', true);
+      // golden lamps register as discoveries
+      this.goldList = [];
+      CHART.notes.filter(n => n.gold).forEach(n => { const g = n.gold; n.it = w.discover({ pos: [n.x, n.y + 0.4, n.z], title: g[2], text: g[3], ar: g[4], size: 0.01, color: 0xffe27a }); n.gi = this.goldList.length; this.goldList.push(n); });
+      this.slotUsed = 0;
+      // windows and roofs that wake as the city hears the news (the film shows them coming on)
+      const cl = slots.filter((q, i) => i % 5 === 2); this.cityL = sprites(w, cl.length, '#ffb466', true); this.cityK = 0;
+      cl.forEach((q, i) => { this.cityL.P.set([q.x, q.y, q.z], i * 3); this.cityL.S[i] = 1.1; this.cityL.A[i] = 0; q.used = true; }); this.cityL.upd();
 
-      // lanterns that drift up from the rooftops
-      const NL = 180, lp = new Float32Array(NL * 3).fill(-500);
-      this.lanterns = Array.from({ length: NL }, () => ({ alive: false, x: 0, y: -500, z: 0, v: 0, ph: 0 }));
-      const lg = new T.BufferGeometry(); lg.setAttribute('position', new T.BufferAttribute(lp, 3));
-      this.lanternPts = new T.Points(lg, new T.PointsMaterial({ map: KIT.glowTex(w), color: 0xff9a48, size: 1.1, transparent: true, opacity: 0.85, depthWrite: false, blending: T.AdditiveBlending, fog: false }));
-      this.lanternPts.frustumCulled = false; S.add(this.lanternPts);
-
-      // the verses, written in light over the southern sky
-      this.verseSprites = VERSES.map(([ar, en]) => {
-        const c = document.createElement('canvas'); c.width = 1400; c.height = 240;
-        const g = c.getContext('2d'); g.textAlign = 'center'; g.direction = 'rtl';
-        g.shadowColor = 'rgba(255,214,140,0.95)'; g.shadowBlur = 30; g.fillStyle = '#fff4d6'; g.font = '96px Amiri, "Geeza Pro", serif';
-        g.fillText(ar, 700, 118); g.direction = 'ltr'; g.shadowBlur = 8; g.fillStyle = 'rgba(242,233,214,0.92)'; g.font = 'italic 42px Spectral, Georgia, serif'; g.fillText(en, 700, 204);
-        const tex = new T.CanvasTexture(c); tex.encoding = T.sRGBEncoding;
-        const sp = new T.Sprite(new T.SpriteMaterial({ map: tex, transparent: true, opacity: 0, depthWrite: false, fog: false }));
-        sp.scale.set(34, 5.8, 1); sp.visible = false; S.add(sp); return sp;
-      });
-
-      this.dust = KIT.dust(w, 120, [-14, ROOF, -10, 14, ROOF + 6, 14], 0xc8d0ff, 0.03); S.add(this.dust);
-
-      w.followShadow(this.moonL, 24, 1024);
-      w.receiveAll();
-      this.winMesh.castShadow = false; this.winMesh.receiveShadow = false;
-      w.scene.traverse(o => { if (o.isMesh && !Array.isArray(o.material) && o.geometry.groups.length > 1) o.geometry.clearGroups(); }); // single-material meshes merge in the bake
-      this.baked = w.bake();
-
-      /* ---------- the rhythm overlay ---------- */
-      const ov = document.createElement('div');
-      ov.setAttribute('aria-hidden', 'true');
-      ov.style.cssText = 'position:absolute;left:50%;bottom:136px;transform:translateX(-50%) translateY(14px);width:min(760px,92vw);opacity:0;transition:opacity .8s,transform .8s;pointer-events:none;z-index:6;text-align:center;';
-      ov.innerHTML = '<p style="margin:0 0 6px;font-family:var(--f-display,Marcellus,serif);letter-spacing:.22em;text-transform:uppercase;font-size:.62rem;color:rgba(242,233,214,.75)"></p><canvas style="display:block;width:100%;height:118px"></canvas>';
-      w.ui.layer.appendChild(ov);
-      this.ov = ov; this.ovLabel = ov.querySelector('p'); this.ovCanvas = ov.querySelector('canvas'); this.ovCtx = this.ovCanvas.getContext('2d');
-
-      w.interact({ key: 'join', pos: [this.lampPos.x, this.lampPos.y, this.lampPos.z], r: 3.2, once: true, label: 'Join the welcome', enabled: () => self.phase === 'explore', onUse: () => self.startRound(env, 0) });
-
-      /* ---------- sound ---------- */
+      /* ---------- state, hand-off, sound ---------- */
+      this.G = { on: false, t: -1, i0: 0, sched: 0, held: [false, false, false, false], phase: -1, li: -1, done: 0, hit: 0 };
+      const c0 = this.camAt(0);
+      w.pos.set(c0.p.x, 0, c0.p.z); w.eye = c0.p.y - w.ground(c0.p.x, c0.p.z);
+      const dl = c0.l.clone().sub(c0.p); w.yaw = Math.atan2(-dl.x, -dl.z); w.pitch = Math.asin(dl.y / dl.length());
       const b = env.bus;
-      this.night = SND.noise(b, { color: 'brown', type: 'lowpass', freq: 360, gain: 0.06 });
-      this.crowd = SND.noise(b, { color: 'pink', type: 'bandpass', freq: 520, q: 1.4, gain: 0.0 });
-      this.crowd2 = SND.noise(b, { color: 'pink', type: 'bandpass', freq: 900, q: 2, gain: 0.0, pan: 0.3 });
-      SND.lfo(b, this.crowd.filter && this.crowd.filter.frequency, 0.3, 90);
-      SND.lfo(b, this.crowd2.filter && this.crowd2.filter.frequency, 0.47, 140);
-      this.hum = SND.drone(b, 146.83, { vowel: 'm', gain: 0 });
-      this.cricketClock = 0.5; this.voiceClock = 3; this.palmClock = 2;
-
-      w.activity('The welcome', 4, 'Walk to the lamp on the southern parapet and press E to join the welcome.');
-
-      // arrival: on the huge moon over the hills, pulling back across the dark rooftops to you
-      const eye = [w.pos.x, ROOF + 1.62, w.pos.z];
-      const mp = this.moonDir.clone().multiplyScalar(600);
-      w.cinematic([
-        { p: [mp.x * 0.15, 24, mp.z * 0.15], l: [mp.x, mp.y + 2, mp.z] },
-        { p: [mp.x * 0.1, 19, mp.z * 0.1], l: [mp.x, mp.y + 4, mp.z] },
-        { p: [mp.x * 0.045, 12, mp.z * 0.045], l: [mp.x * 0.6, mp.y * 0.5, mp.z * 0.6] },
-        { p: [eye[0] - 1.5, eye[1] + 2.5, eye[2] - 6], l: [mp.x * 0.2, 8, mp.z * 0.2] },
-        { p: eye, l: [eye[0] - Math.sin(w.yaw) * 10, eye[1], eye[2] - Math.cos(w.yaw) * 10] },
-      ], 10);
+      this.wind = SND.noise(b, { color: 'pink', type: 'bandpass', freq: 380, q: 0.6, gain: 0.03 });
+      this.murmur = SND.noise(b, { color: 'pink', type: 'bandpass', freq: 260, q: 1.4, gain: 0.0 });
+      this.clk = { cr: 1, dove: 3 };
+      this.post = w.post({ bloom: 0.9, threshold: 0.55, vignette: 0.42, grain: 0.03, sat: 0.95, contrast: 1.05, lift: [0.0, 0.01, 0.035], gain: [0.98, 0.98, 1.05], rays: { strength: 0.3, dir: [mdir.x, 0.25, mdir.z] } });
+      w.tick(dt => this.world(env, dt));
+      this.placeLamps();
     },
 
-    setMoonDir(e) { this.moonDir.set(Math.sin(MOON_AZ) * Math.cos(e), Math.sin(e), Math.cos(MOON_AZ) * Math.cos(e)).normalize(); },
-
-    /* ---------- the rounds ---------- */
-    startRound(env, i) {
-      const w = this.w;
-      this.round = i; this.phase = 'round'; this.hitsThis = 0; this.roundStart = w.time;
-      const t0 = w.time + LEAD;
-      this.markers = PATTERNS[i].map((b, k) => ({ t: t0 + b * BEAT, k, hit: false, missed: false, hitT: 0 }));
-      this.ovLabel.textContent = `Line ${i + 1} of 4  ·  tap as each star crosses the line`;
-      this.ov.style.opacity = '1'; this.ov.style.transform = 'translateX(-50%)';
-      w.step(`Line ${i + 1}: press E, Space or click (tap on touch) as each star reaches the glowing line.`);
-      SND.sing(env.bus, MELODY[i][0] / 2, { vowel: 'm', dur: 1.6, gain: 0.03, voices: 2, attack: 0.3 });
+    camAt(t) {
+      const s = t * SPEED, a = at(s), b = at(s + 24), Hc = this.H;
+      return { p: new T.Vector3(a.x, Hc(a.x, a.z) + 2.3, a.z), l: new T.Vector3(b.x, Hc(b.x, b.z) + 0.2, b.z) };
     },
 
-    tap(env) {
-      const w = this.w; if (!w || this.phase !== 'round' || w.cine) return;
-      const now = w.time;
-      if (now < this.roundStart + 0.25) return;
-      let best = null, bd = 1e9;
-      for (const m of this.markers) { if (m.hit || m.missed) continue; const d = Math.abs(m.t - now); if (d < bd) { bd = d; best = m; } }
-      if (best && bd < WIN) {
-        best.hit = true; best.hitT = now; this.hitsThis++; this.flash = 1;
-        const f = MELODY[this.round][best.k];
-        SND.sing(env.bus, f, { vowel: this.round % 2 ? 'o' : 'a', dur: 1.1, gain: 0.06, voices: 2 + this.round, attack: 0.02, hold: 0.3, breath: 0.06 });
-        // a lasting answer in the city: a few more windows wake, a lantern rises
-        this.glowCity = Math.min(1, this.glowCity + 0.25 / PATTERNS[this.round].length);
-        this.spawnLantern(true);
-        this.bursts.push({ t: now, x: 0 });
-        if (this.hitsThis >= PATTERNS[this.round].length) this.endRound(env);
-      } else {
-        // a tap between the beats: only a breath
-        SND.swell(env.bus, { color: 'pink', type: 'bandpass', f0: 500, f1: 900, dur: 0.35, gain: 0.02, q: 2 });
-        this.flash = Math.max(this.flash, 0.25);
-      }
+    film(env, w) {
+      const self = this, Hc = this.H, P = (s, lat, h) => { const p = at(s); const x = p.x + p.rx * lat, z = p.z + p.rz * lat; return [x, Hc(x, z) + h, z]; };
+      const F = this.fort, pl = this.place, md = this.mdir;
+      return [
+        { dur: 7, fade: 'dip', title: true, fov: [44, 38], path: [[P(-60, -30, 14), P(400, 0, 30)], [P(-30, -10, 8), P(500, 0, 40)]],
+          start: () => { self.doorsK = 0; } },
+        { dur: 7, fade: 'dip', fov: [46, 42], line: 'Every morning they went out to the lava field to watch for him (Sahih al-Bukhari 3906).', ar: 'كانوا يغدون كل غداة إلى الحرة ينتظرونه',
+          path: [[P(60, 22, 3), P(140, -8, 1)], [P(90, 16, 2.4), P(170, -10, 1)]] },
+        { dur: 6, fade: 'cut', fov: [40, 34], line: 'From a fort’s roof, a watcher saw them coming, dressed in white (Sahih al-Bukhari 3906).', ar: 'فبصر بهم رجلٌ على أُطُمٍ مبيَّضين',
+          path: [[[F.x - 18, F.y + 3, F.z + 14], [F.x, F.y + 12, F.z]], [[F.x - 14, F.y + 18, F.z + 12], [F.x + md.x * 80, F.y + 14, F.z + md.z * 80]]] },
+        { dur: 7, fade: 'dip', fov: [50, 46], line: 'The city rejoiced as it never rejoiced at anything (Sahih al-Bukhari 3925).', ar: 'ما رأيت أهل المدينة فرحوا بشيءٍ فرحهم برسول الله',
+          path: [[P(S_CITY + 120, 0, 9), P(S_CITY + 200, 0, 3)], [P(S_CITY + 150, 0, 4), P(S_CITY + 230, 0, 3)]],
+          during: (w, k) => { self.cityK = k; } },
+        { dur: 7, fade: 'dip', fov: [48, 62], lines: [[0.4, 'Tradition says they sang: “The full moon has risen over us”', 'طَلَعَ الْبَدْرُ عَلَيْنَا'], [3.8, 'Strike each lamp as it reaches the line of light.', 'اضرب كل مصباح حين يبلغ خط النور']],
+          path: [[P(-20, 4, 6), P(30, 0, 0.5)], [P(-6, 1, 3.4), P(20, 0, 0.3)]],
+          start: () => { SND.sing(env.bus, D4, { vowel: 'a', dur: 3, gain: 0.03, voices: 3 }); } },
+      ];
+    },
+    filmOpts: {
+      end(w) { const self = ENGINE.cur && ENGINE.cur.w === w ? ENGINE.cur : null; if (self) self.start(); },
     },
 
-    endRound(env) {
-      const w = this.w, i = this.round;
-      this.phase = 'between'; this.betweenT = 0;
-      this.ov.style.opacity = '0'; this.ov.style.transform = 'translateX(-50%) translateY(14px)';
-      this.elevT = ELEV[i + 1]; this.glowCity = (i + 1) / 4;
-      const sp = this.verseSprites[i]; sp.visible = true; sp.userData.t0 = w.time;
-      SND.glow(env.bus, [146.83, 164.81, 146.83, 196][i], { gain: 0.04 + i * 0.01, dur: 9 });
-      // the rooftops answer, wordless, line for line
-      const voices = 2 + i;
-      MELODY[i].forEach((f, k) => {
-        const q = U.pick(this.roofs), s = w.spatial(q, 40);
-        SND.sing(env.bus, f / 2, { vowel: 'a', dur: 1.2, gain: 0.025 + i * 0.006, voices, delay: 0.9 + k * BEAT * 0.8, pan: s.pan * 0.6, attack: 0.08, hold: 0.4, breath: 0.1 });
-      });
-      for (let k = 0; k < 6 + i * 4; k++) this.spawnLantern(false);
-      w.progress(i + 1, i < 3 ? 'The city answers. The next line begins in a moment.' : 'The fourth line is written in the sky.');
-      if (i === 1) w.say('Rejoicing', 'Al-Bara’ ibn ‘Azib said: <span class="q">“I never saw the people of Madinah rejoice at anything as they rejoiced at the coming of the Messenger of God ﷺ.”</span> (Sahih al-Bukhari 3925)', { ar: 'فَمَا رَأَيْتُ أَهْلَ الْمَدِينَةِ فَرِحُوا بِشَيْءٍ فَرَحَهُمْ بِرَسُولِ اللَّهِ ﷺ', ms: 13000 });
-      if (i === 2) w.say('Taybah', 'Yathrib became known as al-Madinah, the City. The Prophet ﷺ called it <i>Taybah</i>, the good, the pleasant (Sahih Muslim 1385).', { ar: 'طَابَة', ms: 11000 });
-      if (i === 3) { this.phase = 'hush'; this.hushT = 0; }
+    start() {
+      const w = this.w, G = this.G; G.on = true; G.t = -1.5;
+      w.mode = dt => this.play(dt);
+      w.onPointer = (e, p, ph) => this.pointer(e, ph);
+      w.activity('The Full Moon Rises', 3, '');
+      this.setPhase(0);
+      if (w.ui.layer.classList.contains('touch')) this.touchPads();
+      w.say('A Loved Tradition', 'The song <i>Tala‘a al-badru ‘alayna</i> is loved and sung to this day, though its report is weak (al-Bayhaqi; al-Albani, al-Silsilah al-Da‘ifah 598). The welcome itself is sahih (Sahih al-Bukhari 3906, 3925). The melody sung here is newly made.', { ms: 9000 });
+    },
+    setPhase(i) {
+      const G = this.G, w = this.w; G.phase = i;
+      const T3 = ['Part 1 of 3 · The lava field', 'Part 2 of 3 · The gardens', 'Part 3 of 3 · The lanes of the city'];
+      const ST = ['Two lanes. Strike F or J (← or →) as each lamp reaches the line.', 'Four lanes now: D F J K (or ← ↓ ↑ →).', 'Hold the key for a long lamp. Some lamps come two at once.'];
+      this.phaseTitle = T3[i]; w.step(ST[i]); this.tally();
+      if (i > 0) SND.glow(w.env.bus, [D4, G4 / 2, A4 / 2][i], { gain: 0.05, dur: 5 });
+    },
+    tally() {
+      const G = this.G, w = this.w, n = CHART.notes.filter(x => x.pi === G.phase).length, h = CHART.notes.filter(x => x.pi === G.phase && x.state === 2).length;
+      w.progress(G.phase + h / n);
+      const el = w.ui.layer.querySelector('.wq-title'); if (el) el.textContent = `${this.phaseTitle}  ·  ${h} lamps lit`;
     },
 
-    spawnLantern(near) {
-      const L = this.lanterns.find(l => !l.alive); if (!L) return;
-      const pool = near ? this.roofs.filter(q => q.d < 40) : this.roofs;
-      const q = U.pick(pool);
-      Object.assign(L, { alive: true, x: q.x + (Math.random() - 0.5) * 3, y: q.y + 0.5, z: q.z + (Math.random() - 0.5) * 3, v: 0.7 + Math.random() * 0.8, ph: Math.random() * 6, age: 0 });
-    },
-
+    /* ---------- input ---------- */
+    laneOfKey(k) { return { d: 0, f: 1, j: 2, k: 3, ArrowLeft: 0, ArrowDown: 1, ArrowUp: 2, ArrowRight: 3, a: 0, s: 1, l: 3 }[k]; },
     onKey(env, e) {
-      if (e.repeat) return;
-      if (e.key === ' ' || e.key === 'e' || e.key === 'E' || e.key === 'Enter') this.tap(env);
+      const w = this.w; if (!w || !this.G || !this.G.on || w.filmS || e.repeat) return;
+      const k = e.key.length === 1 ? e.key.toLowerCase() : e.key, l = this.laneOfKey(k);
+      if (l == null) return;
+      // in the first part, the two lanes also answer to the outer keys
+      this.press(this.G.phase === 0 ? (l <= 1 ? 1 : 2) : l);
     },
-    down(env, p, e) { if (!this.w) return; this.w.down(p, e); this.tap(env); },
-
-    update(env, dt) {
-      const w = this.w; if (!w) return;
-      w.update(dt);
-      const t = w.time, T = THREE;
-      KIT.driftDust(this.dust, dt, t, [0.05, 0.02]);
-      if (!this.saidStart && !w.cine) { this.saidStart = true; w.say('Waiting at the Harrah', 'For days the people of Madinah went out every morning to the lava fields, the <i>harrah</i>, to wait for him, until the heat of midday drove them home. (Sahih al-Bukhari 3906)', { ms: 12000 }); }
-
-      // the moon climbs a step with every line
-      this.elev = U.damp(this.elev, this.elevT, 0.7, dt);
-      this.setMoonDir(this.elev);
-      const cam = w.camera.position;
-      this.moon.position.copy(cam).addScaledVector(this.moonDir, 900);
-      this.moonHalo.position.copy(this.moon.position);
-      const rise = U.inv(ELEV[0], ELEV[4], this.elev);
-      this.moon.scale.setScalar(U.lerp(200, 150, rise));
-      this.moon.material.color.setRGB(U.lerp(1, 0.86, rise), U.lerp(0.84, 0.84, rise), U.lerp(0.66, 0.8, rise));
-      this.moonHalo.material.opacity = 0.16 + rise * 0.1 + (this.phase === 'reveal' ? 0.08 * U.smooth(0, 4, this.revealT) : 0);
-      const u = this.skyM.material.uniforms; u.uSunDir.value.copy(this.moonDir);
-      u.uSun.value.setRGB(0.22 + rise * 0.18, 0.24 + rise * 0.2, 0.36 + rise * 0.2);
-      u.uMid.value.setRGB(0.07 + rise * 0.05, 0.1 + rise * 0.06, 0.24 + rise * 0.08);
-      this.moonL.position.copy(this.moonDir).multiplyScalar(60);
-      this.moonL.intensity = 0.3 + rise * 0.7;
-      this.hemi.intensity = 0.4 + rise * 0.25;
-
-      // the city wakes: windows, rooftop fires, lanterns
-      const glow = this.glowCity;
-      let changed = false; const C = new T.Color();
-      for (let i = 0; i < this.wins.length; i++) {
-        const wn = this.wins[i], target = glow > wn.th * 0.98 ? 1 : 0;
-        if (this.winLit[i] !== target || (target && i % 7 === Math.floor(t * 3) % 7)) {
-          this.winLit[i] = U.damp(this.winLit[i], target, 3, dt * 7); if (Math.abs(this.winLit[i] - target) < 0.02) this.winLit[i] = target;
-          const k = this.winLit[i] * (0.85 + 0.15 * U.noise1(t * 3 + i));
-          C.setRGB(0.08 + k * 1.1, 0.055 + k * 0.62, 0.04 + k * 0.22); this.winMesh.setColorAt(i, C); changed = true;
-        }
-      }
-      if (changed) this.winMesh.instanceColor.needsUpdate = true;
-      this.fires.forEach(f => { const on = glow > f.th; f.g.material.opacity = U.damp(f.g.material.opacity, on ? 0.75 + 0.2 * U.noise1(t * 4 + f.ph) : 0, 2, dt); f.g.visible = f.g.material.opacity > 0.01; });
-      if (glow > 0 && Math.random() < dt * glow * 1.2) this.spawnLantern(false);
-      const lp = this.lanternPts.geometry.attributes.position;
-      this.lanterns.forEach((L, i) => {
-        if (L.alive) { L.age += dt; L.y += L.v * dt; L.x += Math.sin(t * 0.5 + L.ph) * 0.3 * dt + 0.4 * dt; if (L.y > 70) { L.alive = false; L.y = -500; } }
-        lp.setXYZ(i, L.x, L.y, L.z);
+    keyup(env, e) {
+      this.w && this.w.keyup(e); if (!this.G || !this.G.on) return;
+      const k = e.key.length === 1 ? e.key.toLowerCase() : e.key, l = this.laneOfKey(k); if (l == null) return;
+      this.release(this.G.phase === 0 ? (l <= 1 ? 1 : 2) : l);
+    },
+    pointer(e, ph) {
+      if (!this.G.on) return false;
+      if (e.target && e.target.classList && e.target.classList.contains('badr-pad')) return true;
+      const W = this.w.env.w, l = Math.max(0, Math.min(3, Math.floor(e.clientX / W * 4)));
+      const lane = this.G.phase === 0 ? (l <= 1 ? 1 : 2) : l;
+      if (ph === 'down') { this.ptrLane = lane; this.press(lane); } else if (ph === 'up' && this.ptrLane != null) { this.release(this.ptrLane); this.ptrLane = null; }
+      return true;
+    },
+    touchPads() {
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);display:flex;justify-content:center;gap:10px;pointer-events:auto;z-index:5';
+      ['D', 'F', 'J', 'K'].forEach((t, l) => {
+        const bt = document.createElement('button'); bt.type = 'button'; bt.className = 'badr-pad'; bt.textContent = '◆'; bt.setAttribute('aria-label', 'lane ' + (l + 1));
+        bt.style.cssText = 'width:20vw;max-width:96px;height:64px;border-radius:14px;border:1px solid rgba(246,220,154,.5);background:rgba(6,9,20,.4);color:#f6dc9a;font-size:18px;touch-action:none';
+        const lane = () => this.G.phase === 0 ? (l <= 1 ? 1 : 2) : l;
+        bt.addEventListener('pointerdown', ev => { ev.stopPropagation(); ev.preventDefault(); this.press(lane()); });
+        bt.addEventListener('pointerup', ev => { ev.stopPropagation(); this.release(lane()); });
+        wrap.appendChild(bt);
       });
-      lp.needsUpdate = true;
+      this.w.ui.layer.appendChild(wrap); this.padEl = wrap;
+    },
+    press(l) {
+      const G = this.G, b = this.w.env.bus; G.held[l] = true; G.flash = G.flash || [0, 0, 0, 0]; G.flash[l] = 1;
+      // the nearest waiting lamp in this lane within the window
+      let best = null, bd = 0.24;
+      for (let i = G.i0; i < CHART.notes.length; i++) { const n = CHART.notes[i]; if (n.t > G.t + 0.3) break; if (n.state || n.lane !== l) continue; const d = Math.abs(n.t - G.t); if (d < bd) { bd = d; best = n; } }
+      if (!best) { SND.step(b, { gain: 0.025, f: 1400 }); return; }
+      best.state = best.hold ? 1 : 2; best.ht = G.t; best.q = bd < 0.09 ? 1 : 0.7;
+      this.lift(best);
+    },
+    release(l) {
+      const G = this.G; G.held[l] = false;
+      CHART.notes.forEach(n => { if (n.state === 1 && n.lane === l) { const left = n.t + n.hold - G.t; n.state = 2; if (left > 0.35) n.q *= 0.6; this.fly(n); } });
+    },
+    lift(n) {
+      const G = this.G, b = this.w.env.bus;
+      // the city answers: a sung harmony above the melody, louder for a truer stroke
+      SND.sing(b, n.f * 1.5 > 700 ? n.f * 0.75 : n.f * 1.5, { vowel: 'o', dur: n.hold ? n.hold + 0.4 : 0.8, gain: 0.018 + 0.012 * n.q, attack: 0.02, voices: 2 });
+      SND.step(b, { gain: 0.06, f: 1900 });
+      for (let k = 0; k < 10; k++) this.sparks.emit(n.x, n.y + 0.3, n.z, (Math.random() - 0.5) * 2.4, 1 + Math.random() * 2, (Math.random() - 0.5) * 2.4, 0.7, 0.35, 1);
+      if (n.gold) { n.it.done = true; n.it.onUse(this.w, n.it); }
+      if (!n.hold) this.fly(n);
+    },
+    fly(n) {
+      const sl = this.slots, p = at(n.s), G = this.G;
+      // the next free place ahead of the line on the lamp's side: a parapet, a door, a wall top, a palm
+      let tgt = null;
+      for (let k = 0; k < sl.length; k++) { const q = sl[k]; if (q.used) continue; if (q.s == null) q.s = roadInfo(q.x, q.z).s; if (q.s > n.s + 4 && q.s < n.s + 60) { tgt = q; break; } }
+      if (!tgt) { const side = n.lane < 2 ? -1 : 1, x = p.x + p.rx * (7 + Math.random() * 4) * side, z = p.z + p.rz * (7 + Math.random() * 4) * side; tgt = new T.Vector3(x, this.H(x, z) + 1.2 + Math.random(), z); }
+      tgt.used = true; n.to = tgt; n.ft = 0; G.hit++; this.tally();
+    },
 
-      // the parapet lamp calls you until you join
-      this.lampGlow.material.opacity = this.phase === 'explore' ? 0.7 + 0.3 * Math.sin(t * 2.4) : 0.85;
-      this.lampGlow.scale.setScalar(this.phase === 'explore' ? 1.6 + 0.4 * Math.sin(t * 2.4) : 1.4);
+    /* ---------- the ride ---------- */
+    play(dt) {
+      const w = this.w, G = this.G, cam = w.camera, b = w.env.bus;
+      dt = Math.min(dt, 0.06); G.t += dt;
+      // the song: schedule the sung melody and claps just ahead of time
+      const look = G.t + 0.25;
+      while (G.sched < CHART.song.length && CHART.song[G.sched].t < look) { const s0 = CHART.song[G.sched++], d = Math.max(0, s0.t - G.t); SND.sing(b, s0.f, { vowel: 'a', dur: s0.d + 0.25, gain: 0.032, delay: d, attack: 0.04, hold: 0.6, voices: 3, detune: 8 }); }
+      const beatN = Math.floor((G.t + 0.06) / BEAT);
+      if (beatN !== G.lastBeat && G.t > 0 && G.t < CHART.end) { G.lastBeat = beatN; if (beatN % 2 === 1) SND.step(b, { gain: 0.03, f: 2200 }); }
+      // lines of the song, shown in Arabic and English as they are sung
+      while ((G.li + 1) < CHART.lines.length && CHART.lines[G.li + 1].t <= G.t) { G.li++; const L = CHART.lines[G.li], v = LINES[L.li]; w.step(`${v.ar} — ${v.en}`); if (L.pi !== G.phase) this.setPhase(L.pi); }
+      // lamps that pass the line unstruck stay on the road, dimmed
+      while (G.i0 < CHART.notes.length && CHART.notes[G.i0].t < G.t - 0.3) { const n = CHART.notes[G.i0++]; if (!n.state) { n.state = 3; SND.swell(b, { f0: 300, f1: 180, dur: 0.4, gain: 0.012 }); } }
+      // the camera rides the road
+      const tt = Math.max(0, G.t), c = this.camAt(Math.min(tt, CHART.end + 1.5));
+      const sway = Math.sin(G.t * Math.PI / BEAT) * 0.03;
+      cam.position.set(c.p.x, c.p.y + Math.abs(sway), c.p.z); cam.lookAt(c.l); cam.rotation.z += sway * 0.2;
+      w.pos.set(c.p.x, 0, c.p.z); w.y = c.p.y - 2.3;
+      if (w._shadow) { const S2 = w._shadow, f = cam.getWorldDirection(new T.Vector3()); const px = Math.round((c.p.x + f.x * 20) / 2) * 2, pz = Math.round((c.p.z + f.z * 20) / 2) * 2; S2.light.target.position.set(px, 0, pz); S2.light.position.set(px + S2.off.x, S2.off.y, pz + S2.off.z); }
+      // the line of light
+      const ls = Math.min(tt, CHART.end) * SPEED + STRIKE, q = at(ls);
+      this.bar.position.set(q.x, this.H(q.x, q.z) + 0.05, q.z); this.bar.rotation.y = Math.atan2(q.tx, q.tz);
+      this.lineL.position.set(q.x, this.H(q.x, q.z) + 1.2, q.z);
+      G.flash = G.flash || [0, 0, 0, 0];
+      for (let l = 0; l < 4; l++) { G.flash[l] = Math.max(G.held[l] ? 0.5 : 0, G.flash[l] - dt * 4); const x = q.x + q.rx * LANE_X[l], z = q.z + q.rz * LANE_X[l]; this.pads.P.set([x, this.H(x, z) + 0.12, z], l * 3); const on = G.phase === 0 ? (l === 1 || l === 2) : true; this.pads.S[l] = 0.9 + G.flash[l] * 1.2; this.pads.A[l] = on ? 0.35 + G.flash[l] * 0.65 : 0; }
+      this.pads.upd(); this.bar.material.opacity = 0.45 + 0.15 * Math.cos(G.t * Math.PI * 2 / BEAT);
+      this.placeLamps();
+      // the end of the song: the city answers, the camera rises, and the welcome is complete
+      if (G.t > CHART.end + 0.5 && !G.done) { G.done = 1; G.doneT = 0; this.finale(); }
+      if (G.done) {
+        G.doneT += dt; const k = U.smooth(0, 9, G.doneT), md = this.mdir;
+        cam.position.set(c.p.x - md.x * 6 * k, c.p.y + 22 * k, c.p.z - md.z * 6 * k); cam.lookAt(c.p.x + md.x * 120, c.p.y + 6 + 30 * k, c.p.z + md.z * 120);
+      }
+    },
+    // testing aid: jump the song to time t, as if every lamp before it had been struck
+    _seek(t) {
+      const G = this.G; G.t = t;
+      CHART.notes.forEach(n => { if (n.t < t && !n.state) { n.state = 2; this.fly(n); n.ft = 1; } });
+      G.sched = CHART.song.findIndex(e => e.t >= t); if (G.sched < 0) G.sched = CHART.song.length;
+      G.i0 = CHART.notes.findIndex(n => n.t >= t - 0.3); if (G.i0 < 0) G.i0 = CHART.notes.length;
+      let li = -1; CHART.lines.forEach((L, i) => { if (L.t <= t) li = i; }); G.li = li - 1;
+    },
+    finale() {
+      const w = this.w, b = w.env.bus, G = this.G;
+      this.murmur.set('gain', 0.02, 2);
+      [D4, F4, A4].forEach((f, i) => SND.glow(b, f, { gain: 0.06, dur: 10, delay: i * 0.4, vowel: i ? 'o' : 'a' }));
+      LINES[0].n.forEach(([b0, d, f]) => { SND.sing(b, f, { vowel: 'a', dur: d * BEAT + 0.3, gain: 0.04, delay: 1.5 + b0 * BEAT, voices: 4 }); SND.sing(b, f * 1.5, { vowel: 'o', dur: d * BEAT + 0.3, gain: 0.02, delay: 1.5 + b0 * BEAT, voices: 2 }); });
+      w.say('The Welcome', 'The city has come out to meet him. Al-Bara’: <span class="q">“I never saw the people of Madinah rejoice at anything as they rejoiced at the Messenger of God.”</span> (Sahih al-Bukhari 3925)', { ms: 11000 });
+      setTimeout(() => {
+        if (this.w !== w) return;
+        w.finish('The city has welcomed him');
+        setTimeout(() => {
+          if (this.w !== w) return;
+          G.on = false; w.mode = null; w.onPointer = null; if (this.padEl) this.padEl.remove();
+          const p = at(Math.min(LEN, CHART.end * SPEED)); w.pos.set(p.x, 0, p.z); w.y = w.ground(p.x, p.z); w.eye = 1.62; w.yaw = Math.atan2(-p.tx, -p.tz); w.pitch = 0.1;
+          w.env.hint('WASD to walk in the open place · look up at the moon');
+        }, 6000);
+      }, 9000);
+    },
 
-      // verses fade in where they are written
-      this.verseSprites.forEach((sp, i) => {
-        if (!sp.visible) return;
-        const az = MOON_AZ - 0.62, el = 0.66 - i * 0.105, dir = new T.Vector3(Math.sin(az) * Math.cos(el), Math.sin(el), Math.cos(az) * Math.cos(el));
-        sp.position.copy(cam).addScaledVector(dir, 120);
-        const a = U.smooth(0, 2.5, t - sp.userData.t0);
-        sp.material.opacity = a * (this.phase === 'reveal' || this.phase === 'still' ? 1 : 0.85);
-        sp.scale.set(58 * (0.96 + 0.04 * a), 9.9 * (0.96 + 0.04 * a), 1);
+    /* the lamps: waiting on the road, rising, held, settled on the city */
+    placeLamps() {
+      const G = this.G, m4 = new T.Matrix4(), q = new T.Quaternion(), v = new T.Vector3(), one = new T.Vector3(1, 1, 1), zero = new T.Matrix4().makeScale(0, 0, 0);
+      const t = G.t, fl = this.flames, tr = this.trails, gf = this.goldFl, dt = this.lastDt || 0.016;
+      CHART.notes.forEach((n, i) => {
+        let x = n.x, y = n.y, z = n.z, a = 0, sz = 0.5, tra = 0;
+        if (n.state === 0) { const ahead = n.t - t; a = ahead > 9 ? 0 : 0.55 + 0.45 * U.smooth(1.5, 0, ahead); sz = 0.55 + U.smooth(1, 0, Math.abs(ahead)) * 0.4; if (n.hold) tra = a * 0.6; }
+        else if (n.state === 1) { a = 1; sz = 0.9; tra = 1; const k = Math.min(1, (t - n.t) / n.hold); const lp = at(n.s + k * n.hold * SPEED); if (t > n.t) { x = lp.x + lp.rx * LANE_X[n.lane]; z = lp.z + lp.rz * LANE_X[n.lane]; } if (t > n.t + n.hold + 0.2) { n.state = 2; this.fly(n); } }
+        else if (n.state === 2 && n.to) {
+          n.ft = Math.min(1, n.ft + dt * 1.3); const k = U.easeOut(n.ft);
+          x = U.lerp(n.x, n.to.x, k); z = U.lerp(n.z, n.to.z, k); y = U.lerp(n.y, n.to.y, k) + Math.sin(k * Math.PI) * 4; a = 0.95; sz = 0.6 + (1 - k) * 0.4;
+        } else if (n.state === 3) { a = 0.12; sz = 0.35; }
+        v.set(x, y, z); q.identity(); m4.compose(v, q, one); this.lampMesh.setMatrixAt(i, m4);
+        fl.P.set([x, y + 0.22, z], i * 3); fl.S[i] = sz; fl.A[i] = a * (0.85 + 0.15 * Math.sin(t * 9 + i));
+        if (n.hold && n.state < 2 && n.ex != null) { tr.P.set([(x + n.ex) / 2, n.y + 0.12, (z + n.ez) / 2], i * 3); tr.S[i] = Math.hypot(n.ex - x, n.ez - z) * 0.9 + 0.3; tr.A[i] = tra * 0.35; } else tr.A[i] = 0;
+        if (n.gold) { gf.P.set([x, y + 0.5, z], n.gi * 3); gf.S[n.gi] = 1.6; gf.A[n.gi] = n.state === 0 ? a : n.state === 2 ? 0.5 : 0; }
       });
-
-      // the rhythm round
-      if (this.phase === 'round') {
-        for (const m of this.markers) {
-          if (!m.hit && !m.missed && t > m.t + WIN) {
-            m.missed = true; m.missT = t;
-            // a missed star simply comes round again
-            const last = Math.max(...this.markers.filter(x => !x.missed).map(x => x.t), t + LEAD - BEAT);
-            this.markers.push({ t: Math.max(last + BEAT * 1.5, t + LEAD), k: m.k, hit: false, missed: false, hitT: 0 });
-          }
-        }
-        this.markers = this.markers.filter(m => !(m.missed && t - m.missT > 1));
-      }
-      if (this.phase === 'between') { this.betweenT += dt; if (this.betweenT > 5.5) this.startRound(env, this.round + 1); }
-      if (this.phase === 'hush') {
-        this.hushT += dt;
-        if (this.hushT > 3) {
-          this.phase = 'reveal'; this.revealT = 0;
-          SND.glow(env.bus, 146.83, { gain: 0.08, dur: 16, vowel: 'a' }); SND.glow(env.bus, 220, { gain: 0.06, dur: 16, delay: 1.2, vowel: 'o' });
-          MELODY.forEach((line, li) => line.forEach((f, k) => SND.sing(env.bus, f, { vowel: 'a', dur: 1.3, gain: 0.045, voices: 5, delay: 2 + li * 5.4 + k * BEAT, attack: 0.08, hold: 0.4, spread: 1.2 })));
-          for (let k = 0; k < 24; k++) this.spawnLantern(false);
-        }
-      }
-      if (this.phase === 'reveal') {
-        this.revealT += dt;
-        if (this.revealT > 3 && !this.saidSong) { this.saidSong = true; w.say('The Song of Welcome', '<i>Tala‘a al-badru ‘alayna</i> is loved across the Muslim world and still sung today. Its report is weak: al-Bayhaqi gives it in <i>Dala’il al-Nubuwwah</i> with a broken chain, and al-Albani graded it weak (<i>al-Silsilah al-Da‘ifah</i> 598). Some scholars place it not at the arrival but at the return from Tabuk.', { ms: 18000 }); }
-        if (this.revealT > 24 && !this.done) { this.done = true; this.phase = 'still'; w.finish('The city has welcomed him'); }
-      }
-      this.drawOverlay(t);
-
-      // sound layers: the murmur follows the welcome, the hum the harmony, crickets the stillness
-      const joy = this.phase === 'hush' ? 0 : glow;
-      this.crowd.set('gain', 0.05 * joy, 0.8); this.crowd2.set('gain', 0.025 * joy, 0.8);
-      this.night.set('gain', this.phase === 'hush' ? 0.015 : 0.06, 0.8);
-      this.hum.setGain(this.phase === 'hush' ? 0 : Math.max(0, this.round + (this.phase === 'round' ? 0 : 1)) * 0.004, 1.5);
-      this.voiceClock -= dt * (0.3 + joy * 2.5);
-      if (this.voiceClock < 0 && this.phase !== 'hush' && glow > 0) {
-        this.voiceClock = 0.6 + Math.random() * 1.2;
-        const q = U.pick(this.roofs), s = w.spatial(q, 25);
-        SND.sing(env.bus, U.rnd(180, 330), { vowel: U.pick(['a', 'o', 'e']), dur: U.rnd(0.3, 0.8), gain: 0.02 * s.gain + 0.004, pan: s.pan, voices: 1, breath: 0.3, attack: 0.03, hold: 0.25, vib: 0.004, glide: 1.06 });
-      }
-      this.cricketClock -= dt;
-      if (this.cricketClock < 0) { this.cricketClock = 0.4 + Math.random() * 1.2 + joy * 2; if (this.phase !== 'hush') SND.cricket(env.bus, { gain: 0.004 * (1 - joy * 0.7) }); }
-      this.palmClock -= dt;
-      if (this.palmClock < 0) { this.palmClock = 5 + Math.random() * 6; SND.swell(env.bus, { color: 'pink', type: 'highpass', f0: 1800, f1: 3200, dur: 3, gain: 0.015, pan: U.rnd(-1, 1) }); }
+      this.lampMesh.instanceMatrix.needsUpdate = true; fl.upd(); tr.upd(); gf.upd();
     },
 
-    drawOverlay(t) {
-      const cv = this.ovCanvas, g = this.ovCtx;
-      if (this.ov.style.opacity === '0' && !this.markers.length) return;
-      const dpr = Math.min(2, window.devicePixelRatio || 1), W = cv.clientWidth, H = cv.clientHeight;
-      if (!W) return;
-      if (cv.width !== Math.round(W * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
-      g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
-      // panel
-      g.fillStyle = 'rgba(6,9,24,0.62)'; g.strokeStyle = 'rgba(242,233,214,0.16)'; g.lineWidth = 1;
-      const rr = 14; g.beginPath(); g.moveTo(rr, 0); g.arcTo(W, 0, W, H, rr); g.arcTo(W, H, 0, H, rr); g.arcTo(0, H, 0, 0, rr); g.arcTo(0, 0, W, 0, rr); g.closePath(); g.fill(); g.stroke();
-      const i = Math.max(0, this.round), line = VERSES[i], hx = W * 0.2, ty = H * 0.66, speed = (W - hx + 20) / LEAD;
-      // the line of the song, filling with light as it is sung
-      const total = PATTERNS[i].length, frac = (this.hitsThis || 0) / total;
-      g.font = `${Math.round(Math.min(26, W * 0.042))}px Amiri, "Geeza Pro", serif`; g.textAlign = 'center'; g.direction = 'rtl'; g.textBaseline = 'middle';
-      g.fillStyle = 'rgba(242,233,214,0.22)'; g.fillText(line[0], W / 2, H * 0.27);
-      g.save(); const tw = g.measureText(line[0]).width + 20; g.beginPath(); g.rect(W / 2 + tw / 2 - tw * frac, 0, tw * frac, H * 0.5); g.clip();
-      g.shadowColor = 'rgba(255,214,140,0.9)'; g.shadowBlur = 14; g.fillStyle = '#ffeec8'; g.fillText(line[0], W / 2, H * 0.27); g.restore();
-      g.direction = 'ltr';
-      // the track and the line
-      g.strokeStyle = 'rgba(242,233,214,0.18)'; g.setLineDash([3, 6]); g.beginPath(); g.moveTo(16, ty); g.lineTo(W - 16, ty); g.stroke(); g.setLineDash([]);
-      const fl = this.flash; this.flash = Math.max(0, this.flash - 0.06);
-      const lgr = g.createLinearGradient(hx, ty - 26, hx, ty + 26); lgr.addColorStop(0, 'rgba(255,214,140,0)'); lgr.addColorStop(0.5, `rgba(255,214,140,${0.55 + fl * 0.45})`); lgr.addColorStop(1, 'rgba(255,214,140,0)');
-      g.fillStyle = lgr; g.fillRect(hx - 2 - fl * 3, ty - 26, 4 + fl * 6, 52);
-      g.strokeStyle = `rgba(255,224,160,${0.25 + fl * 0.6})`; g.lineWidth = 1.5; g.beginPath(); g.arc(hx, ty, 15 + fl * 6, 0, 6.283); g.stroke();
-      // the stars
-      for (const m of this.markers) {
-        let x = hx + (m.t - t) * speed, a = 1, r = 9;
-        if (m.hit) { const k = (t - m.hitT) / 0.6; if (k > 1) continue; x = hx; a = 1 - k; r = 9 + k * 22; g.strokeStyle = `rgba(255,230,170,${a})`; g.lineWidth = 2; g.beginPath(); g.arc(x, ty, r, 0, 6.283); g.stroke(); continue; }
-        if (m.missed) { a = Math.max(0, 1 - (t - m.missT)); }
-        if (x > W - 10) continue;
-        const near = 1 - U.clamp(Math.abs(x - hx) / 60);
-        a *= U.clamp((W - 10 - x) / 40);
-        g.save(); g.globalAlpha = a;
-        const gr = g.createRadialGradient(x, ty, 0, x, ty, 22); gr.addColorStop(0, 'rgba(255,214,140,0.5)'); gr.addColorStop(1, 'rgba(255,214,140,0)');
-        g.fillStyle = gr; g.fillRect(x - 22, ty - 22, 44, 44);
-        U.star8(g, x, ty, r + near * 3, 0.55, t * 0.8 + m.k); g.fillStyle = m.missed ? 'rgba(200,190,170,0.6)' : '#f4d898'; g.fill();
-        g.restore();
-      }
+    world(env, dt) {
+      const w = this.w, G = this.G, t = w.time, b = env.bus, cam = w.camera;
+      this.lastDt = dt;
+      if (this.cullList) for (const m of this.cullList) { const S0 = m.geometry.boundingSphere; m.visible = S0.center.distanceTo(cam.position) - S0.radius < 700; }
+      // the moon: a soft glow over the photographed one, rising a little as the song goes on
+      const md = this.moonDir || new T.Vector3(this.mdir.x, 0.22, this.mdir.z).normalize(), rise = G.on ? U.smooth(0, CHART.end, G.t) * 0.12 : 0;
+      const dir = new T.Vector3(md.x, md.y + rise, md.z).normalize();
+      this.moon.position.copy(cam.position).addScaledVector(dir, 1500); this.moon.material.opacity = 0.35 + rise * 2;
+      this.moonL.position.copy(dir).multiplyScalar(100); if (w._shadow) w._shadow.off.copy(dir).multiplyScalar(125);
+      if (this.post && this.post.rays) this.post.rays.dir = [dir.x, dir.y, dir.z];
+      this.fortLamp.material.opacity = 0.75 + 0.2 * U.noise1(t * 6);
+      for (let i = 0; i < this.waiting.n; i++) this.waiting.A[i] = 0.6 + 0.3 * U.noise1(t * 5 + i * 3);
+      this.waiting.upd();
+      this.sparks.step(dt, 2, -0.3);
+      { const cl = this.cityL, n = cl.n, k = w.filmS ? this.cityK : Math.max(this.cityK, 1); for (let i = 0; i < n; i++) cl.A[i] = U.smooth(i / n * 0.8, i / n * 0.8 + 0.2, k) * (0.6 + 0.25 * U.noise1(t * 4 + i)); cl.upd(); }
+      if (!G.on && !w.filmS) this.placeLamps();
+      this.clk.cr -= dt; if (this.clk.cr < 0) { this.clk.cr = 0.8 + Math.random() * 2.5; SND.cricket(b, { gain: 0.0025 }); }
+      this.clk.dove -= dt; if (this.clk.dove < 0) { this.clk.dove = 6 + Math.random() * 8; SND.coo(b, { gain: 0.012 }); }
     },
+
+    update(env, dt) { const w = this.w; if (!w) return; w.update(Math.min(dt, 0.1)); },
+    onLeave() { this.padEl = null; },
   }));
 })();

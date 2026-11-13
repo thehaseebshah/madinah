@@ -267,18 +267,23 @@
       const occ = this.occ = makeOcc();
 
       /* ---------- sky and moonlight ---------- */
-      const moonDir = new T.Vector3(0.16, 0.25, -0.95).normalize();
+      const moonDir = new T.Vector3(0.13, 0.56, -0.82).normalize();
       w.sky({ top: '#050814', mid: '#1a2442', bot: '#0b0f1a', sunDir: moonDir.toArray(), sun: '#8090c0', sunSize: 0.0004, stars: 1.2, haze: 0.3 });
-      const moon = this.moon = new T.DirectionalLight(0xa8bae8, PHOTO.enabled ? 0.62 : 0.6); moon.position.copy(moonDir).multiplyScalar(120); S.add(moon);
+      const moon = this.moon = new T.DirectionalLight(0xa8bae8, PHOTO.enabled ? 0.5 : 0.55); moon.position.copy(moonDir).multiplyScalar(120); S.add(moon);
       w.followShadow(moon, 55, 2048); moon.shadow.bias = -0.0008;
-      S.add(new T.HemisphereLight(0x4a5a88, 0x1a1410, PHOTO.enabled ? 0.07 : 0.35));
+      S.add(new T.HemisphereLight(0x4a5a88, 0x1a1410, PHOTO.enabled ? 0.12 : 0.35));
       this.moonDir = moonDir.clone();
       // turn the photographed moonrise so the moon stands over the head of the ravine
       PHOTO.sky(w, 'qwantani_moonrise_puresky', { sun: moon, rotation: -Math.PI / 2 + 0.16 - 0.629, intensity: 0.16, gain: 0.17, tint: '#8a9ed8', haze: '#121a30', horizon: 0.6, ground: '#2a2622', bounce: 0.2 })
-        .then(o => { if (o && o.sunDir) { self.moonDir.copy(o.sunDir); if (w._post && w._post.rays) w._post.rays.dir = o.sunDir.toArray(); } });
+        .then(o => { if (!o || !o.sunDir) return;
+          // keep the photographed moon's bearing, but light the ravine from higher, so floors and roofs catch it
+          const d = o.sunDir, h = Math.hypot(d.x, d.z) || 1, el = 0.6;
+          self.moonDir.set(d.x / h * Math.cos(el), Math.sin(el), d.z / h * Math.cos(el));
+          moon.position.copy(self.moonDir).multiplyScalar(120); if (w._shadow) w._shadow.off.copy(self.moonDir).multiplyScalar(w._shadow.off.length());
+          if (w._post && w._post.rays) w._post.rays.dir = o.sunDir.toArray(); });
 
       /* ---------- terrain, horizon ---------- */
-      warpTerrain(w, { nx: 300, nz: 340, fx: u => 450 * (0.08 * u + 0.92 * u * u * u), fz: v => 60 + 450 * v, height: H, rock: [0.8, 0.93], colors: { low: '#a09482', high: '#928672', rock: '#857870', dark: '#4e443c' },
+      warpTerrain(w, { nx: 300, nz: 340, fx: u => 450 * (0.08 * u + 0.92 * u * u * u), fz: v => 60 + 450 * v, height: H, rock: [0.8, 0.93], colors: { low: '#968a78', high: '#8a7e6c', rock: '#6e625a', dark: '#3e3630' },
         tex: 'gravel', rockTex: 'granite', photo: { ground: 'gravelly_sand', rock: 'rock_face_03', normal: 1 }, rep: 0.22, rockRep: 0.045 });
       SCAPE.horizon(w, { cz: 60, haze: '#1c2440', layers: [{ r: 620, h: 90, color: '#2a2a36', seed: 5 }, { r: 900, h: 120, color: '#3a3c50', seed: 9 }, { r: 1400, h: 150, color: '#4c5070', seed: 13 }] });
 
@@ -290,7 +295,7 @@
         stone: PHOTO.mat(w, 'old_stone_wall', { triplanar: 0.45, color: 0xa09080, fallback: SCAPE.tex.granite(w) }),
         beam: PHOTO.mat(w, 'medieval_wood', { rep: [1, 1], color: 0x9a8270, fallback: KIT.wood(w) }),
         door: PHOTO.mat(w, 'old_planks_02', { rep: [1, 1], color: 0x9a8470, fallback: KIT.wood(w, [1, 1], '#5a3c24') }),
-        tent: PHOTO.mat(w, 'rough_linen', { rep: [3, 2], color: 0x7a604c, side: T.DoubleSide, fallback: SCAPE.tex.mud(w) }),
+        tent: PHOTO.mat(w, 'rough_linen', { rep: [3, 2], color: 0x5a4434, side: T.DoubleSide, fallback: SCAPE.tex.mud(w) }),
         leather: PHOTO.mat(w, 'brown_leather', { rep: [2, 1], color: 0x9a7a60, fallback: KIT.wood(w, [1, 1], '#5a3a24') }),
         pole: PHOTO.mat(w, 'medieval_wood', { rep: [1, 2], color: 0x7a6656, fallback: KIT.wood(w) }),
         rope: new T.MeshStandardMaterial({ color: 0x8a7a62, roughness: 1 }),
@@ -371,7 +376,7 @@
       const big = cover.filter((_, i) => i % 2 === 0), flat = cover.filter((_, i) => i % 2 === 1);
       big.forEach(([x, z, s]) => { w.addCircle(x, z, 1.05 * s); occ.add(x, z, 1.15 * s, 1.75 * s); });
       flat.forEach(([x, z, s]) => { const k = s * 1.5; w.addCircle(x, z, 0.85 * k); occ.add(x, z, 0.95 * k, 0.8 * k); });
-      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_04', points: big, fallback: 'boulder', fallbackScale: 1.2, sink: 0.12, seed: 11, color: '#b4aca6' });
+      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_04', points: big, fallback: 'boulder', fallbackScale: 1.2, sink: 0.12, seed: 11, color: '#a4a6ac' });
       SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_02', points: flat.map(([x, z, s]) => [x, z, s * 1.5]), fallback: 'boulder', fallbackScale: 0.9, sink: 0.08, seed: 12, color: '#b4aca6' });
       this.cover = cover;
       // cliffs of granite standing out of the walls
@@ -450,7 +455,7 @@
       this.peb = new T.Mesh(new T.DodecahedronGeometry(0.06, 0), pebM); this.peb.visible = false; this.peb.userData.dynamic = true; S.add(this.peb);
 
       /* ---------- the watch: torches, their cones and pools of light ---------- */
-      const fanMat = () => new T.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, blending: T.AdditiveBlending, fog: false, side: T.DoubleSide });
+      const fanMat = () => new T.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, blending: T.AdditiveBlending, fog: false, side: T.DoubleSide, polygonOffset: true, polygonOffsetFactor: -4 });
       const NR = 22;
       const stickM = PHOTO.mat(w, 'medieval_wood', { rep: [1, 1], color: 0x5a4636, fallback: KIT.wood(w) });
       const beamMat = new T.ShaderMaterial({
@@ -481,7 +486,7 @@
         P.stepT = Math.random();
         return P;
       });
-      this.torchLights = [0, 1, 2].map(() => { const L = new T.PointLight(0xff8040, 0, 20, 1.6); S.add(L); return L; });
+      this.torchLights = [0, 1, 2].map(() => { const L = new T.PointLight(0xff7a30, 0, 13, 1.8); S.add(L); return L; });
       this.warmLights = [0, 1, 2].map(() => { const L = new T.PointLight(0xffa452, 0, 10, 1.5); S.add(L); return L; });
       this.beamMat = beamMat;
 
@@ -729,14 +734,14 @@
           // the cone of light, stopped by walls and boulders
           const pa = P.fan.geometry.attributes.position, pc = P.fan.geometry.attributes.color, NR = (pa.count - 1) / 2;
           const sk = U.clamp(P.sus), col = new T.Color(TORCH).lerp(new T.Color(0xff3a10), sk);
-          const inten = (0.42 + sk * 0.35) * fk;
+          const inten = (0.3 + sk * 0.25) * fk;
           pa.setXYZ(0, P.pos.x, gy + 0.08, P.pos.z); pc.setXYZ(0, col.r * inten, col.g * inten, col.b * inten);
           for (let i = 0; i < NR; i++) {
             const a = P.a + (i / (NR - 1) - 0.5) * 2 * P.half, dx = Math.sin(a), dz = Math.cos(a);
             const L = on ? this.reach(P.pos.x, P.pos.z, dx, dz, P.R, 1.2) : 0.01;
             const m1 = L * 0.55, x1 = P.pos.x + dx * m1, z1 = P.pos.z + dz * m1, x2 = P.pos.x + dx * L, z2 = P.pos.z + dz * L;
             pa.setXYZ(1 + i * 2, x1, H(x1, z1) + 0.08, z1); pa.setXYZ(2 + i * 2, x2, H(x2, z2) + 0.08, z2);
-            const e1 = inten * 0.55, e2 = inten * 0.1 * (L / P.R);
+            const edge = Math.pow(Math.sin(Math.PI * (0.06 + 0.88 * i / (NR - 1))), 0.7), e1 = inten * 0.75 * edge, e2 = inten * 0.12 * (L / P.R) * edge;
             pc.setXYZ(1 + i * 2, col.r * e1, col.g * e1, col.b * e1); pc.setXYZ(2 + i * 2, col.r * e2, col.g * e2, col.b * e2);
           }
           pa.needsUpdate = pc.needsUpdate = true; P.fan.visible = on;
@@ -775,7 +780,7 @@
       this.beamMat.uniforms.uOp.value = 0.12 * fadeAll;
       // the nearest torches carry real light
       { const act = this.watch.filter(P => (P.active || w.filmS) && fadeAll > 0.01).sort((a, c) => a.pos.distanceToSquared(w.camera.position) - c.pos.distanceToSquared(w.camera.position));
-        this.torchLights.forEach((L, i) => { const P = act[i]; if (!P) { L.intensity = 0; return; } L.position.copy(P.pos); L.intensity = 2.4 * fadeAll * (0.85 + 0.15 * Math.sin(t * 13 + i)); }); }
+        this.torchLights.forEach((L, i) => { const P = act[i]; if (!P) { L.intensity = 0; return; } L.position.copy(P.pos); L.intensity = 1.1 * fadeAll * (0.85 + 0.15 * Math.sin(t * 13 + i)); }); }
 
       // caught: the night takes you back
       if (play && maxSus >= 1) this.caught(env);

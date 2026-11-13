@@ -157,6 +157,20 @@
       },
     };
   }
+  // instanced scatters get a real bounding sphere, so the camera can skip the ones out of view
+  function cullable(w, res, list) {
+    const fix = () => res.meshes.forEach(m => {
+      if (!m.isInstancedMesh || !m.count) return;
+      const m4 = new T.Matrix4(), p = new T.Vector3(), c = new T.Vector3(); let n = m.count, sMax = 0;
+      for (let i = 0; i < n; i++) { m.getMatrixAt(i, m4); c.add(p.setFromMatrixPosition(m4)); }
+      c.divideScalar(n); let r = 0;
+      for (let i = 0; i < n; i++) { m.getMatrixAt(i, m4); r = Math.max(r, p.setFromMatrixPosition(m4).distanceTo(c)); sMax = Math.max(sMax, m4.getMaxScaleOnAxis()); }
+      if (!m.geometry.boundingSphere) m.geometry.computeBoundingSphere();
+      m.geometry = m.geometry.clone(); m.geometry.boundingSphere = new T.Sphere(c, r + (m.geometry.boundingSphere ? m.geometry.boundingSphere.radius : 2) * sMax + 2);
+      m.frustumCulled = true; list.push(m);
+    });
+    if (res.ready) res.ready.then(fix); else fix();
+  }
   function cylBetween(a, b, r0, r1, seg) {
     const d = new T.Vector3().subVectors(b, a), len = d.length();
     const g = new T.CylinderGeometry(r1, r0, len, seg || 7, 1); g.translate(0, len / 2, 0);
@@ -182,7 +196,7 @@
       (() => { const g = new T.BoxGeometry(1.5, 0.5, 0.08); g.translate(0, 2.05, -0.55); return g; })(),
       sphereAt(1, 0.32, 0.22, 0.3, 0, 2.55, 0.35),
     ]);
-    const leg = SCAPE.merge([cylBetween(new T.Vector3(0, 0, 0), new T.Vector3(0, -1.48, 0), 0.11, 0.07, 6), sphereAt(1, 0.12, 0.05, 0.15, 0, -1.5, -0.02, 8)]);
+    const leg = SCAPE.merge([cylBetween(new T.Vector3(0, 0, 0), new T.Vector3(0, -0.7, 0.03), 0.15, 0.1, 7), sphereAt(1, 0.1, 0.1, 0.1, 0, -0.72, 0.03, 8), cylBetween(new T.Vector3(0, -0.72, 0.03), new T.Vector3(0, -1.48, 0), 0.085, 0.06, 6), sphereAt(1, 0.12, 0.05, 0.15, 0, -1.5, -0.02, 8)]);
     return { body, saddle, leg };
   }
   const HIPS = [[-0.24, 1.55, -0.7], [0.24, 1.55, -0.7], [-0.24, 1.55, 0.78], [0.24, 1.55, 0.78]];
@@ -241,9 +255,9 @@
       this.dawnK = 0; this.skies = {};
       if (PHOTO.enabled) {
         const grab = () => { const m = S.children[S.children.length - 1]; return m && m.material && m.material.uniforms && m.material.uniforms.tSky ? m : null; };
-        PHOTO.sky(w, 'qwantani_night_puresky', { rotation: 3.96, intensity: 0.38, haze: '#141b30', horizon: 0.55, ground: '#2a2836', bounce: 0.25 });
+        PHOTO.sky(w, 'qwantani_night_puresky', { rotation: 0.82, intensity: 0.38, haze: '#141b30', horizon: 0.55, ground: '#2a2836', bounce: 0.25 });
         this.skies.night = grab(); if (this.skies.night) this.skies.night.material.uniforms.uGain.value = 0.85;
-        PHOTO.sky(w, 'qwantani_dawn_puresky', { env: false, rotation: 2.51, haze: '#c0a890', horizon: 0.45 });
+        PHOTO.sky(w, 'qwantani_dawn_puresky', { env: false, rotation: -0.63, haze: '#c0a890', horizon: 0.45 });
         const dm = this.skies.dawn = grab();
         if (dm) {
           const m = dm.material; m.uniforms.uA = { value: 0 }; m.transparent = true; dm.renderOrder = -9;
@@ -264,16 +278,27 @@
       const near = (x, z, a, b) => { const d = Math.abs(x - RX(z)); return d < a ? 0 : 1 - U.smooth(a, b, d) * 0.85; };
       const road = (x, z, m) => Math.abs(x - RX(z)) < (m || 6.5);
       const AREA = [-520, Z1 + 40, 560, Z0 + 260];
-      const sc = o => SCAPE.scatter(w, Object.assign({ area: AREA }, o));
+      // every scatter is cut into bands along the road, so what lies far behind or far ahead is not drawn
+      this.cullList = [];
+      const NB = 7, bandZ = k => U.lerp(AREA[3], AREA[1], k / NB);
+      const sc = o => {
+        if (o.area) { const r = SCAPE.scatter(w, o); cullable(w, r, this.cullList); return r; }
+        const out = { meshes: [], list: [] };
+        for (let k = 0; k < NB; k++) {
+          const r = SCAPE.scatter(w, Object.assign({}, o, { n: Math.max(1, Math.round(o.n / NB)), seed: o.seed * 13 + k, area: [AREA[0], bandZ(k + 1), AREA[2], bandZ(k)] }));
+          cullable(w, r, this.cullList); out.list.push(...r.list); if (r.ready) r.ready.then(() => out.meshes.push(...r.meshes)); else out.meshes.push(...r.meshes);
+        }
+        return out;
+      };
+      const scPts = o => { for (let k = 0; k < NB; k++) { const z1 = bandZ(k), z0 = bandZ(k + 1), pts = o.points.filter(q => q[1] <= z1 && q[1] > z0); if (pts.length) cullable(w, SCAPE.scatter(w, Object.assign({}, o, { points: pts })), this.cullList); } };
       const nearArea = (a, b, k) => ({ density: (x, z) => near(x, z, a, b) * ZW(z, k) });
-      sc(Object.assign({ kind: 'model', model: 'namaqualand_boulder_02', fallback: 'boulder', n: 190, scale: [0.9, 2.6], seed: 11, collide: false, avoid: (x, z) => road(x, z, 10) }, nearArea(10, 170, [1, 0.25, 0.4, 0.5, 0])));
-      sc(Object.assign({ kind: 'model', model: 'namaqualand_boulder_04', fallback: 'boulder', n: 150, scale: [0.8, 2.2], seed: 12, avoid: (x, z) => road(x, z, 9) }, nearArea(9, 150, [1, 0.2, 0.5, 0.2, 0])));
-      sc(Object.assign({ kind: 'model', model: 'rock_07', fallback: 'rock', n: 220, scale: [0.6, 1.8], seed: 13, avoid: (x, z) => road(x, z, 8) }, nearArea(8, 120, [1, 0.3, 0.6, 0.6, 0.2])));
-      sc(Object.assign({ kind: 'model', model: 'namaqualand_rocks_01', fallback: 'rock', fallbackScale: 0.4, n: 700, scale: [0.6, 1.6], seed: 14, avoid: (x, z) => road(x, z, 5.2) }, nearArea(5.2, 70, [1, 0.4, 0.8, 0.9, 0.4])));
-      sc(Object.assign({ kind: 'model', model: 'namaqualand_stones_01', fallback: 'pebble', fallbackScale: 0.6, n: 2200, scale: [0.6, 1.5], seed: 15, castShadow: false, avoid: (x, z) => road(x, z, 4.6) }, nearArea(4.6, 34, [1, 0.5, 1, 1, 0.6])));
+      sc(Object.assign({ kind: 'model', model: 'namaqualand_boulder_02', fallback: 'boulder', n: 150, scale: [0.9, 2.6], seed: 11, collide: false, avoid: (x, z) => road(x, z, 10) }, nearArea(10, 170, [1, 0.25, 0.4, 0.5, 0])));
+      sc(Object.assign({ kind: 'model', model: 'namaqualand_boulder_04', fallback: 'boulder', n: 110, scale: [0.8, 2.2], seed: 12, avoid: (x, z) => road(x, z, 9) }, nearArea(9, 150, [1, 0.2, 0.5, 0.2, 0])));
+      sc(Object.assign({ kind: 'model', model: 'rock_07', fallback: 'rock', n: 160, scale: [0.6, 1.8], seed: 13, avoid: (x, z) => road(x, z, 8) }, nearArea(8, 120, [1, 0.3, 0.6, 0.6, 0.2])));
+      sc(Object.assign({ kind: 'model', model: 'namaqualand_rocks_01', fallback: 'rock', fallbackScale: 0.4, n: 520, scale: [0.6, 1.6], seed: 14, avoid: (x, z) => road(x, z, 5.2) }, nearArea(5.2, 70, [1, 0.4, 0.8, 0.9, 0.4])));
+      sc(Object.assign({ kind: 'model', model: 'namaqualand_stones_01', fallback: 'pebble', fallbackScale: 0.6, n: 1500, scale: [0.6, 1.5], seed: 15, castShadow: false, avoid: (x, z) => road(x, z, 4.6) }, nearArea(4.6, 34, [1, 0.5, 1, 1, 0.6])));
       sc(Object.assign({ kind: 'model', model: 'shrub_03', fallback: 'shrub', n: 240, scale: [0.6, 1.4], seed: 16, avoid: (x, z) => road(x, z, 7) }, nearArea(7, 90, [0.4, 0.8, 1, 0.3, 0.8])));
       sc(Object.assign({ kind: 'model', model: 'wild_rooibos_bush', fallback: 'shrub', n: 160, scale: [0.6, 1.2], seed: 17, avoid: (x, z) => road(x, z, 7) }, nearArea(7, 80, [0.2, 0.4, 1, 0.6, 1])));
-      sc(Object.assign({ kind: 'model', model: 'grass_medium_01', fallback: 'grass', n: 600, scale: [0.7, 1.3], seed: 18, castShadow: false, avoid: (x, z) => road(x, z, 4.8) }, nearArea(4.8, 50, [0.3, 1, 1, 0.3, 1])));
       sc(Object.assign({ kind: 'model', model: 'dry_branches_medium_01', fallback: 'thorn', n: 90, scale: [0.8, 1.4], seed: 19, avoid: (x, z) => road(x, z, 7) }, nearArea(7, 80, [0.8, 0.5, 1, 0.5, 0])));
       sc(Object.assign({ kind: 'model', model: 'dead_tree_trunk', fallback: 'rock', n: 26, scale: [0.8, 1.2], seed: 20, avoid: (x, z) => road(x, z, 9) }, nearArea(9, 80, [0.3, 1, 0.8, 0.2, 0])));
       sc({ kind: 'boulder', n: 420, scale: [3, 14], seed: 21, tex: 'granite', color: '#8a8078', density: (x, z) => U.smooth(60, 160, Math.abs(x - RX(z))) * ZW(z, [1, 0.2, 0.3, 0, 0]) });
@@ -290,7 +315,7 @@
       hs.meshes.forEach(m => { m.material = PHOTO.mat(w, 'clay_plaster', { triplanar: 0.25, fallback: m.material.map, color: '#d8c8b0' }); });
       // cairns of stones marking the guide's way
       const cairns = []; for (let s = 30; s < STOP; s += 46) { const p = tp(s), side = (s / 46 | 0) % 2 ? 1 : -1; cairns.push([p.x + p.rx * 8.6 * side, p.z + p.rz * 8.6 * side, 1.25]); }
-      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_rocks_01', variant: 1, fallback: 'rock', fallbackScale: 0.5, points: cairns, seed: 31 });
+      scPts({ kind: 'model', model: 'namaqualand_rocks_01', variant: 1, fallback: 'rock', fallbackScale: 0.5, points: cairns, seed: 31 });
 
       /* ---------- obstacles ---------- */
       const rockPts = [], bankPts = [], forkPts = [], branchList = [];
@@ -301,9 +326,9 @@
         if (o.type === 'fork') for (let k = -14; k <= 14; k += 4.5) { const q = tp(o.s + k); forkPts.push([q.x + q.rx * (rnd() - 0.5) * 0.6, q.z + q.rz * (rnd() - 0.5) * 0.6, U.lerp(1.12, 0.7, Math.abs(k) / 14)]); }
         if (o.type === 'branch') branchList.push(o);
       });
-      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_05', fallback: 'boulder', fallbackScale: 0.8, points: rockPts, seed: 32, sink: 0.08 });
-      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_rocks_01', variant: 2, fallback: 'rock', fallbackScale: 0.4, points: bankPts, seed: 33 });
-      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_02', fallback: 'boulder', points: forkPts, seed: 34, sink: 0.15 });
+      scPts({ kind: 'model', model: 'namaqualand_boulder_05', fallback: 'boulder', fallbackScale: 0.8, points: rockPts, seed: 32, sink: 0.08 });
+      scPts({ kind: 'model', model: 'namaqualand_rocks_01', variant: 2, fallback: 'rock', fallbackScale: 0.4, points: bankPts, seed: 33 });
+      scPts({ kind: 'model', model: 'namaqualand_boulder_02', fallback: 'boulder', points: forkPts, seed: 34, sink: 0.15 });
       // the low acacia limbs
       const arch = acaciaArch();
       const barkM = PHOTO.mat(w, 'medieval_wood', { triplanar: 0.7, color: '#a08a78', fallback: KIT.bark(w) });
@@ -314,7 +339,7 @@
       [ib, il].forEach(m => { m.castShadow = true; m.receiveShadow = true; m.frustumCulled = false; m.userData.dynamic = true; S.add(m); });
       // the soft sand on the wrong side of each fork: small dunes of drift and thorn
       const softPts = []; FORKS.forEach(f => { for (let k = -12; k <= 12; k += 3) { const q = tp(f.s + k); softPts.push([q.x + q.rx * -f.good * (LANE + 0.6 * rnd()), q.z + q.rz * -f.good * (LANE + 0.6 * rnd()), 0.5 + rnd() * 0.3]); } });
-      SCAPE.scatter(w, { kind: 'thorn', points: softPts, seed: 35, color: '#c8b8a0' });
+      scPts({ kind: 'thorn', points: softPts, seed: 35, color: '#c8b8a0' });
 
       /* ---------- Jabal Thawr: the cave mouth high on the slope behind the start ---------- */
       const cp = tp(-150); this.cave = new T.Vector3(cp.x + 34, 0, cp.z); this.cave.y = H(this.cave.x, this.cave.z) + 1;
@@ -325,7 +350,7 @@
 
       /* ---------- the camels, the guide's lamp, and their camp below the cave ---------- */
       const cg = camelGeos();
-      const fur = PHOTO.mat(w, 'rough_linen', { color: '#6e543c', rep: [2, 2], normal: 0.7, fallbackColor: '#5e4632' });
+      const fur = PHOTO.mat(w, 'rough_linen', { color: '#5a3c24', rep: [2, 2], normal: 0.7, fallbackColor: '#5e4632' });
       const cloth = PHOTO.mat(w, 'brown_leather', { color: '#9a6a4a', rep: [1, 1] });
       this.cBody = new T.InstancedMesh(cg.body, fur, 2); this.cSad = new T.InstancedMesh(cg.saddle, cloth, 2); this.cLeg = new T.InstancedMesh(cg.leg, fur, 8);
       [this.cBody, this.cSad, this.cLeg].forEach(m => { m.castShadow = true; m.receiveShadow = true; m.frustumCulled = false; m.userData.dynamic = true; m.instanceMatrix.setUsage(T.DynamicDrawUsage); S.add(m); });
@@ -371,7 +396,7 @@
       });
       M.sort((a, b) => a.s - b.s);
       this.motes = M; this.moteSp = sprites(w, M.length, '#ffe2a8', true);
-      M.forEach((m, i) => { const p = tp(m.s); m.x = p.x + p.rx * m.lat; m.z = p.z + p.rz * m.lat; m.y = H(m.x, m.z) + m.h; this.moteSp.P.set([m.x, m.y, m.z], i * 3); this.moteSp.S[i] = 0.55; this.moteSp.A[i] = 0.9; });
+      M.forEach((m, i) => { const p = tp(m.s); m.x = p.x + p.rx * m.lat; m.z = p.z + p.rz * m.lat; m.y = H(m.x, m.z) + m.h; this.moteSp.P.set([m.x, m.y, m.z], i * 3); this.moteSp.S[i] = 0.32; this.moteSp.A[i] = 0.8; });
       this.moteSp.upd();
 
       /* ---------- discoveries along the road (fly through the golden light) ---------- */
@@ -652,7 +677,7 @@
       this.trail.upd();
       R.light = U.damp(R.light, 0.85, 0.05, dt);
       const fl = 0.92 + 0.08 * U.noise1(w.time * 7) - (R.hitT > 0 ? 0.35 * Math.abs(Math.sin(w.time * 30)) : 0);
-      this.orbL.intensity = 1.1 * R.light * fl; this.orb.material.opacity = 0.75 * fl; this.orb.scale.setScalar(1.1 + R.light * 0.5);
+      const dk = 1 - this.dawnK * 0.6; this.orbL.intensity = 1.1 * R.light * fl * dk; this.orb.material.opacity = 0.75 * fl * dk; this.orb.scale.setScalar(1.1 + R.light * 0.5);
       R.hitT = Math.max(0, R.hitT - dt);
 
       // the lamp and the camels ahead
@@ -730,7 +755,7 @@
       const k = this.dawnK;
       if (this.skies.night) { const n = this.skies.night, d = this.skies.dawn; n.position.copy(cam.position); if (d) { d.position.copy(cam.position); d.material.uniforms.uA.value = U.smooth(0.05, 0.9, k); d.visible = !!d.material.uniforms.tSky.value.image && k > 0.01; } n.visible = !!n.material.uniforms.tSky.value.image && k < 0.99; }
       if (this.proSky) { const u = this.proSky.material.uniforms; u.uTop.value.setRGB(U.lerp(0.012, 0.32, k), U.lerp(0.02, 0.42, k), U.lerp(0.055, 0.62, k)); u.uMid.value.setRGB(U.lerp(0.055, 0.95, k), U.lerp(0.086, 0.7, k), U.lerp(0.19, 0.55, k)); u.uStars.value = 0.9 * (1 - k); }
-      if (k > 0.3 && !this.envDawn && PHOTO.enabled) { this.envDawn = true; PHOTO.sky(w, 'qwantani_dawn_puresky', { background: false, sun: this.moon, intensity: 0.75, rotation: 2.51, ground: '#8a7058', bounce: 0.5 }); }
+      if (k > 0.3 && !this.envDawn && PHOTO.enabled) { this.envDawn = true; PHOTO.sky(w, 'qwantani_dawn_puresky', { background: false, sun: this.moon, intensity: 0.75, rotation: -0.63, ground: '#8a7058', bounce: 0.5 }); }
       this.moon.color.setRGB(U.lerp(0.62, 1, k), U.lerp(0.7, 0.72, k), U.lerp(0.9, 0.5, k)); this.moon.intensity = U.lerp(0.3, 1.5, U.smooth(0.3, 1, k));
       this.hemi.intensity = (PHOTO.enabled ? 0.1 : 0.35) + k * 0.15;
       w.scene.fog.color.setRGB(U.lerp(0.063, 0.62, k), U.lerp(0.086, 0.52, k), U.lerp(0.15, 0.48, k)); w.scene.fog.density = U.lerp(0.0011, 0.0013, k);
@@ -739,6 +764,8 @@
       if (this.post && this.post.rays) { this.post.rays.pos = [cam.position.x + 900, cam.position.y + 60, cam.position.z - 300]; }
       // shadows follow whatever the camera looks at
       if (w._shadow) { const L = w._shadow.light, f = w.forward ? cam.getWorldDirection(new T.Vector3()) : null; const px = Math.round((cam.position.x + f.x * 18) / 2) * 2, pz = Math.round((cam.position.z + f.z * 18) / 2) * 2; L.target.position.set(px, 0, pz); L.position.set(px + w._shadow.off.x, w._shadow.off.y, pz + w._shadow.off.z); }
+      // far bands are not drawn at all
+      if (this.cullList) for (const m of this.cullList) { const S0 = m.geometry.boundingSphere; m.visible = S0.center.distanceTo(cam.position) - S0.radius < 1000; }
       // the sea's glitter under the stars
       this.glitter.position.set(cam.position.x - 900, 2, cam.position.z - 200); this.glitter.material.opacity = 0.05 * (1 - k);
       // the lamp swings and flickers
@@ -769,7 +796,7 @@
       }
       this.sand.step(dt, 1.6, 2); this.sparks.step(dt, 2.5, -0.5);
       // motes twinkle
-      if (this.motes) { const sp = this.moteSp, i0 = Math.max(0, (R.mi || 0) - 2); for (let i = i0; i < Math.min(this.motes.length, i0 + 60); i++) if (!this.motes[i].got) sp.A[i] = 0.75 + 0.25 * Math.sin(t * 4 + i); sp.geo.attributes.aAlpha.needsUpdate = true; }
+      if (this.motes) { const sp = this.moteSp, i0 = Math.max(0, (R.mi || 0) - 2); for (let i = i0; i < Math.min(this.motes.length, i0 + 60); i++) if (!this.motes[i].got) sp.A[i] = 0.6 + 0.25 * Math.sin(t * 4 + i); sp.geo.attributes.aAlpha.needsUpdate = true; }
       // night and dawn sounds
       this.clk.gust -= dt; if (this.clk.gust < 0) { this.clk.gust = 5 + Math.random() * 6; SND.swell(b, { f0: 260, f1: 1100, dur: 3.2, gain: 0.04 * (1 - k * 0.5), pan: U.rnd(-1, 1) }); }
       this.clk.cricket -= dt; if (this.clk.cricket < 0 && k < 0.5) { this.clk.cricket = 0.8 + Math.random() * 2.5; SND.cricket(b, { gain: 0.003 }); }

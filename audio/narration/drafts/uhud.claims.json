@@ -1,0 +1,23 @@
+[
+  {
+    "claim": "Uhud is a mountain north of Madinah, about 7.5 km long and 1,077 m high, mostly of red granite, about 5 km north of the Prophet's Mosque.",
+    "grade": "history",
+    "ref": "Saudipedia 'Mount Uhud'; Wikipedia 'Mount Uhud'",
+    "url": "https://saudipedia.com/en/mount-uhud",
+    "note": "Wikipedia gives 1,077 m and 7.5 km; Saudipedia describes rocky granite, predominantly red, and a distance of about 5 km from the Prophet's Mosque. The station says 'some seven kilometres long' and 'red granite'. Some geologists describe much of the red rock as rhyolite."
+  },
+  {
+    "claim": "The martyrs of Uhud were buried at Uhud in their blood, unwashed, two men sometimes put in one grave, and the Prophet did not offer the funeral prayer over them then.",
+    "grade": "sahih",
+    "ref": "Sahih al-Bukhari 1343 (Jabir ibn Abdullah)",
+    "url": "https://sunnah.com/bukhari:1343",
+    "note": "Supports the film line 'About seventy were killed, and buried here' together with claim 37 (Bukhari 3039 for the number)."
+  },
+  {
+    "claim": "Returning from Tabuk, when Madinah came into view the Prophet said 'This is Tabah', and on seeing Uhud, 'This is a mountain that loves us and we love it.'",
+    "grade": "sahih",
+    "ref": "Sahih al-Bukhari 4422 (Abu Humayd)",
+    "url": "https://sunnah.com/bukhari:4422",
+    "note": "Same as claim 88 of sources.verified.json (uhud); listed for the 'Tabah' discovery."
+  }
+]

@@ -11,7 +11,7 @@
   const T = THREE;
   const ID = 'safa';
   const KX = 112, KZ = -62;                 // the Ka'bah, behind the track, west of as-Safa
-  const CAMZ = 17, FOV = 38;                // the side camera
+  const CAMZ = 21, FOV = 38;                // the side camera
   const SUMMIT = { x: 214, y: 14.8 };
 
   /* ---------------- local helpers ---------------- */
@@ -66,7 +66,7 @@
       const self = this;
       return [
         { dur: 7, fade: 'dip', title: true, ease: 'glide', fov: [48, 40],
-          path: [[[-40, 120, 170], [80, 10, -40]], [[30, 85, 130], [110, 6, -50]]],
+          path: [[[-150, 52, 95], [200, 46, -60]], [[-80, 40, 70], [200, 38, -60]]],
           start: () => { SND.swell(env.bus, { f0: 120, f1: 360, dur: 6.5, gain: 0.035 }); } },
         { dur: 6, fade: 'dip', line: 'Makkah before dawn. For three years the message has been shared quietly.', ar: 'مكة قبيل الفجر. ثلاثَ سنين والدعوةُ سِرّ.',
           path: [[[-150, 9, 10], [-120, 5, -4]], [[-118, 7.5, 8], [-90, 4.5, -4]]], ease: 'linear' },
@@ -74,7 +74,7 @@
           path: [[[-20, 3, 9], [-10, 6, -2]], [[2, 2.6, 9], [12, 5, -2]]], ease: 'linear',
           start: () => SND.sing(env.bus, 220, { vowel: 'a', dur: 4.5, gain: 0.04, voices: 3, attack: 1 }) },
         { dur: 6, fade: 'dip', line: 'Beside the House, at the foot of Abu Qubays, rises a low rock: as-Safa.', ar: 'وبجوار البيت، عند سفح أبي قُبيس، صخرةٌ منخفضة: الصفا.',
-          path: [[[KX - 40, 22, KZ + 30], [KX + 70, 8, -8]], [[KX - 12, 16, KZ + 46], [SUMMIT.x, 10, 0]]], ease: 'glide' },
+          path: [[[KX - 52, 14, KZ + 72], [KX, 5, KZ]], [[KX + 38, 17, 26], [SUMMIT.x, 9, -2]]], ease: 'glide' },
         { dur: 6, fade: 'cut', line: 'The clans of Quraysh sleep in their houses across the valley.', ar: 'وقبائلُ قريشٍ نيامٌ في بيوتها على امتداد الوادي.',
           path: [[[60, 30, 40], [20, 3, -40]], [[100, 26, 30], [60, 3, -50]]], ease: 'linear',
           during: (w2, k) => { self.windowsGlow(k); } },
@@ -92,17 +92,17 @@
       const H = (x, z) => {
         // the track corridor (z near 0) follows a gentle floor; the valley rises into mountains all round
         const dc = Math.hypot((x - 40) * 0.7, (z + 60) * 0.9);
-        let y = Math.max(0, dc - 190); y = Math.pow(y, 1.25) * 0.55;
-        y += SCAPE.ridge(x * 0.012, z * 0.012, 5) * 50 * U.smooth(170, 280, dc);
-        y += 110 * Math.exp(-((x - 270) ** 2 + (z + 70) ** 2) / (2 * 60 * 60));   // Abu Qubays
+        let y = Math.max(0, dc - 250); y = Math.pow(y, 1.15) * 0.42;
+        y += SCAPE.ridge(x * 0.012, z * 0.012, 5) * 40 * U.smooth(230, 330, dc);
+        y += 70 * Math.exp(-((x - 290) ** 2 + (z + 90) ** 2) / (2 * 90 * 90)) * (0.7 + 0.6 * SCAPE.ridge(x * 0.02, z * 0.02, 4));   // Abu Qubays
         y += 12.5 * Math.exp(-((x - 212) ** 2) / (2 * 16 * 16) - (z * z) / (2 * 22 * 22)); // the rock of as-Safa
         y += SCAPE.fbm(x * 0.05, z * 0.05, 3) * 0.6 * U.smooth(4, 14, Math.abs(z)) + SCAPE.fbm(x * 0.3, z * 0.3, 2) * 0.06;
         return y;
       };
-      const w = this.w = WORLD.create(env, { start: { x: -205, z: CAMZ, yaw: 0 }, exposure: 1.0, far: 1700, fov: FOV, fog: { color: 0x5a5a78, density: 0.0021 } });
+      const w = this.w = WORLD.create(env, { start: { x: -205, z: CAMZ, yaw: 0 }, exposure: 0.86, far: 1700, fov: FOV, fog: { color: 0x5a5a78, density: 0.0021 } });
       const S = w.scene;
-      const ter = SCAPE.terrain(w, { size: 1200, seg: 300, cx: 40, cz: -60, height: H, rock: [0.82, 0.94], rockHeight: [10, 30],
-        colors: { low: '#bba184', high: '#a98e70', rock: '#6e6058', dark: '#4e423c' }, tex: 'gravel', rockTex: 'granite',
+      const ter = SCAPE.terrain(w, { size: 1200, seg: 300, cx: 40, cz: -60, height: H, rock: [0.86, 0.96], rockHeight: [3, 8],
+        colors: { low: '#9e8a72', high: '#8e7a64', rock: '#5e524c', dark: '#3e3632' }, tex: 'gravel', rockTex: 'granite',
         photo: { ground: 'gravelly_sand', rock: 'rock_face_03', normal: 1 }, rep: 0.22, rockRep: 0.05 });
       w.ground = ter.ground;
       w.sky({ top: '#141c40', mid: '#7a6a88', bot: '#2a2438', sunDir: [1, 0.02, -0.3], sun: '#ff9a6a', sunSize: 0.004, stars: 0.4, haze: 0.4 });
@@ -116,9 +116,10 @@
       SCAPE.horizon(w, { cx: 40, cz: -60, haze: '#6e6a82', layers: [{ r: 700, h: 120, color: '#3c3a48', seed: 13 }, { r: 1000, h: 150, color: '#55526a', seed: 27 }, { r: 1400, h: 170, color: '#6e6a84', seed: 5 }] });
 
       const M = this.M = {
-        walls: [tri(w, 'old_stone_wall', 0.42, KIT.mudBrick(w, [1, 1]), '#c8bcac'), tri(w, 'clay_plaster', 0.3, KIT.plaster(w, [1, 1], '#d8c4a4'), '#e6d4bc'),
-                tri(w, 'brown_mud_dry', 0.28, KIT.mudBrick(w, [1, 1]), '#d0bca8'), tri(w, 'clay_block_wall', 0.4, KIT.mudBrick(w, [1, 1]), '#d4c0a8')],
+        walls: [tri(w, 'old_stone_wall', 0.42, KIT.mudBrick(w, [1, 1]), '#d2c8bc'), tri(w, 'clay_plaster', 0.3, KIT.plaster(w, [1, 1], '#e6d8c0'), '#fff0da'),
+                tri(w, 'clay_plaster', 0.3, KIT.plaster(w, [1, 1], '#d8c4a4'), '#f0dcc0'), tri(w, 'clay_block_wall', 0.4, KIT.mudBrick(w, [1, 1]), '#e0ccb4')],
         roof: tri(w, 'mud_cracked_dry_03', 0.3, KIT.sand(w, [1, 1]), '#9a8470'),
+        back: [tri(w, 'old_stone_wall', 0.42, KIT.mudBrick(w, [1, 1]), '#8a8078'), tri(w, 'clay_plaster', 0.3, KIT.plaster(w, [1, 1], '#a89a88'), '#a8988a'), tri(w, 'clay_plaster', 0.3, KIT.plaster(w, [1, 1], '#8a7e70'), '#8a7c70')],
         beam: PHOTO.mat(w, 'medieval_wood', { rep: [0.4, 1], color: '#a88a6a', fallback: KIT.wood(w, [1, 1], '#6a4a30') }),
         door: PHOTO.mat(w, 'old_planks_02', { rep: [0.8, 1.2], color: '#b09878', fallback: KIT.wood(w, [1, 1], '#5a3a22') }),
         dark: new T.MeshStandardMaterial({ color: 0x14100e, roughness: 1 }),
@@ -128,7 +129,7 @@
         pole: PHOTO.mat(w, 'palm_tree_bark', { rep: [1, 3], color: '#a89078', fallback: KIT.bark(w) }),
         plank: PHOTO.mat(w, 'old_planks_02', { rep: [2, 0.5], color: '#c0a888', fallback: KIT.wood(w, [3, 1], '#7a5838') }),
         log: PHOTO.mat(w, 'medieval_wood', { rep: [1, 2], color: '#b09070', fallback: KIT.wood(w, [1, 2], '#6a4a30') }),
-        awnings: ['#d8c8a8', '#b8653e', '#c9a04a', '#8a6a4a', '#e2d6c0'].map(c => linen(w, c, [1.5, 1])),
+        awnings: ['#a89878', '#9a5434', '#a8843c', '#7a5c40', '#b0a48c'].map(c => linen(w, c, [1.5, 1])),
       };
       this.warmMat = M.warm;
 
@@ -215,7 +216,9 @@
       // rock crowns: scanned boulders capping the rock pillars
       SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_02', points: this.rockCaps.map(([x, top, wd]) => [x, 0, wd * 0.48]), seed: 61, fallback: 'boulder', fallbackScale: 0.8, sink: 0.55,
         ground: x => { let best = null; for (const c of self.rockCaps) if (!best || Math.abs(c[0] - x) < Math.abs(best[0] - x)) best = c; return best ? best[1] - 0.05 : 0; } });
-      PHOTO.place(w, 'namaqualand_cliff_01', { pos: [214, 0, -6], s: 1.5, ry: 0.3 }); PHOTO.place(w, 'namaqualand_cliff_01', { pos: [196, 0, -9], s: 1.3, ry: 2.2 });
+      [[214, -7, 1.5, 0.3], [196, -9, 1.3, 2.2], [228, -12, 1.4, 1.1], [182, -14, 1.2, 2.8], [238, -2, 1.3, -0.6]].forEach(([x, z, sc, ry]) => PHOTO.place(w, 'namaqualand_cliff_01', { pos: [x, w.ground(x, z) - 1.5, z], s: sc, ry }));
+      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_04', n: 40, area: [150, -50, 250, -4.5], scale: [1.2, 3.0], seed: 62, color: '#7a6e66', sink: 0.3, fallback: 'boulder' });
+      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_rocks_01', variant: 1, n: 120, area: [140, -50, 250, 8], scale: [0.8, 2], seed: 63, fallback: 'rock', fallbackScale: 0.4 });
 
       /* ---------------- depth: the town behind, the Ka'bah, foreground silhouettes ---------------- */
       // rows of houses just behind the track and climbing away across the valley
@@ -223,8 +226,8 @@
       for (let row = 0; row < 3; row++) {
         let x = -226 + hr() * 4;
         while (x < 150 - row * 10) {
-          const wd = 5 + hr() * 7, z1 = -6 - row * 8.5 - hr() * 2, z0 = z1 - 5 - hr() * 3, top = 4 + hr() * 5 + row * 0.8;
-          if (!(Math.abs(x - KX) < 22 && row > 0)) house(statics, M, x, x + wd, top, Math.min(w.ground(x, z1), w.ground(x + wd, z1)), z0, z1, hr, { lit: true });
+          const wd = 5 + hr() * 7, z1 = -6 - row * 8.5 - hr() * 2, z0 = z1 - 5 - hr() * 3, top = 2.6 + hr() * 3.2 + row * 1.8;
+          if (!(Math.abs(x - KX) < 22 && row > 0)) house(statics, M, x, x + wd, top, Math.min(w.ground(x, z1), w.ground(x + wd, z1)), z0, z1, hr, { lit: true, wall: M.back[(row * 2 + (hr() * 2 | 0)) % M.back.length] });
           x += wd + (hr() < 0.3 ? 2 + hr() * 3 : 0.3);
         }
       }
@@ -241,7 +244,7 @@
       for (let x = -230; x < 230; x += 9 + fr() * 14) {
         const z = 5.5 + fr() * 4, kind = fr();
         if (kind < 0.45) { const p = KIT.palm(w, 7 + fr() * 5, { lean: (fr() - 0.5) * 0.5 }); p.position.set(x, w.ground(x, z), z); statics.add(p); }
-        else if (kind < 0.75) { cyl(statics, M.pole, 0.09, 0.11, 6, x, w.ground(x, z) + 3, z); const c = new T.Mesh(new T.PlaneGeometry(1.6, 2.2, 4, 4), M.awnings[(fr() * 5) | 0]); c.position.set(x + 0.8, w.ground(x, z) + 4.4, z); statics.add(c); }
+        else if (kind < 0.7) { box(statics, M.stone, 3 + fr() * 4, 0.8 + fr() * 0.7, 0.6, x, w.ground(x, z) + 0.3, z + 2); }
         else { PHOTO.place(w, U.pick(['namaqualand_boulder_04', 'namaqualand_boulder_05']), { pos: [x, undefined, z + 1], s: 0.8 + fr() * 0.6, ry: fr() * 6 }); }
       }
       // props on roofs and in the market
@@ -253,13 +256,13 @@
       box(statics, M.dark, 6, 0.1, 2.6, -34, -0.75, 0.2, 0, false);
       // scatter: stones, scrub and the gully
       SCAPE.scatter(w, { kind: 'pebble', n: 2200, area: [-230, -60, 230, 12], scale: [0.05, 0.2], seed: 4, color: '#a89c90' });
-      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_stones_01', n: 420, area: [-230, -40, 230, 10], scale: [0.8, 1.6], seed: 31, fallback: 'pebble', fallbackScale: 0.15 });
-      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_rocks_01', n: 260, area: [40, -80, 240, 12], scale: [0.7, 2], seed: 32, fallback: 'rock', fallbackScale: 0.4 });
+      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_stones_01', variant: 2, n: 420, area: [-230, -40, 230, 10], scale: [0.8, 1.6], seed: 31, fallback: 'pebble', fallbackScale: 0.15 });
+      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_rocks_01', variant: 0, n: 260, area: [40, -80, 240, 12], scale: [0.7, 2], seed: 32, fallback: 'rock', fallbackScale: 0.4 });
       SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_02', n: 140, area: [-300, -400, 400, 20], scale: [2, 5], seed: 34, fallback: 'boulder',
-        density: (x, z) => U.smooth(150, 200, Math.hypot((x - 40) * 0.7, (z + 60) * 0.9)) + (x > 150 && z < -8 ? 0.7 : 0) });
-      SCAPE.scatter(w, { kind: 'boulder', n: 260, area: [-400, -560, 480, 200], scale: [3, 10], seed: 3, density: (x, z) => U.smooth(180, 240, Math.hypot((x - 40) * 0.7, (z + 60) * 0.9)) });
-      SCAPE.scatter(w, { kind: 'rock', n: 600, area: [-300, -400, 400, 30], scale: [0.4, 2.2], seed: 5, density: (x, z) => U.smooth(120, 190, Math.hypot((x - 40) * 0.7, (z + 60) * 0.9)) + (x > 70 ? 0.3 : 0) });
-      SCAPE.scatter(w, { kind: 'model', model: 'shrub_03', n: 120, area: [-230, -80, 240, 14], scale: [0.7, 1.4], seed: 37, fallback: 'shrub', density: (x, z) => (x > 40 ? 1 : 0.15) });
+        density: (x, z) => U.smooth(230, 280, Math.hypot((x - 40) * 0.7, (z + 60) * 0.9)) + (x > 150 && z < -8 ? 0.7 : 0) });
+      SCAPE.scatter(w, { kind: 'boulder', n: 260, area: [-400, -560, 480, 200], scale: [3, 10], seed: 3, density: (x, z) => U.smooth(250, 320, Math.hypot((x - 40) * 0.7, (z + 60) * 0.9)) });
+      SCAPE.scatter(w, { kind: 'rock', n: 600, area: [-300, -400, 400, 30], scale: [0.4, 2.2], seed: 5, density: (x, z) => U.smooth(200, 260, Math.hypot((x - 40) * 0.7, (z + 60) * 0.9)) + (x > 70 ? 0.3 : 0) });
+      SCAPE.scatter(w, { kind: 'model', model: 'shrub_03', variant: 1, n: 120, area: [-230, -80, 240, 14], scale: [0.7, 1.4], seed: 37, fallback: 'shrub', density: (x, z) => (x > 40 ? 1 : 0.15) });
       SCAPE.scatter(w, { kind: 'thorn', n: 200, area: [-260, -200, 300, 14], scale: [0.6, 1.3], seed: 8, density: (x, z) => (x > 40 || z < -60 ? 1 : 0.1) });
       SCAPE.scatter(w, { kind: 'grass', n: 1200, area: [36, -40, 240, 12], scale: [0.35, 0.8], seed: 6 });
       SCAPE.scatter(w, { kind: 'acacia', n: 18, area: [60, -70, 200, -14], scale: [0.9, 1.4], seed: 9 });
@@ -326,9 +329,9 @@
       /* ---------------- state, controls, sound ---------------- */
       this.p = { x: -204, y: 4.2, vx: 0, vy: 0, ground: true, coyote: 0, buffer: 0, hold: false, face: 1, energy: 0, sq: 1, land: 0 };
       this.check = { x: -202, y: 4.2 }; this.part = 1; this.lit = 0; this.state = 'film';
-      this.cam = new T.Vector3(-201, 7, CAMZ); this.camL = new T.Vector3(-201, 5, 0);
+      this.cam = new T.Vector3(-201, 7.8, CAMZ); this.camL = new T.Vector3(-201, 5, 0);
       // the hand-off: the film ends on the side camera
-      w.pos.set(-201, 0, CAMZ); w.eye = 7.2 - w.ground(-201, CAMZ); w.yaw = 0; w.pitch = -0.12;
+      w.pos.set(-201, 0, CAMZ); w.eye = 7.8 - w.ground(-201, CAMZ); w.yaw = 0; w.pitch = -0.142;
       this.buildButtons(w);
       w.onPointer = () => self.state === 'play' || self.state === 'kindle';
       const b = env.bus;
@@ -510,11 +513,11 @@
     camTick(dt) {
       const w = this.w, P = this.p;
       this.look = U.damp(this.look || 0, P.face * 2.2 + P.vx * 0.25, 1.6, dt);
-      const tx = P.x + this.look, ty = Math.max(P.y, w.ground(P.x, 0)) + 2.3;
+      const tx = P.x + this.look, ty = Math.max(P.y, w.ground(P.x, 0)) + 3.6;
       const wide = this.part === 3 && P.x > 150 ? 4 : 0;
       this.cam.x = U.damp(this.cam.x, tx, 4, dt); this.cam.y = U.damp(this.cam.y, ty + wide * 0.4, 2.6, dt); this.cam.z = U.damp(this.cam.z, CAMZ + wide, 1.5, dt);
       w.camera.position.copy(this.cam);
-      w.camera.lookAt(this.cam.x, this.cam.y - 2.1, 0);
+      w.camera.lookAt(this.cam.x, this.cam.y - 3.0, 0);
       if (w._shadow) { const L = w._shadow.light, px = Math.round(this.cam.x / 1.5) * 1.5; L.target.position.set(px, 0, 0); L.position.set(px + w._shadow.off.x, w._shadow.off.y, w._shadow.off.z); }
       w.pos.set(P.x, 0, 0);
     },
@@ -558,8 +561,8 @@
       const t = this.endT;
       // the camera draws back over the valley
       const k = U.ease(U.clamp(t / 10));
-      w.camera.position.lerpVectors(this.endCam.from, new T.Vector3(150, 32, 46), k);
-      w.camera.lookAt(U.lerp(SUMMIT.x, 160, k), U.lerp(SUMMIT.y, 4, k), U.lerp(0, -20, k));
+      w.camera.position.lerpVectors(this.endCam.from, new T.Vector3(236, 30, 34), k);
+      w.camera.lookAt(U.lerp(SUMMIT.x, 140, k), U.lerp(SUMMIT.y, 2, k), U.lerp(0, -40, k));
       this.flameScale = U.damp(this.flameScale, 3.4, 1, dt); this.placeFlame(dt);
       this.summitGlow.material.opacity = 0.6 + 0.2 * Math.sin(t * 2); this.summitGlow.scale.setScalar(3 + k * 6);
       // the lights come out of the houses and gather at the foot of the rock
@@ -648,7 +651,7 @@
       // the dawn grows as the flame travels east
       const dawn = U.smooth(-210, 220, this.p.x);
       if (this.post && this.post.uniforms) { this.post.uniforms.uLift.value.set(0.01, 0.012 - dawn * 0.004, 0.03 - dawn * 0.02); this.post.uniforms.uGain.value.set(1.04 + dawn * 0.06, 0.98 + dawn * 0.02, 0.94 - dawn * 0.05); }
-      w.renderer.toneMappingExposure = 1.0 + dawn * 0.15;
+      w.renderer.toneMappingExposure = 0.86 + dawn * 0.14;
       // night and dawn sounds
       const C = this.clocks;
       C.cricket -= dt; if (C.cricket < 0) { C.cricket = 0.6 + Math.random() * 2.5; SND.cricket && SND.cricket(env.bus, { gain: 0.012 * (1 - dawn), pan: U.rnd(-0.9, 0.9) }); }

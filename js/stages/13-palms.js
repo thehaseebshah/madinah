@@ -18,9 +18,9 @@
   [-10.5, -3.5, 3.5, 10.5].forEach(x => [-4.6, 4.6].forEach(z => PALMS.push({ x, z })));
   const MALE = { x: 18, z: -8.5 };
   const WELL = { x: -38, z: 0 }, CIST = { x: -29.5, z: 0 };
-  const HOUSE = { x: -36, z: 17 }, STORE = { x: -31.5, z: 12.6 }, MIRBAD = { x: -36, z: -17 }, PLATE = { x: -33.2, z: 12.4 };
+  const HOUSE = { x: -36, z: 17 }, STORE = { x: -35.6, z: 11.2 }, MIRBAD = { x: -36, z: -17 }, PLATE = { x: -34.2, z: 13.0 };
   const START = { x: -20, z: 6 };
-  const CAM = { H: 13.5, D: 11.5 };
+  const CAM = { H: 21, D: 16 };
   const SCALE = [392, 440, 493.88, 523.25, 587.33, 659.25, 739.99, 783.99];
   const SKIES = { p1: 'qwantani_morning_puresky', p2: 'qwantani_noon_puresky', p3: 'kloofendal_43d_clear_puresky', p4: 'qwantani_late_afternoon_puresky', final: 'qwantani_sunrise_puresky' };
   const SEASONS = { p1: 'Spring', p2: 'Summer', p3: 'High summer', p4: 'Autumn', final: 'Autumn' };
@@ -124,7 +124,7 @@
     arabic: 'نخيل العالية',
     title: 'The Palm Groves',
     era: 'Ajwa dates of al-‘Aliyah',
-    hint: 'WASD to walk · Shift to hurry · E, Space or click to work · 1–4 choose a tool · wheel to zoom',
+    hint: 'WASD walk · E or click to work · 1–4 tools · wheel zooms',
     hintTouch: 'Left thumb to walk · tap the right side to work · tap a tool to choose it',
     sound: { reverb: 0.25 },
     story: `<p>Madinah was an oasis long before it was a city: palm gardens fed by wells, between two tracts of black lava. The gardens of al-‘Aliyah, on the higher ground, are still famous for <i>‘ajwa</i>, a small, soft, nearly black date: “In the ‘ajwa of al-‘Aliyah there is healing.” (Sahih Muslim 2048)</p>
@@ -216,18 +216,30 @@
       // ground cover: grass under the palms, shrubs, fallen fronds, stones
       SCAPE.scatter(w, { kind: 'grass', n: 2200, area: { x: 0, z: 0, r: 135 }, scale: [0.4, 0.9], seed: 51, color: '#b8c088', avoid: (x, z) => inPlot(x, z, -6) || H(x, z) > 2.5 });
       SCAPE.scatter(w, { kind: 'shrub', n: 220, area: { x: 0, z: 0, r: 140 }, scale: [0.5, 1.3], seed: 52, avoid: (x, z) => inPlot(x, z) || H(x, z) > 3 });
-      SCAPE.scatter(w, { kind: 'model', model: 'grass_medium_01', fallback: 'grass', n: 120, area: [-55, -32, 32, 32], scale: [0.8, 1.4], seed: 53, avoid: (x, z) => Math.abs(z) < 1.2 || PALMS.some(p => Math.hypot(p.x - x, p.z - z) < 2.2) });
-      SCAPE.scatter(w, { kind: 'model', model: 'shrub_01', fallback: 'shrub', n: 40, area: { x: 0, z: 0, r: 110 }, scale: [0.6, 1.2], seed: 54, avoid: (x, z) => inPlot(x, z, 2) });
-      SCAPE.scatter(w, { kind: 'model', model: 'dry_branches_medium_01', fallback: 'thorn', n: 40, area: { x: 0, z: 0, r: 100 }, scale: [0.8, 1.3], seed: 55, avoid: (x, z) => inPlot(x, z, -4) });
-      SCAPE.scatter(w, { kind: 'pebble', n: 1100, area: { x: 0, z: 0, r: 120 }, scale: [0.05, 0.18], seed: 56, color: '#a09080' });
-      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_stones_01', fallback: 'pebble', n: 80, area: [-60, -40, 40, 40], scale: [0.8, 1.6], seed: 57, avoid: (x, z) => Math.abs(z) < 1 });
+      SCAPE.scatter(w, { kind: 'model', model: 'grass_medium_01', fallback: 'grass', n: 50, castShadow: false, area: [-55, -32, 32, 32], scale: [0.8, 1.4], seed: 53, avoid: (x, z) => Math.abs(z) < 1.2 || PALMS.some(p => Math.hypot(p.x - x, p.z - z) < 2.2) });
+      SCAPE.scatter(w, { kind: 'model', model: 'shrub_01', fallback: 'shrub', n: 24, area: { x: 0, z: 0, r: 110 }, scale: [0.6, 1.2], seed: 54, avoid: (x, z) => inPlot(x, z, 2) });
+      SCAPE.scatter(w, { kind: 'model', model: 'dry_branches_medium_01', fallback: 'thorn', n: 20, castShadow: false, area: { x: 0, z: 0, r: 100 }, scale: [0.8, 1.3], seed: 55, avoid: (x, z) => inPlot(x, z, -4) });
+      SCAPE.scatter(w, { kind: 'pebble', n: 700, castShadow: false, area: { x: 0, z: 0, r: 120 }, scale: [0.05, 0.18], seed: 56, color: '#a09080' });
+      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_stones_01', fallback: 'pebble', n: 36, castShadow: false, area: [-60, -40, 40, 40], scale: [0.8, 1.6], seed: 57, avoid: (x, z) => Math.abs(z) < 1 });
       // the basalt: boulders and rubble over the lava tracts
       const lava = (x, z) => U.smooth(1.5, 4, H(x, z));
-      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_02', fallback: 'boulder', n: 70, area: { x: 0, z: 0, r: 300 }, density: lava, scale: [0.8, 2.6], seed: 61, color: '#4a4440', collide: true });
-      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_rocks_01', fallback: 'rock', n: 140, area: { x: 0, z: 0, r: 260 }, density: lava, scale: [1, 2.5], seed: 62, color: '#4a4440' });
-      SCAPE.scatter(w, { kind: 'boulder', tex: 'lava', n: 260, area: { x: 0, z: 0, r: 420 }, density: lava, scale: [1.5, 5], seed: 63, color: '#5a524c', castShadow: false });
-      SCAPE.scatter(w, { kind: 'rock', tex: 'lava', n: 320, area: { x: 0, z: 0, r: 300 }, density: lava, scale: [0.3, 1.2], seed: 64, color: '#6a605a' });
+      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_02', fallback: 'boulder', n: 40, area: { x: 0, z: 0, r: 300 }, density: lava, scale: [0.8, 2.6], seed: 61, color: '#4a4440', collide: true });
+      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_rocks_01', fallback: 'rock', n: 60, castShadow: false, area: { x: 0, z: 0, r: 260 }, density: lava, scale: [1, 2.5], seed: 62, color: '#4a4440' });
+      SCAPE.scatter(w, { kind: 'boulder', tex: 'lava', n: 150, area: { x: 0, z: 0, r: 420 }, density: lava, scale: [1.5, 5], seed: 63, color: '#5a524c', castShadow: false });
+      SCAPE.scatter(w, { kind: 'rock', tex: 'lava', n: 200, castShadow: false, area: { x: 0, z: 0, r: 300 }, density: lava, scale: [0.3, 1.2], seed: 64, color: '#6a605a' });
       SCAPE.birds(w, { n: 10, x: 30, z: -40, y: 38, r: 70, color: 0x3a3028 });
+      // inside the garden: a green under-crop between the rows, fallen fronds, damp shade
+      SCAPE.scatter(w, { kind: 'grass', n: 1400, area: [-23, -12.5, 23, 12.5], scale: [0.35, 0.75], seed: 58, color: '#9cb070',
+        avoid: (x, z) => Math.abs(z) < 1.3 || PALMS.some(p => Math.hypot(p.x - x, p.z - z) < 2.1 || (Math.abs(p.x - x) < 0.8 && Math.sign(p.z) === Math.sign(z) && Math.abs(z) < Math.abs(p.z))) || Math.hypot(x - MALE.x, z - MALE.z) < 1.5 || (x > -26 && x < -20 && Math.abs(z) < 3.5) });
+      {
+        const dryT = w.tex(256, (g, sz) => { g.clearRect(0, 0, sz, sz); const mid = sz / 2; g.strokeStyle = '#8a6a3c'; g.lineWidth = 3; g.beginPath(); g.moveTo(0, mid); g.lineTo(sz, mid); g.stroke();
+          for (let i = 4; i < 60; i++) { const x = i / 60 * sz, L = (Math.sin(i / 60 * Math.PI) * 0.85 + 0.15) * mid * 0.9, c = 150 + Math.random() * 60; g.strokeStyle = `rgb(${c | 0},${c * 0.78 | 0},${c * 0.5 | 0})`; g.lineWidth = 2.4; g.beginPath(); g.moveTo(x, mid); g.lineTo(x + L * 0.45, mid - L); g.stroke(); g.beginPath(); g.moveTo(x, mid); g.lineTo(x + L * 0.45, mid + L); g.stroke(); } });
+        const fg = new T.PlaneGeometry(3, 1.1).rotateX(-Math.PI / 2), fm = new T.MeshStandardMaterial({ map: dryT, alphaTest: 0.45, side: T.DoubleSide, roughness: 1 });
+        const N = 260, fr = new T.InstancedMesh(fg, fm, N), mm = new T.Matrix4(), rr = U.seeded(77);
+        for (let i = 0; i < N; i++) { const x = (rr() - 0.5) * 230, z = (rr() - 0.5) * 230, inside = i < 60; const px = inside ? (rr() - 0.5) * 46 : x, pz = inside ? (rr() - 0.5) * 25 : z;
+          mm.compose(new T.Vector3(px, w.ground(px, pz) + 0.04 + i * 0.0002, pz), new T.Quaternion().setFromEuler(new T.Euler(0, rr() * 6.3, 0)), new T.Vector3(1, 1, 1).multiplyScalar(0.7 + rr() * 0.5)); fr.setMatrixAt(i, mm); }
+        fr.receiveShadow = true; fr.userData.dynamic = true; S.add(fr);
+      }
       SCAPE.motes(w, { n: 70, area: [-30, 0.5, -16, 25, 7, 16], color: '#fff0c8', size: 0.22, additive: true });
 
       const box = (wd, ht, dp, mat, x, y, z, ry) => { const m = new T.Mesh(new T.BoxGeometry(wd, ht, dp), mat); m.position.set(x, y, z); m.rotation.y = ry || 0; m.castShadow = m.receiveShadow = true; S.add(m); return m; };
@@ -321,7 +333,8 @@
       this.rampY = rampY;
       // cistern and the stone trough that feeds the garden channel
       const cy0 = w.ground(CIST.x, CIST.z);
-      box(4.2, 0.9, 3.2, M.stone, CIST.x, cy0 + 0.3, CIST.z); w.addBox(CIST.x - 2.1, CIST.z - 1.6, CIST.x + 2.1, CIST.z + 1.6);
+      [[4.2, 0.4, 0, 1.4], [4.2, 0.4, 0, -1.4], [0.4, 2.4, 1.9, 0], [0.4, 2.4, -1.9, 0]].forEach(([a, b, dx, dz]) => box(a, 1.0, b, M.stone, CIST.x + dx, cy0 + 0.35, CIST.z + dz));
+      box(3.6, 0.2, 2.6, M.stone, CIST.x, cy0 + 0.0, CIST.z); w.addBox(CIST.x - 2.1, CIST.z - 1.6, CIST.x + 2.1, CIST.z + 1.6);
       box(3.6, 0.3, 0.5, M.stone, (WELL.x + CIST.x) / 2 + 0.6, cy0 + 1.1, WELL.z);
 
       /* ---------- water: channels, gates and basins ---------- */
@@ -329,7 +342,7 @@
         uniforms: { uTime: { value: 0 }, uSun: { value: new T.Vector3(-0.5, 0.6, -0.6).normalize() }, uFog: { value: new T.Color(0xdccbb0) }, uFogD: { value: 0.0019 }, uSky: { value: new T.Color(0x86a6cc) }, uHor: { value: new T.Color(0xeadcc4) }, uDeep: { value: new T.Color(0x2a2418) } } });
       const chanLen = 14 - (CIST.x + 2.1);
       const chanW = new T.Mesh(new T.PlaneGeometry(chanLen, 0.6), waterMat); chanW.rotation.x = -Math.PI / 2; chanW.position.set((CIST.x + 2.1 + 14) / 2, 0.03, 0); chanW.userData.dynamic = true; S.add(chanW);
-      const cisW = new T.Mesh(new T.PlaneGeometry(3.6, 2.6), waterMat); cisW.rotation.x = -Math.PI / 2; cisW.position.set(CIST.x, cy0 + 0.72, CIST.z); cisW.userData.dynamic = true; S.add(cisW);
+      const cisW = new T.Mesh(new T.PlaneGeometry(3.6, 2.6), waterMat); cisW.rotation.x = -Math.PI / 2; cisW.position.set(CIST.x, cy0 + 0.62, CIST.z); cisW.userData.dynamic = true; S.add(cisW);
       [-1, 1].forEach(s => box(chanLen, 0.2, 0.3, M.mud, chanW.position.x, 0.06, s * 0.45));
       this.feedW = []; this.gates = [];
       const gateGeo = new T.BoxGeometry(0.9, 0.35, 0.4);
@@ -483,7 +496,7 @@
       /* ---------- HUD: calendar and tool bar, Stardew-style ---------- */
       const L = w.ui.layer;
       this.hud = el(L, 'position:absolute;left:24px;top:64px;padding:6px 12px 7px;border-radius:4px 12px 4px 12px;background:rgba(6,9,20,.55);border:1px solid rgba(255,240,210,.18);color:#f4ead8;font:500 13px/1.35 Marcellus,Georgia,serif;letter-spacing:.06em;pointer-events:none;transition:opacity .5s;opacity:0', '');
-      this.bar = el(L, 'position:absolute;left:50%;bottom:74px;transform:translateX(-50%);display:flex;gap:6px;transition:opacity .5s;opacity:0');
+      this.bar = el(L, 'position:absolute;left:50%;bottom:96px;transform:translateX(-50%);display:flex;gap:6px;transition:opacity .5s;opacity:0');
       this.tools = [['Pollen', 'pollen'], ['Hoe', 'hoe'], ['Bags', 'bags'], ['Basket', 'basket']].map(([n, id], i) => {
         const b = el(this.bar, 'min-width:68px;padding:5px 8px 6px;border-radius:6px;background:rgba(6,9,20,.6);border:1px solid rgba(255,240,210,.2);color:#e8dcc4;font:500 12px/1.2 Marcellus,Georgia,serif;text-align:center;cursor:pointer;pointer-events:auto;user-select:none', `<span style="opacity:.6;font-size:10px">${i + 1}</span> ${n}<br><b style="font-weight:400;color:#ffd890" data-c></b>`);
         b.addEventListener('pointerdown', e => { e.stopPropagation(); this.tool = i; SND.knock(env.bus, { f: 300, gain: 0.03, click: 3000 }); });
@@ -508,7 +521,7 @@
       this.updGates(); this.updBunches();
       this.birdM.forEach(m => { m.count = 0; });
       floor.receiveShadow = true;
-      S.traverse(o => { if (o.isInstancedMesh) o.frustumCulled = false; });
+      S.traverse(o => { if (o.isInstancedMesh) { o.frustumCulled = false; o.userData.dynamic = true; } });
       w.bake();
     },
 

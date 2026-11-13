@@ -121,18 +121,18 @@
       const H = (x, z) => {
         let y = SCAPE.fbm(x * 0.012, z * 0.012, 3) * 1.4 + SCAPE.fbm(x * 0.08, z * 0.08, 2) * 0.15;
         const hr = harrah(x, z);
-        y += hr * (3 + SCAPE.ridge(x * 0.05, z * 0.05, 4) * 2.2 + SCAPE.fbm(x * 0.3, z * 0.3, 2) * 0.35);
+        y += hr * (3 + SCAPE.ridge(x * 0.05, z * 0.05, 4) * 2.6 + SCAPE.ridge(x * 0.16, z * 0.16, 3) * 1.1 + SCAPE.fbm(x * 0.6, z * 0.6, 2) * 0.35);
         const d = Math.hypot(x, z);
-        y += Math.pow(Math.max(0, d - 520), 1.2) * 0.35 * (0.6 + 0.6 * SCAPE.ridge(x * 0.006, z * 0.006, 4));   // far hills
+        y += Math.pow(Math.max(0, d - 520), 1.1) * 0.13 * (0.5 + 0.8 * SCAPE.ridge(x * 0.006, z * 0.006, 4));   // far hills
         y += 120 * Math.exp(-((x - 60) ** 2 + (z - 700) ** 2) / (2 * 140 * 140));                                  // Jabal 'Ayr, to the south
         y *= U.smooth(10, 20, d) * 0.9 + 0.1;                                                                       // the site is level
         return y;
       };
-      const w = this.w = WORLD.create(env, { start: START, exposure: 0.85, far: 1800, fov: 64, fog: { color: 0xd9c8b0, density: 0.0014 }, bounds: [-170, -170, 170, 170] });
+      const w = this.w = WORLD.create(env, { start: START, exposure: 0.78, far: 1800, fov: 64, fog: { color: 0xd9c8b0, density: 0.0014 }, bounds: [-170, -170, 170, 170] });
       const S = w.scene;
       const ter = SCAPE.terrain(w, { size: 1500, seg: 320, height: H, rock: [0.8, 0.92], rockHeight: [1.8, 2.8],
-        colors: { low: '#c9b08e', high: '#b9a07e', rock: '#4a4442', dark: '#2e2a2a' }, tex: 'dune', rockTex: 'lava',
-        photo: { ground: 'dense_sand', rock: 'dark_rock', normal: 1 }, rep: 0.2, rockRep: 0.08 });
+        colors: { low: '#b39a7c', high: '#a68e70', rock: '#3c3634', dark: '#262222' }, tex: 'dune', rockTex: 'lava',
+        photo: { ground: 'dense_sand', rock: 'rock_face_03', normal: 1 }, rep: 0.2, rockRep: 0.12 });
       w.ground = ter.ground;
       w.surface = (x, z) => (harrah(x, z) > 0.5 ? 'stone' : 'sand');
       w.sky({ top: '#5f8fc4', mid: '#e8d6b8', bot: '#d8c4a8', sunDir: [0.6, 0.4, 0.5], sun: '#ffe2b0', sunSize: 0.0016, clouds: 0.3, haze: 0.4 });
@@ -177,7 +177,7 @@
       this.houses = houses;
       /* ---------------- palm groves, garden walls, wells and channels ---------------- */
       const notBuilt = (x, z) => Math.hypot(x, z) < 22 || houses.some(h => Math.hypot(h.x - x, h.z - z) < Math.max(h.hw, h.hd) + 3) || road(x, z);
-      const palms = SCAPE.scatter(w, { kind: 'palm', n: 520, area: { x: 0, z: 0, r: 420 }, scale: [8, 14], seed: 10, avoid: notBuilt,
+      const palms = SCAPE.scatter(w, { kind: 'palm', n: 1100, area: { x: 0, z: 0, r: 340 }, scale: [8, 14], seed: 10, avoid: notBuilt,
         density: (x, z) => { const d = Math.hypot(x, z); return (1 - harrah(x, z)) * (d < 40 ? 0.15 : 1) * (SCAPE.fbm(x * 0.02, z * 0.02, 2) > -0.15 ? 1 : 0.2) * (1 - U.smooth(330, 420, d)); }, collide: 0.4 });
       if (palms.meshes[0]) palms.meshes[0].material = tri(w, 'palm_tree_bark', 1.4, palms.meshes[0].material.map, '#d8c4ac');
       SCAPE.scatter(w, { kind: 'palm', n: 60, area: { x: 0, z: 0, r: 150 }, scale: [1.6, 3.2], seed: 13, avoid: notBuilt, density: (x, z) => 1 - harrah(x, z) });  // young offshoots
@@ -197,17 +197,17 @@
         for (let k = 0; k < L; k += 2) { const px = x + Math.cos(a) * (k + 2), pz = z + Math.sin(a) * (k + 2); const m = new T.Mesh(new T.PlaneGeometry(2.1, 0.45), chM); m.rotation.set(-Math.PI / 2, 0, -a); m.position.set(px, w.ground(px, pz) + 0.03, pz); statics.add(m); }
       });
       // the harrah: black basalt boulders and broken flows
-      SCAPE.scatter(w, { kind: 'boulder', n: 380, area: [-420, -420, -70, 420], scale: [0.8, 3.2], seed: 3, tex: 'lava', color: '#6a6260', density: (x, z) => harrah(x, z) });
-      SCAPE.scatter(w, { kind: 'rock', n: 900, area: [-400, -400, -60, 400], scale: [0.3, 1.2], seed: 5, tex: 'lava', color: '#5a5450', density: (x, z) => harrah(x, z) });
+      SCAPE.scatter(w, { kind: 'boulder', n: 600, area: [-420, -420, -70, 420], scale: [0.8, 3.2], seed: 3, tex: 'lava', color: '#6a6260', density: (x, z) => harrah(x, z) });
+      SCAPE.scatter(w, { kind: 'rock', n: 1600, area: [-400, -400, -60, 400], scale: [0.3, 1.2], seed: 5, tex: 'lava', color: '#5a5450', density: (x, z) => harrah(x, z) });
       SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_04', n: 70, area: [-200, -160, -80, 200], scale: [1, 2.5], seed: 34, color: '#585250', density: (x, z) => harrah(x, z), collide: true, fallback: 'boulder' });
       SCAPE.scatter(w, { kind: 'model', model: 'rock_07', n: 120, area: [-200, -160, -75, 200], scale: [0.6, 1.6], seed: 35, color: '#4e4846', density: (x, z) => harrah(x, z), fallback: 'rock' });
       // scrub, grass and stones of the oasis floor
       SCAPE.scatter(w, { kind: 'grass', n: 1800, area: { x: 0, z: 0, r: 200 }, scale: [0.4, 0.9], seed: 6, avoid: (x, z) => Math.hypot(x, z) < 18, density: (x, z) => (1 - harrah(x, z)) * 0.8 });
-      SCAPE.scatter(w, { kind: 'model', model: 'grass_medium_01', n: 500, area: { x: 0, z: 0, r: 140 }, scale: [0.7, 1.3], seed: 36, avoid: notBuilt, density: (x, z) => 1 - harrah(x, z), fallback: 'grass' });
+      SCAPE.scatter(w, { kind: 'model', model: 'grass_medium_01', variant: 2, n: 500, area: { x: 0, z: 0, r: 140 }, scale: [0.7, 1.3], seed: 36, avoid: notBuilt, density: (x, z) => 1 - harrah(x, z), fallback: 'grass' });
       SCAPE.scatter(w, { kind: 'model', model: 'shrub_01', n: 160, area: { x: 0, z: 0, r: 180 }, scale: [0.7, 1.4], seed: 37, avoid: notBuilt, fallback: 'shrub' });
-      SCAPE.scatter(w, { kind: 'model', model: 'wild_rooibos_bush', n: 100, area: { x: 0, z: 0, r: 200 }, scale: [0.8, 1.4], seed: 38, avoid: notBuilt, fallback: 'shrub' });
+      SCAPE.scatter(w, { kind: 'model', model: 'wild_rooibos_bush', variant: 0, n: 100, area: { x: 0, z: 0, r: 200 }, scale: [0.8, 1.4], seed: 38, avoid: notBuilt, fallback: 'shrub' });
       SCAPE.scatter(w, { kind: 'pebble', n: 2200, area: { x: 0, z: 0, r: 150 }, scale: [0.05, 0.2], seed: 4, color: '#b8ab9c', avoid: (x, z) => Math.abs(x) < SITE && Math.abs(z) < SITE });
-      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_stones_01', n: 360, area: { x: 0, z: 0, r: 130 }, scale: [0.8, 1.6], seed: 31, avoid: notBuilt, fallback: 'pebble', fallbackScale: 0.15 });
+      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_stones_01', variant: 1, n: 360, area: { x: 0, z: 0, r: 130 }, scale: [0.8, 1.6], seed: 31, avoid: notBuilt, fallback: 'pebble', fallbackScale: 0.15 });
       SCAPE.scatter(w, { kind: 'acacia', n: 26, area: { x: 0, z: 0, r: 260 }, scale: [0.9, 1.4], seed: 9, avoid: notBuilt, collide: true, density: (x, z) => 0.3 + harrah(x, z) * 0.7 });
       // life: birds over the groves, smoke from the village, dust and pollen in the low sun
       SCAPE.birds(w, { n: 16, x: 30, z: -30, y: 30, r: 60, size: 0.5, speed: 0.15 });
@@ -343,8 +343,8 @@
       const stoneG = new T.BoxGeometry(CELL * 0.82, 0.86, CELL * 0.82);
       { const p = stoneG.attributes.position; for (let j = 0; j < p.count; j++) { p.setX(j, p.getX(j) * (1 - Math.abs(p.getY(j)) * 0.06)); p.setZ(j, p.getZ(j) * (1 - Math.abs(p.getY(j)) * 0.05)); } stoneG.computeVertexNormals(); }
       lv.stones = lv.boxes0.map(([x, y], j) => {
-        const m = new T.Mesh(stoneG, this.blockMat.clone()); m.castShadow = m.receiveShadow = true; m.rotation.y = (j % 3 - 1) * 0.04;
-        m.material.color.set(['#d8d0c4', '#c8bfb2', '#d2c6b4', '#bfb8ae'][j % 4]); m.material.emissive = new T.Color(0x000000);
+        const m = new T.Mesh(stoneG, PHOTO.mat(this.w, 'rock_boulder_dry', { rep: [0.9, 0.7], normal: 1.5, color: ['#e2dace', '#d4ccbe', '#ddd0bc', '#cbc4ba'][j % 4], fallback: KIT.plaster(this.w, [1, 1], '#cfc6b8') }));
+        m.castShadow = m.receiveShadow = true; m.rotation.y = (j % 3 - 1) * 0.04; m.material.emissive = new T.Color(0x000000);
         lv.g.add(m); return { m, x, y, vx: x, vy: y, on: false, bump: 0 };
       });
       lv.p = lv.p0.slice(); lv.hist = [];

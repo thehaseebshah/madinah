@@ -103,7 +103,7 @@
   function camelGeo() {
     // a camel kneeling at rest: body, hump, folded legs, a long neck and the head held low
     const parts = [];
-    const ell = (rx, ry, rz, x, y, z, rot) => { const g = new T.SphereGeometry(1, 12, 8); g.scale(rx, ry, rz); if (rot) g.rotateZ(rot); g.translate(x, y, z); parts.push(g); };
+    const ell = (rx, ry, rz, x, y, z, rot) => { const g = new T.SphereGeometry(1, 8, 6); g.scale(rx, ry, rz); if (rot) g.rotateZ(rot); g.translate(x, y, z); parts.push(g); };
     ell(1.12, 0.4, 0.4, 0, 0.58, 0);
     ell(0.5, 0.4, 0.33, -0.12, 0.9, 0);
     ell(0.5, 0.15, 0.44, 0.55, 0.14, 0); ell(0.55, 0.16, 0.44, -0.62, 0.15, 0);
@@ -198,8 +198,8 @@
       SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_02', fallback: 'boulder', n: 150, area: { x: HILL.x, z: HILL.z, r: 70 }, density: (x, z) => U.smooth(68, 15, onHill(x, z)), scale: [1.5, 4.2], collide: 0.4, seed: 21 });
       SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_04', fallback: 'boulder', n: 60, area: { x: HILL.x - 10, z: HILL.z + 10, r: 80 }, density: (x, z) => U.smooth(80, 30, onHill(x, z)), scale: [0.8, 2.2], collide: 0.4, seed: 22 });
       SCAPE.scatter(w, { kind: 'boulder', n: 260, area: { x: 0, z: 0, r: 700 }, density: (x, z) => U.smooth(330, 420, Math.hypot(x * 0.95, z)) + U.smooth(50, 20, onHill(x, z)), scale: [2, 9], seed: 23 });
-      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_rocks_01', variant: 0, fallback: 'rock', n: 380, area: [-235, -205, 222, 205], scale: [0.6, 1.6], avoid: (x, z) => nearRoute(x, z, 2), seed: 24 });
-      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_stones_01', variant: 1, fallback: 'pebble', n: 1600, area: [-235, -205, 222, 205], scale: [0.7, 1.5], seed: 25 });
+      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_rocks_01', variant: 0, fallback: 'rock', n: 280, area: [-235, -205, 222, 205], scale: [0.6, 1.6], avoid: (x, z) => nearRoute(x, z, 2), seed: 24 });
+      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_stones_01', variant: 1, fallback: 'pebble', n: 1100, area: [-235, -205, 222, 205], scale: [0.7, 1.5], seed: 25 });
       SCAPE.scatter(w, { kind: 'rock', n: 520, area: { x: 0, z: 0, r: 360 }, scale: [0.25, 1.1], seed: 26 });
       SCAPE.scatter(w, { kind: 'model', model: 'shrub_03', variant: 0, fallback: 'shrub', n: 170, area: [-235, -205, 222, 205], scale: [0.7, 1.4], avoid: (x, z) => nearRoute(x, z, 3), density: (x, z) => 0.35 + 0.65 * U.smooth(-0.1, 0.4, SCAPE.fbm(x * 0.02, z * 0.02, 2)), seed: 27 });
       SCAPE.scatter(w, { kind: 'grass', n: 1500, area: [-235, -205, 222, 205], scale: [0.35, 0.8], color: '#e6d6b0', density: (x, z) => (Math.abs(x - VX(z)) < 22 ? 1 : 0.25 + 0.75 * U.smooth(0, 0.35, SCAPE.fbm(x * 0.03 + 4, z * 0.03, 2))), avoid: (x, z) => nearRoute(x, z, 1.5), seed: 28, castShadow: false });
@@ -229,7 +229,7 @@
         // tents in a camp face one way; camps are rows
         const camp = Math.floor(SCAPE.fbm(x * 0.01, z * 0.01, 2) * 6), ry = camp * 0.5 + (r() - 0.5) * 0.25;
         const kind = r();
-        if (kind < 0.16) { hair.push({ x, z, ry, s: 0.9 + r() * 0.35, col: U.pick(['#ffffff', '#e0d8d0', '#c8beb4']) }); if (r() < 0.4 && routeD(x, z) > 18) camels.push({ x: x + Math.cos(ry) * 5, z: z + Math.sin(ry) * 5 + 3, ry: r() * 6.28, s: 0.95 + r() * 0.15, col: U.pick(['#ffffff', '#f0dcc0', '#e0c8a8', '#d4b896']) }); }
+        if (kind < 0.16) { hair.push({ x, z, ry, s: 0.9 + r() * 0.35, col: U.pick(['#ffffff', '#e0d8d0', '#c8beb4']) }); if (r() < 0.25 && routeD(x, z) > 18) camels.push({ x: x + Math.cos(ry) * 5, z: z + Math.sin(ry) * 5 + 3, ry: r() * 6.28, s: 0.95 + r() * 0.15, col: U.pick(['#ffffff', '#f0dcc0', '#e0c8a8', '#d4b896']) }); }
         else if (kind < 0.36) awn.push({ x, z, ry, s: 0.85 + r() * 0.35, col: U.pick(cloth) });
         else tents.push({ x, z, ry, s: 0.85 + r() * 0.4, sy: 0.9 + r() * 0.25, col: U.pick(cloth) });
       }

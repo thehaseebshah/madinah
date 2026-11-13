@@ -119,14 +119,16 @@
       this.sun = new T.DirectionalLight(0xffe8c8, 1.9); this.sun.position.set(88, 35, 40); S.add(this.sun);
       S.add(new T.HemisphereLight(0xc8d8f0, 0x9a7a5a, PHOTO.enabled ? 0.08 : 0.6));
       w.followShadow(this.sun, 48, 2048);
-      PHOTO.sky(w, 'qwantani_morning_puresky', { sun: this.sun, intensity: 0.75, rotation: 0.42 - 0.629, haze: '#d8c8b0', horizon: 0.45, ground: '#b89a78', bounce: 0.5 });
+      const skyO = { sun: this.sun, intensity: 0.75, rotation: 0.42 - 0.629, haze: '#d8c8b0', horizon: 0.45, ground: '#b89a78', bounce: 0.5 };
+      // if the morning panorama's light fails to load, light the scene from the sunrise one instead
+      PHOTO.sky(w, 'qwantani_morning_puresky', skyO).then(o => { if (this.w === w && o && !o.sunDir) PHOTO.sky(w, 'qwantani_sunrise_puresky', Object.assign({}, skyO, { background: false })); });
 
       /* ---------- terrain, harrah and Uhud ---------- */
       SCAPE.terrain(w, { size: 1700, seg: 320, height: H, rock: [0.82, 0.94], rockHeight: [7, 20], colors: { low: '#c8ac86', high: '#b49470', rock: '#5a4a44', dark: '#2e2624' },
         tex: 'gravel', rockTex: 'lava', photo: { ground: 'dry_ground_rocks', rock: 'dark_rock', normal: 1 }, rep: 0.22, rockRep: 0.05 });
       SCAPE.horizon(w, { haze: '#d8c8b0', layers: [{ r: 1000, h: 90, color: '#7a6458', seed: 5 }, { r: 1500, h: 130, color: '#9a8a80', seed: 9 }, { r: 2100, h: 160, color: '#b8aca4', seed: 13 }] });
       // the yard: packed earth, swept
-      const yard = new T.Mesh(new T.PlaneGeometry(40, 44).rotateX(-Math.PI / 2), PHOTO.mat(w, 'dirt', { rep: [8, 9], color: 0xf0e4d4, fallback: SCAPE.tex.gravel(w, [6, 6]) }));
+      const yard = new T.Mesh(new T.PlaneGeometry(40, 44).rotateX(-Math.PI / 2), PHOTO.mat(w, 'dirt', { rep: [8, 9], color: 0xf0e4d4, fallback: SCAPE.tex.mud(w, [5, 5]) }));
       yard.position.y = 0.015; yard.receiveShadow = true; S.add(yard);
 
       /* ---------- the plan, in chalk, on the ground ---------- */
@@ -209,13 +211,13 @@
       const palmArea = (x, z) => !inPlot(x, z, 4) && !LANE(x, z) && !houses.some(h => Math.abs(h.x - x) < h.sx / 2 + 2 && Math.abs(h.z - z) < h.sz / 2 + 2) && Math.hypot(x - 30, z + 8) > 8;
       const palms = SCAPE.scatter(w, { kind: 'palm', n: 340, area: [-220, -220, 220, 220], scale: [7, 13], density: (x, z) => (x < 20 ? 0.95 : 0.4) * U.smooth(-0.3, 0.2, SCAPE.fbm(x * 0.012 + 3, z * 0.012, 2)) * (1 - U.smooth(200, 230, Math.abs(x))), avoid: (x, z) => !palmArea(x, z), seed: 41, collide: 0.03 });
       if (palms.meshes[0]) palms.meshes[0].material = PHOTO.mat(w, 'palm_tree_bark', { triplanar: 1.6, color: 0xa89480, fallback: KIT.bark(w) });
-      SCAPE.scatter(w, { kind: 'palm', n: 260, area: [-700, -700, 700, 700], scale: [8, 13], density: (x, z) => U.smooth(220, 260, Math.hypot(x, z)) * (1 - U.smooth(420, 500, Math.hypot(x, z))) * U.smooth(-0.2, 0.2, SCAPE.fbm(x * 0.01, z * 0.01, 2)), seed: 42, castShadow: false });
+      SCAPE.scatter(w, { kind: 'palm', n: 200, area: [-700, -700, 700, 700], scale: [8, 13], density: (x, z) => U.smooth(220, 260, Math.hypot(x, z)) * (1 - U.smooth(420, 500, Math.hypot(x, z))) * U.smooth(-0.2, 0.2, SCAPE.fbm(x * 0.01, z * 0.01, 2)), seed: 42, castShadow: false });
       // stumps where the yard's palms were cut
       SCAPE.scatter(w, { kind: 'model', model: 'dead_tree_trunk', n: 8, area: [-40, -30, -24, 10], scale: [0.9, 1.3], seed: 43 });
-      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_stones_01', variant: 2, fallback: 'pebble', n: 1300, area: [-150, -150, 150, 150], avoid: (x, z) => inPlot(x, z, -2), scale: [0.8, 1.6], seed: 44 });
-      SCAPE.scatter(w, { kind: 'model', model: 'grass_medium_01', variant: 0, fallback: 'grass', n: 700, area: [-150, -150, 150, 150], avoid: (x, z) => inPlot(x, z, 0) || LANE(x, z), scale: [0.8, 1.5], seed: 45 });
+      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_stones_01', variant: 2, fallback: 'pebble', n: 900, area: [-150, -150, 150, 150], avoid: (x, z) => inPlot(x, z, -2), scale: [0.8, 1.6], seed: 44 });
+      SCAPE.scatter(w, { kind: 'model', model: 'grass_medium_01', variant: 0, fallback: 'grass', n: 320, area: [-150, -150, 150, 150], avoid: (x, z) => inPlot(x, z, 0) || LANE(x, z), scale: [0.8, 1.5], seed: 45 });
       SCAPE.scatter(w, { kind: 'grass', n: 1400, area: [-150, -150, 150, 150], avoid: (x, z) => inPlot(x, z, 0) || LANE(x, z), scale: [0.4, 0.9], color: '#d8d0a0', seed: 46, castShadow: false });
-      SCAPE.scatter(w, { kind: 'model', model: 'shrub_01', variant: 0, fallback: 'shrub', n: 140, area: [-150, -150, 150, 150], avoid: (x, z) => inPlot(x, z, 2) || LANE(x, z), scale: [0.7, 1.3], seed: 47 });
+      SCAPE.scatter(w, { kind: 'model', model: 'shrub_01', variant: 0, fallback: 'shrub', n: 100, area: [-150, -150, 150, 150], avoid: (x, z) => inPlot(x, z, 2) || LANE(x, z), scale: [0.7, 1.3], seed: 47 });
       SCAPE.scatter(w, { kind: 'boulder', tex: 'lava', n: 300, area: [-700, -500, 700, 500], density: (x, z) => U.smooth(200, 260, Math.abs(x)), scale: [1.5, 6], seed: 48 });
       SCAPE.scatter(w, { kind: 'rock', tex: 'lava', n: 400, area: [-150, -150, 150, 150], avoid: (x, z) => inPlot(x, z, 0), scale: [0.2, 0.7], seed: 49 });
       SCAPE.birds(w, { n: 10, x: -40, z: 10, y: 45, r: 70 });
@@ -344,10 +346,10 @@
         this.mode = 'walk'; w.mode = null; Object.values(this.ghosts).forEach(g => { g.visible = false; });
         const c = w.camera.position; w.pos.set(U.clamp(c.x * 0.4, -30, 30), 0, U.clamp(c.z * 0.4 + 20, -30, 40)); w.yaw = Math.atan2(w.pos.x, w.pos.z); w.pitch = -0.05;
         this.walkBtn.innerHTML = '<span style="font-size:1rem">⌂</span><span>V build</span>';
-        Array.from(this.bar.children).forEach(ch => { if (ch !== this.walkBtn) ch.style.visibility = 'hidden'; });
+        Array.from(this.bar.children).forEach(ch => { if (ch !== this.walkBtn) ch.style.display = 'none'; });
         w.step('Walking the site · press V (or ⌂) to return to the plan');
       } else {
-        Array.from(this.bar.children).forEach(ch => { ch.style.visibility = ''; });
+        Array.from(this.bar.children).forEach(ch => { ch.style.display = ''; });
         this.enterBuild(); w.step(PARTS[this.part].step);
       }
     },

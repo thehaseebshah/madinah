@@ -1,0 +1,7 @@
+[
+  { "claim": "The umbrellas of the courtyards open and close automatically in response to the weather.", "grade": "history", "ref": "Wikipedia, 'Al-Masjid an-Nabawi' (umbrellas)", "url": "https://en.wikipedia.org/wiki/Al-Masjid_an-Nabawi", "note": "Installed 2010 (250 umbrellas, about 143,000 m2) — see sources.verified.json city #55." },
+  { "claim": "The mosque has ten minarets; of the original minarets only two survive: the main (Ra'isiyyah) minaret and the minaret of Bab as-Salam.", "grade": "history", "ref": "Wikipedia, 'Al-Masjid an-Nabawi' (minarets)", "url": "https://en.wikipedia.org/wiki/Al-Masjid_an-Nabawi", "note": "" },
+  { "claim": "'Do not set out on a journey except for three mosques: al-Masjid al-Haram, the mosque of the Messenger, and al-Masjid al-Aqsa.'", "grade": "sahih", "ref": "Sahih al-Bukhari 1189 (Abu Hurayrah); Sahih Muslim 1397", "url": "https://sunnah.com/bukhari:1189", "note": "Checked via en.tohed.com/hadith/bukhari/1189." },
+  { "claim": "'One prayer in this mosque of mine is better than a thousand prayers in any other mosque, except al-Masjid al-Haram.'", "grade": "sahih", "ref": "Sahih al-Bukhari 1190", "url": "https://sunnah.com/bukhari:1190", "note": "" },
+  { "claim": "King Fahd's expansion began in 1985 and was completed in the early 1990s; the mosque grew to more than 160,000 m2.", "grade": "history", "ref": "Wikipedia, 'Al-Masjid an-Nabawi'", "url": "https://en.wikipedia.org/wiki/Al-Masjid_an-Nabawi", "note": "" }
+]

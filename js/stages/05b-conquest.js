@@ -62,6 +62,20 @@
       },
     };
   }
+  // instanced scatters get a real bounding sphere, so the camera can skip the ones out of view
+  function cullable(w, res, list) {
+    const fix = () => res.meshes.forEach(m => {
+      if (!m.isInstancedMesh || !m.count) return;
+      const m4 = new T.Matrix4(), p = new T.Vector3(), c = new T.Vector3(); let n = m.count, sMax = 0;
+      for (let i = 0; i < n; i++) { m.getMatrixAt(i, m4); c.add(p.setFromMatrixPosition(m4)); }
+      c.divideScalar(n); let r = 0;
+      for (let i = 0; i < n; i++) { m.getMatrixAt(i, m4); r = Math.max(r, p.setFromMatrixPosition(m4).distanceTo(c)); sMax = Math.max(sMax, m4.getMaxScaleOnAxis()); }
+      if (!m.geometry.boundingSphere) m.geometry.computeBoundingSphere();
+      m.geometry = m.geometry.clone(); m.geometry.boundingSphere = new T.Sphere(c, r + (m.geometry.boundingSphere ? m.geometry.boundingSphere.radius : 2) * sMax + 2);
+      m.frustumCulled = true; list.push(m);
+    });
+    if (res.ready) res.ready.then(fix); else fix();
+  }
   const rot = (g, q) => g.applyMatrix4(new T.Matrix4().makeRotationFromQuaternion(q));
   function cylBetween(a, b, r0, r1, seg) {
     const d = new T.Vector3().subVectors(b, a), len = d.length();
@@ -97,7 +111,7 @@
             <p>Here sixty plain stones stand for them. No figure is shown.</p>`,
 
     enter(env) {
-      const w = this.w = WORLD.create(env, { start: { x: 16, z: 0, yaw: 0 }, exposure: 0.85, far: 4200, near: 0.12, fov: 66,
+      const w = this.w = WORLD.create(env, { start: { x: 16, z: 0, yaw: 0 }, exposure: 0.72, far: 4200, near: 0.12, fov: 66,
         fog: { color: 0xd8cbb6, density: 0.0009 } });
       const S = w.scene, Q = w.quality, rnd = U.seeded(630);
       w.renderer.setClearColor(0xc8d4e4);
@@ -105,16 +119,16 @@
 
       /* ---------- land ---------- */
       const ter = SCAPE.terrain(w, { size: 2600, seg: Q < 1 ? 280 : 340, height: H, rock: [0.8, 0.93], rockHeight: [40, 110],
-        colors: { low: '#cdb594', high: '#c0a582', rock: '#8a7a6e', dark: '#5e5048' }, tex: 'gravel', rockTex: 'granite',
+        colors: { low: '#ae9878', high: '#a48c6c', rock: '#7a6c62', dark: '#4e443e' }, tex: 'gravel', rockTex: 'granite',
         photo: { ground: 'gravelly_sand', rock: 'rock_face', normal: 1 }, rep: 0.22, rockRep: 0.035 });
       w.ground = ter.ground;
       SCAPE.horizon(w, { haze: '#d8cbb6', layers: [{ r: 1500, h: 120, color: '#8c7c72', seed: 3 }, { r: 2000, h: 170, color: '#a4968c', seed: 8 }, { r: 2700, h: 200, color: '#bcb2a8', seed: 13 }] });
 
       /* ---------- sky and light: a clear morning ---------- */
-      this.sun = new T.DirectionalLight(0xfff0dc, 1.9); this.sun.position.set(60, 50, 30); S.add(this.sun);
+      this.sun = new T.DirectionalLight(0xfff0dc, 1.6); this.sun.position.set(60, 50, 30); S.add(this.sun);
       S.add(new T.HemisphereLight(0xcfe0ff, 0xa08868, PHOTO.enabled ? 0.08 : 0.6));
       w.followShadow(this.sun, 55, Q < 1 ? 1024 : 2048);
-      if (PHOTO.enabled) PHOTO.sky(w, 'qwantani_morning_puresky', { sun: this.sun, rotation: Math.PI * 0.5, intensity: 0.8, haze: '#d8cbb6', horizon: 0.45, ground: '#b89a78' }).then(o => { this.sunDir = o && o.sunDir; });
+      if (PHOTO.enabled) PHOTO.sky(w, 'qwantani_morning_puresky', { sun: this.sun, rotation: Math.PI * 0.5, intensity: 0.62, haze: '#d8cbb6', horizon: 0.45, ground: '#b89a78' }).then(o => { this.sunDir = o && o.sunDir; });
       else w.sky({ top: '#3f78c8', mid: '#e4dccb', bot: '#c8b090', sunDir: [0.6, 0.45, 0.2], sun: '#fff0d0', sunSize: 0.0014, clouds: 0.25 });
 
       /* ---------- materials ---------- */
@@ -125,11 +139,11 @@
         mud: PHOTO.mat(w, 'brown_mud_dry', { triplanar: 0.35, color: '#d0b896', fallback: SCAPE.tex.mud(w) }),
         wood: PHOTO.mat(w, 'medieval_wood', { triplanar: 0.9, color: '#a08870', fallback: KIT.wood(w, [1, 1]) }),
         door: PHOTO.mat(w, 'old_planks_02', { rep: [1, 1], color: '#9a8068', fallback: KIT.wood(w, [1, 2], '#5a4030') }),
-        kstone: PHOTO.mat(w, 'rock_face', { triplanar: 0.45, color: '#6a6662', fallback: SCAPE.tex.granite(w) }),
+        kstone: PHOTO.mat(w, 'dark_rock', { triplanar: 0.4, color: '#9a9896', fallback: SCAPE.tex.granite(w) }),
         dark: new T.MeshStandardMaterial({ color: 0x1a1410, roughness: 1 }),
         idol: PHOTO.mat(w, 'rock_boulder_dry', { triplanar: 0.6, color: '#c8b8a6', fallback: SCAPE.tex.granite(w) }),
         plinth: PHOTO.mat(w, 'quarry_wall', { triplanar: 0.5, color: '#bcae9c', fallback: SCAPE.tex.granite(w) }),
-        cloth: PHOTO.mat(w, 'rough_linen', { rep: [2, 2], color: '#d8c8a8', side: T.DoubleSide }),
+        cloth: PHOTO.mat(w, 'rough_linen', { rep: [2, 2], color: '#c89a6a', side: T.DoubleSide }),
       };
 
       /* ---------- the Ka'bah: courses of stone and timber, the raised door on the east ---------- */
@@ -180,6 +194,12 @@
         }
         a += da + (inLane ? 0.08 : 0);
       }
+      // life on the roofs of the ring: baskets, jars, bowls, mats of palm fibre
+      const roofPts = k => this.ring.flatMap((R, i) => { const out = []; for (let j = 0; j < k; j++) { const a = U.lerp(R.a0, R.a1, rnd()), r = rnd() < 0.5 ? 40.6 + rnd() * 2 : 45.4 + rnd() * 2.4; out.push([Math.cos(a) * r, -Math.sin(a) * r, 0.9 + rnd() * 0.5, R.top]); } return out; });
+      [['wicker_basket_01', 1, 1.2], ['ceramic_vase_01', 1, 1.3], ['jug_01', 1, 1.5], ['wooden_bowl_01', 1, 1.6]].forEach(([id, k, s0], q) => {
+        const pts = roofPts(k).filter((_, i) => (i + q) % 2 === 0);
+        const r0 = SCAPE.scatter(w, { kind: 'model', model: id, points: pts.map(p => [p[0], p[1], p[2] * s0]), seed: 80 + q, ground: (x, z) => { let best = 0, bd = 1e9; pts.forEach(p => { const d = Math.hypot(p[0] - x, p[1] - z); if (d < bd) { bd = d; best = p[3]; } }); return best; } });
+      });
       // a few houses closer in, and an outer town, with lanes between
       this.idolSites = [];
       for (let i = 0; i < 70; i++) {
@@ -191,8 +211,8 @@
       }
       // a lane of shut doors on the way in from the north (the film passes through it)
       this.doors = [];
-      for (let i = 0; i < 6; i++) {
-        const side = i % 2 ? 1 : -1, z = -150 - i * 9, x = side * 6.4;
+      for (let i = 0; i < 12; i++) {
+        const side = i % 2 ? 1 : -1, z = -146 - Math.floor(i / 2) * 9.2, x = side * 6.4;
         house(x + side * 3.5, z, side > 0 ? -Math.PI / 2 : Math.PI / 2, 8.5, 7, 5.5 + (i % 3) * 0.6, i % 4);
         const pivot = new T.Group(); pivot.position.set(x - side * 0.52, H(x, z) + 0.25, z - 0.55); pivot.userData.dynamic = true; S.add(pivot);
         const d = box(1.05, 1.95, 0.1, M.door, 0, 0.98, 0.52); d.rotation.y = 0; pivot.add(d); d.position.set(0, 0.98, 0.52);
@@ -202,24 +222,33 @@
       occluders.push(houses);
       this.occluders = occluders;
       // the town beyond, in instanced mud and plaster
-      const town = SCAPE.scatter(w, { kind: 'house', n: 260, area: { x: 0, z: -40, r: 420 }, scale: [7, 11], seed: 61, density: (x, z) => H(x, z) < 34 ? 1 : 0.15,
+      const town = SCAPE.scatter(w, { kind: 'house', n: 260, area: { x: 0, z: -40, r: 420 }, scale: [7, 11], seed: 61, density: (x, z) => H(x, z) < 16 ? 1 : H(x, z) < 30 ? 0.12 : 0,
         avoid: (x, z) => { const r = Math.hypot(x, z); return r < 135 || (Math.abs(x) < 12 && z < -100); } });
       town.meshes.forEach(m => { m.material = PHOTO.mat(w, 'clay_plaster', { triplanar: 0.22, fallback: m.material.map, color: '#dccab2' }); });
       this.town = town.list;
 
       /* ---------- the scattered life of the valley ---------- */
-      const sc = o => SCAPE.scatter(w, o);
+      // scatters are laid in tiles, so tiles out of view or far away are skipped
+      this.cullList = [];
+      const sc = o => {
+        const A = o.area, R = A.r, tiles = R > 300 ? 4 : 2, sz = R * 2 / tiles;
+        for (let a = 0; a < tiles; a++) for (let c = 0; c < tiles; c++) {
+          const x0 = A.x - R + a * sz, z0 = A.z - R + c * sz, d0 = o.density;
+          const r = SCAPE.scatter(w, Object.assign({}, o, { area: [x0, z0, x0 + sz, z0 + sz], n: Math.max(1, Math.round(o.n / (tiles * tiles) * 1.27)), seed: o.seed * 17 + a * 5 + c,
+            density: (x, z) => (Math.hypot(x - A.x, z - A.z) > R ? 0 : 1) * (d0 ? d0(x, z) : 1) }));
+          cullable(w, r, this.cullList);
+        }
+      };
       const notTown = (x, z) => Math.hypot(x, z) < 52;
-      sc({ kind: 'model', model: 'namaqualand_boulder_02', fallback: 'boulder', n: 220, area: { x: 0, z: 0, r: 700 }, scale: [1, 3], seed: 62, density: (x, z) => U.smooth(18, 50, H(x, z)) });
-      sc({ kind: 'model', model: 'namaqualand_boulder_04', fallback: 'boulder', n: 160, area: { x: 0, z: 0, r: 700 }, scale: [1, 2.6], seed: 63, density: (x, z) => U.smooth(12, 40, H(x, z)) });
-      sc({ kind: 'model', model: 'rock_07', fallback: 'rock', n: 260, area: { x: 0, z: 0, r: 500 }, scale: [0.6, 1.8], seed: 64, avoid: notTown });
-      sc({ kind: 'model', model: 'namaqualand_rocks_01', fallback: 'rock', fallbackScale: 0.4, n: 520, area: { x: 0, z: 0, r: 400 }, scale: [0.6, 1.4], seed: 65, avoid: notTown });
-      sc({ kind: 'model', model: 'namaqualand_stones_01', fallback: 'pebble', fallbackScale: 0.6, n: 1400, area: { x: 0, z: 0, r: 160 }, scale: [0.6, 1.4], seed: 66, castShadow: false, avoid: (x, z) => Math.hypot(x, z) < 9.5 });
-      sc({ kind: 'model', model: 'shrub_01', fallback: 'shrub', n: 180, area: { x: 0, z: 0, r: 520 }, scale: [0.6, 1.3], seed: 67, avoid: notTown });
+      sc({ kind: 'model', model: 'namaqualand_boulder_02', fallback: 'boulder', n: 150, area: { x: 0, z: 0, r: 700 }, scale: [1, 3], seed: 62, density: (x, z) => U.smooth(18, 50, H(x, z)) });
+      sc({ kind: 'model', model: 'namaqualand_boulder_04', fallback: 'boulder', n: 110, area: { x: 0, z: 0, r: 700 }, scale: [1, 2.6], seed: 63, density: (x, z) => U.smooth(12, 40, H(x, z)) });
+      sc({ kind: 'model', model: 'rock_07', fallback: 'rock', n: 150, area: { x: 0, z: 0, r: 500 }, scale: [0.6, 1.8], seed: 64, avoid: notTown });
+      sc({ kind: 'model', model: 'namaqualand_rocks_01', fallback: 'rock', fallbackScale: 0.4, n: 420, area: { x: 0, z: 0, r: 400 }, scale: [0.6, 1.4], seed: 65, avoid: notTown });
+      sc({ kind: 'model', model: 'namaqualand_stones_01', fallback: 'pebble', fallbackScale: 0.6, n: 1100, area: { x: 0, z: 0, r: 160 }, scale: [0.6, 1.4], seed: 66, castShadow: false, avoid: (x, z) => Math.hypot(x, z) < 9.5 });
+      sc({ kind: 'model', model: 'shrub_03', fallback: 'shrub', n: 200, area: { x: 0, z: 0, r: 520 }, scale: [0.6, 1.3], seed: 67, avoid: notTown });
       sc({ kind: 'model', model: 'dry_branches_medium_01', fallback: 'thorn', n: 70, area: { x: 0, z: 0, r: 500 }, scale: [0.8, 1.3], seed: 68, avoid: notTown });
-      sc({ kind: 'model', model: 'grass_medium_01', fallback: 'grass', n: 400, area: { x: 0, z: 0, r: 420 }, scale: [0.7, 1.2], seed: 69, castShadow: false, avoid: notTown });
-      sc({ kind: 'boulder', n: 520, area: { x: 0, z: 0, r: 1200 }, scale: [3, 14], seed: 70, tex: 'granite', color: '#b0a294', density: (x, z) => U.smooth(25, 80, H(x, z)) });
-      sc({ kind: 'rock', n: 900, area: { x: 0, z: 0, r: 700 }, scale: [0.3, 1.3], seed: 71, avoid: notTown });
+      sc({ kind: 'boulder', n: 380, area: { x: 0, z: 0, r: 1200 }, scale: [3, 14], seed: 70, tex: 'granite', color: '#b0a294', density: (x, z) => U.smooth(25, 80, H(x, z)) });
+      sc({ kind: 'rock', n: 600, area: { x: 0, z: 0, r: 700 }, scale: [0.3, 1.3], seed: 71, avoid: notTown });
       sc({ kind: 'thorn', n: 260, area: { x: 0, z: 0, r: 650 }, scale: [0.7, 1.3], seed: 72, avoid: notTown });
       sc({ kind: 'grass', n: 1200, area: { x: 0, z: 0, r: 500 }, scale: [0.4, 0.8], seed: 73, avoid: notTown });
       sc({ kind: 'acacia', n: 60, area: { x: 0, z: 0, r: 700 }, scale: [0.9, 1.4], seed: 74, avoid: (x, z) => Math.hypot(x, z) < 140 });
@@ -268,8 +297,8 @@
       roofIdx.forEach((i, k) => { const s0 = this.idolSites[i]; addIdol(s0.x, s0.z, s0.y + 0.55, 1, { awning: k % 2 === 0 }); });
       [[180, -60], [200, 30], [-230, -10], [-210, -110], [150, 110]].forEach(([x, z]) => addIdol(x, z, null, 1, { s: 1.5 }));
       // part 3: across the valley, revealed a few at a time as the dust clears
-      const far = this.town.filter(it => it.x < 60 && Math.hypot(it.x - 120, it.z) > 90).sort((a, b) => a.z - b.z);
-      for (let k = 0; k < 28; k++) { const it = far[Math.floor((k + 0.5) / 28 * far.length)]; if (!it) break; addIdol(it.x, it.z, it.y + it.sy - 0.05, 2, { group: Math.floor(k / 4), reveal: 0, s: 1.25 }); }
+      const far = this.town.filter(it => { const a = Math.atan2(it.z + 10, it.x - 112), da = Math.abs(((a - Math.PI) + Math.PI * 3) % (Math.PI * 2) - Math.PI); return it.x < 70 && da < 0.95 && Math.hypot(it.x - 112, it.z + 10) > 90 && Math.hypot(it.x - 112, it.z + 10) < 330; }).sort((a, b) => Math.atan2(a.z + 10, a.x - 112) - Math.atan2(b.z + 10, b.x - 112));
+      for (let k = 0; k < 28; k++) { const it = far[Math.floor((k + 0.5) / 28 * far.length)]; if (!it) break; addIdol(it.x, it.z, it.y + it.sy - 0.05, 2, { group: Math.floor(k / 4), reveal: 0, s: 2.0 }); }
       this.count = [0, 1, 2].map(p => ID.filter(o => o.phase === p).length);
       this.idolMesh = shapes.map((g, k) => { const m = new T.InstancedMesh(g, M.idol, ID.length); m.castShadow = m.receiveShadow = true; m.frustumCulled = false; m.userData.dynamic = true; m.instanceMatrix.setUsage(T.DynamicDrawUsage); S.add(m); return m; });
       this.plinth = new T.InstancedMesh(plinthG, M.plinth, ID.length); this.plinth.castShadow = this.plinth.receiveShadow = true; this.plinth.frustumCulled = false; this.plinth.userData.dynamic = true; S.add(this.plinth);
@@ -297,7 +326,7 @@
       this.glints = sprites(w, ID.length, '#ffd27a', true);
 
       /* ---------- the staff in view, and the line of light it sends ---------- */
-      const staff = this.staff = new T.Group(); w.camera.add(staff);
+      const staff = this.staff = new T.Group(); staff.userData.dynamic = true; w.camera.add(staff);
       const sg = cylBetween(new T.Vector3(0, -0.9, 0), new T.Vector3(0, 0.75, 0), 0.026, 0.018, 8);
       const sm = new T.Mesh(sg, M.wood); staff.add(sm);
       const tip = KIT.glow(w, 0xffd890, 0.22, 0.7); tip.position.y = 0.77; staff.add(tip); this.tip = tip;
@@ -370,7 +399,7 @@
           path: [[P(-14, -560, 6), P(0, -380, 8)], [P(-8, -470, 4), P(0, -250, 6)]], during: (w, k, dt) => { self.flap(dt * 2); } },
         { dur: 6, fade: 'cut', fov: [44, 42], line: 'Whoever locks his door is safe (Sahih Muslim 1780).', ar: 'وَمَنْ أَغْلَقَ بَابَهُ فَهُوَ آمِنٌ',
           path: [[P(0, -205, 1.7), P(0, -150, 1.8)], [P(0, -178, 1.7), P(0, -130, 1.8)]],
-          during: (w, k) => { self.doors.forEach((d, i) => { const kk = U.smooth(0.1 + i * 0.1, 0.25 + i * 0.1, k); if (kk > 0.98 && !d.userData.thud) { d.userData.thud = true; SND.knock(env.bus, { f: 150, gain: 0.12, click: 900 }); } d.rotation.y = U.lerp(d.userData.open, d.userData.shut, kk); }); } },
+          during: (w, k) => { self.doors.forEach((d, i) => { const kk = U.smooth(0.05 + i * 0.06, 0.2 + i * 0.06, k); if (kk > 0.98 && !d.userData.thud) { d.userData.thud = true; SND.knock(env.bus, { f: 150, gain: 0.12, click: 900 }); } d.rotation.y = U.lerp(d.userData.open, d.userData.shut, kk); }); } },
         { dur: 7, fade: 'dip', fov: [40, 36], line: 'Around the House stand three hundred and sixty idols (Sahih al-Bukhari 4287).', ar: 'وحول البيت ثلاثمئة وستون نُصُبًا',
           path: [[[30, 2.2, 22], [0, 2, 0]], [[22, 1.4, 28], [-4, 1.8, 6]], [[8, 1.2, 30], [-8, 1.6, 8]]],
           start: () => { self.doors.forEach(d => { d.rotation.y = d.userData.shut; }); SND.glow(env.bus, 130.81, { gain: 0.04, dur: 7 }); } },
@@ -529,6 +558,13 @@
         this.column.material.opacity = U.smooth(9, 13, t) * 0.32 * (0.85 + 0.15 * Math.sin(w.time * 1.3));
         this.roofGlow.material.opacity = U.smooth(9, 12, t) * 0.9;
       }
+      // point the way to the stone that holds the rail, or the nearest one showing
+      if (!G.end && !G.transit) {
+        let tgt = null, bd = 1e9;
+        this.idols.forEach(I => { if (!I.alive || I.phase !== G.phase || I.reveal < 0.55) return; const d = G.phase < 2 ? I.gate : Math.hypot(I.x - pos.x, I.z - pos.z); if (d < bd) { bd = d; tgt = I; } });
+        const f = cam.getWorldDirection(new T.Vector3());
+        if (tgt) { const dx = tgt.x - pos.x, dz = tgt.z - pos.z, l = Math.hypot(dx, dz); const off = (dx * f.x + dz * f.z) / l < 0.82; w.goal(off ? [tgt.x, tgt.y + tgt.h, tgt.z] : null); } else w.goal(null);
+      } else w.goal(null);
       if (this.flash) { this.flash = Math.max(0, this.flash - dt * 0.6); this.fade(this.flash * 0.85, '#fff6e6'); }
     },
     fade(k, col) { if (this.post) this.post.set({ fade: k, fadeColor: col || '#000000' }); else { const f = this.w.ui.layer.querySelector('.w-fade'); f.style.background = col || '#000'; f.style.opacity = k; } },
@@ -564,6 +600,7 @@
     world(env, dt) {
       const w = this.w, G = this.G, t = w.time, b = env.bus;
       this.flap(dt);
+      if (this.cullList) for (const m of this.cullList) { const S0 = m.geometry.boundingSphere; m.visible = S0.center.distanceTo(w.camera.position) - S0.radius < 900; }
       for (let i = 0; i < this.plumes.n; i++) { this.plumes.P[i * 3] = this.plumeBase[i * 3] + Math.sin(t * 0.05 + i) * 6; this.plumes.P[i * 3 + 1] = this.plumeBase[i * 3 + 1] + Math.sin(t * 0.08 + i * 2) * 2; this.plumes.A[i] = 0.18 + 0.08 * Math.sin(t * 0.1 + i); }
       this.plumes.upd();
       // the stones: falling ones tip about their base edge, rock, and go down to dust

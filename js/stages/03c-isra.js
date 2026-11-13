@@ -145,7 +145,7 @@
       this.touch = matchMedia('(pointer: coarse)').matches;
 
       /* ---------- terrain and sky ---------- */
-      const ter = SCAPE.terrain(w, { size: 3600, seg: 320, cx: 0, cz: -1300, height, rock: [0.62, 0.86], colors: { low: '#a8967e', high: '#9a8670', rock: '#7e7064', dark: '#4e4440' }, photo: { ground: 'dense_sand', rock: 'rock_boulder_dry', normal: 1 }, rep: 0.12, rockRep: 0.03 });
+      const ter = SCAPE.terrain(w, { size: 3600, seg: 320, cx: 0, cz: -1300, height, rock: [0.62, 0.86], colors: { low: '#8e7e6a', high: '#84745e', rock: '#7e7064', dark: '#4e4440' }, photo: { ground: 'dense_sand', rock: 'rock_boulder_dry', normal: 1 }, rep: 0.12, rockRep: 0.03 });
       const ground = w.ground = ter.ground; this.ground = ground;
       const moonDir = new T.Vector3(0.35, 0.5, -0.8).normalize(); this.moonDir = moonDir;
       w.sky({ top: '#04070f', mid: '#16203a', bot: '#070a12', sunDir: moonDir.toArray(), sun: '#8a98c0', sunSize: 0.0004, stars: 1.4, haze: 0.2 });
@@ -165,7 +165,7 @@
 
       /* ---------- materials ---------- */
       const granite = SCAPE.tex.granite(w);
-      const plaster = PHOTO.mat(w, 'clay_plaster', { triplanar: 0.25, fallback: SCAPE.tex.mud(w), color: 0xe0d0b8 });
+      const plaster = PHOTO.mat(w, 'clay_plaster', { triplanar: 0.25, fallback: SCAPE.tex.mud(w), color: 0xfff4e4 });
       const limestone = PHOTO.mat(w, 'plastered_stone_wall', { triplanar: 0.2, fallback: granite, color: 0xe8e0d0 });
       const wallM = PHOTO.mat(w, 'old_stone_wall', { rep: [1, 1], fallback: granite, color: 0xd8ccb8 });
       const kStone = PHOTO.mat(w, 'old_stone_wall', { rep: [1, 1], fallback: granite, color: 0x6a645e });
@@ -189,7 +189,7 @@
         }
         const l1 = new T.PointLight(0xffa860, 1.2, 30, 1.8); l1.position.set(-10, 4, 16); S.add(l1);
         const l2 = new T.PointLight(0xffa860, 1.0, 30, 1.8); l2.position.set(12, 4, -14); S.add(l2);
-        const hs = SCAPE.scatter(w, { kind: 'house', n: 420, area: { x: 0, z: 0, r: 190 }, scale: [6, 10], seed: 61, collide: false, avoid: (x, z) => Math.hypot(x, z) < 34, density: (x, z) => 1 - U.smooth(90, 190, Math.hypot(x, z)) * 0.8 });
+        const hs = SCAPE.scatter(w, { kind: 'house', n: 700, area: { x: 0, z: 0, r: 200 }, scale: [8, 14], seed: 61, collide: false, avoid: (x, z) => Math.hypot(x, z) < 34, density: (x, z) => 1 - U.smooth(90, 190, Math.hypot(x, z)) * 0.8 });
         hs.meshes.forEach(m => { m.material = plaster; });
         SCAPE.scatter(w, { kind: 'palm', n: 40, area: { x: 0, z: 0, r: 170 }, scale: [8, 12], seed: 62, avoid: (x, z) => Math.hypot(x, z) < 34 });
         const fires = []; const r3 = U.seeded(7);
@@ -273,7 +273,7 @@
       this.Y0 = helixStart + HH * 0.7; const a0 = Math.PI / 2 - 0.9;
       const hpts = []; const Ntot = 7 * TURN + 0.7 / TURN * TURN;
       const yAt = ang => helixStart + (ang - a0) / (Math.PI * 2 * TURN) * HH;
-      const angEnd = a0 + Math.PI * 2 * (TURN * 7 + 0.7);
+      const angEnd = a0 + Math.PI * 2 * (TURN * 7 + 0.7 + 0.35);
       for (let ang = a0; ang <= angEnd + 1e-6; ang += Math.PI / 14) hpts.push(hp(ang, yAt(ang)));
       this.heavenRail = new T.CatmullRomCurve3(hpts, false, 'centripetal');
       this.gateAng = k => a0 + Math.PI * 2 * (0.7 + TURN * k);   // gate k opens heaven k+1 (k = 0..7)
@@ -282,15 +282,15 @@
       // arc length of each gate along the heaven rail
       const lens = this.heavenRail.getLengths(4000);
       this.gateS = [];
-      for (let k = 0; k <= 7; k++) { const target = this.gateAng(k) - a0, frac = target / (angEnd - a0); this.gateS.push(lens[Math.round(frac * 4000)]); }
+      for (let k = 0; k <= 7; k++) { const target = this.gateAng(k) - a0, frac = target / (angEnd - a0); this.gateS.push(lens[Math.round(frac * 4000)] * this.Lh / lens[4000]); }
 
       /* ---------- rings, discoveries and gates ---------- */
       const ringGeo = new T.TorusGeometry(3.2, 0.22, 10, 40);
       this.rings = [];
       const mkRing = (rail, s, ox, oy, hue, k, move) => {
         const m = new T.Mesh(ringGeo, new T.MeshBasicMaterial({ color: new T.Color(hue), transparent: true, opacity: 0.9, blending: T.AdditiveBlending, depthWrite: false, fog: false }));
-        m.userData.dynamic = true; S.add(m);
-        const gl = KIT.glow(w, new T.Color(hue), 9, 0.35); gl.material.fog = false; S.add(gl);
+        m.userData.dynamic = true; m.visible = false; S.add(m);
+        const gl = KIT.glow(w, new T.Color(hue), 9, 0.35); gl.material.fog = false; gl.visible = false; S.add(gl);
         const R = { rail, s, ox, oy, ox0: ox, oy0: oy, m, gl, hue, k, move, hit: false, miss: false, burst: 0 };
         this.rings.push(R); return R;
       };
@@ -323,8 +323,8 @@
         const tex = patternTex(k < 7 ? HEAVENS[k].pts : 12, 0.2, moveHole ? 0.22 : 0);
         const disc = new T.Mesh(new T.CircleGeometry(24, 72), new T.MeshBasicMaterial({ map: tex, color: new T.Color(hue), transparent: true, opacity: 0.0, blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide, fog: false }));
         const s = this.gateS[k], P = this.heavenRail.getPointAt(Math.min(1, s / this.Lh)), Tn = this.heavenRail.getTangentAt(Math.min(1, s / this.Lh));
-        disc.position.copy(P); disc.lookAt(P.clone().add(Tn)); disc.userData.dynamic = true; disc.renderOrder = 2; S.add(disc);
-        const halo = KIT.glow(w, new T.Color(hue), 12, 0); halo.material.fog = false; S.add(halo);
+        disc.position.copy(P); disc.lookAt(P.clone().add(Tn)); disc.userData.dynamic = true; disc.renderOrder = 2; disc.visible = false; S.add(disc);
+        const halo = KIT.glow(w, new T.Color(hue), 12, 0); halo.material.fog = false; halo.visible = false; S.add(halo);
         this.gates.push({ k, disc, halo, s, P, Tn, move: moveHole, ang: 0, passed: false, hue });
       }
 
@@ -346,7 +346,7 @@
         orn.frustumCulled = false; orn.visible = false; orn.userData.dynamic = true; S.add(orn);
         const motes = SCAPE.motes(w, { n: 140, area: [AQ.x - 120, yc - HH * 0.6, AQ.z - 120, AQ.x + 120, yc + HH * 0.6, AQ.z + 120], color: h.hue, size: 1.4, opacity: 0.7, blink: true, seed: 40 + k });
         motes.pts.visible = false;
-        const name = lightText(h.ar, h.pb, h.en, h.n); S.add(name);
+        const name = lightText(h.ar, h.pb, h.en, h.n); name.visible = false; S.add(name);
         return { dome, floor, orn, ornL, motes, yc, name, nameT: -1, upd: () => { for (let i = 0; i < N; i++) { const o = ornL[i]; const a = o.a + w.time * o.sp * 0.1; p.set(AQ.x + Math.cos(a) * o.d, o.y + Math.sin(w.time * 0.3 + o.ph) * 2, AQ.z + Math.sin(a) * o.d); e.set(w.time * o.sp + o.ph, w.time * o.sp * 0.7, 0); q.setFromEuler(e); sc.setScalar(o.s); m4.compose(p, q, sc); orn.setMatrixAt(i, m4); } orn.instanceMatrix.needsUpdate = true; } };
       });
 
@@ -424,7 +424,7 @@
       this.post = w.post({ bloom: 0.85, threshold: 0.58, rays: { strength: 0.18, dir: moonDir.toArray(), density: 0.8 }, vignette: 0.45, grain: 0.035, sat: 1.0, contrast: 1.05, lift: [0.012, 0.02, 0.045], gain: [0.98, 1.0, 1.06] });
       // the earth is left behind once the heavens open
       const keep = new Set([this.orb, this.orbCore, this.orbLight, this.trailPts, this.bursts, this.tree, this.treeGlow, this.fifty, this.finalDome, ...this.five, ...this.rivers.map(r => r.m), ...this.rings.map(r => r.m), ...this.rings.map(r => r.gl), ...this.gates.map(g => g.disc), ...this.gates.map(g => g.halo), ...this.domes.flatMap(d => [d.dome, d.floor, d.orn, d.motes.pts, d.name]), ...this.discs.map(d => d.it)]);
-      this.earthObjs = S.children.filter(o => !keep.has(o) && !o.isLight && (o.isMesh || o.isSprite || o.isPoints || o.isGroup || o.isInstancedMesh));
+      this.earthObjs = S.children.filter(o => !keep.has(o) && !o.isLight && o.renderOrder !== -10 && o !== w.skyMesh && (o.isMesh || o.isSprite || o.isPoints || o.isGroup || o.isInstancedMesh));
       this.discMotes = w.scene.children.filter(o => o.isSprite && this.discs.some(d => d.pos.distanceTo(o.position) < 0.01));
 
       /* ---------- touch buttons ---------- */
@@ -489,10 +489,10 @@
         { dur: 5.5, fade: 'white', line: 'No image can show this journey. Here there is only light.', ar: 'لا تستطيع صورةٌ أن تُظهِر هذه الرحلة. هنا نورٌ فحسب.', ease: 'glide', fov: [60, 50],
           path: [[[AQ.x + 20, PY + 60, AQ.z + 20], [AQ.x, this.Y0 + 60, AQ.z]], [[AQ.x + 8, PY + 120, AQ.z + 8], [AQ.x, this.Y0 + 260, AQ.z]]],
           start: () => { self.showHeaven(0, true); SND.glow(env.bus, 146.83, { gain: 0.06, dur: 7 }); },
-          during: (w, k) => { self.gates[0].disc.material.opacity = 0.7; self.domes[0].floor.material.opacity = 0.5; } },
+          during: (w, k) => { self.gates[0].disc.visible = true; self.gates[0].disc.material.opacity = 0.7; self.domes[0].floor.material.opacity = 0.5; } },
         { dur: 6, fade: 'dip', line: 'You are a small light. Fly through the rings, and follow.', ar: 'أنتَ نورٌ صغير. اعبُر الحلقات، واتبَع.', ease: 'inout', fov: [52, 66],
           path: [[at(COL.x + 14, 4, COL.z + 18), [COL.x, 3, COL.z]], [c0.pos.toArray(), c0.look.toArray()]],
-          start: () => { self.showHeaven(-1); self.gates[0].disc.material.opacity = 0; self.column.material.opacity = 0.16; self.aqCol.material.opacity = 0; } },
+          start: () => { self.showHeaven(-1); self.gates[0].disc.visible = false; self.column.material.opacity = 0.16; self.aqCol.material.opacity = 0; } },
       ];
     },
     filmOpts: {
@@ -527,8 +527,8 @@
     showHeaven(k, force) {
       this.domes.forEach((d, i) => { const on = i === k; d.dome.visible = on; d.floor.visible = on || i === k + 1; d.orn.visible = on; d.motes.pts.visible = on; });
       const sky = k >= 0 || force;
-      if (this.photoSky && this.photoSky.mesh) this.photoSky.mesh.visible = !sky;
-      if (this.w.skyMesh) this.w.skyMesh.visible = !sky && !this.photoSky;
+      const skies = this.w.scene.children.filter(o => o.renderOrder === -10);
+      skies.forEach(o => { o.visible = !sky && (o === this.w.skyMesh); });
       this.earthObjs.forEach(o => { o.visible = !(k >= 0); });
       this.cres.visible = k < 0;
       if (this.w.scene.fog) this.w.scene.fog.density = k >= 0 ? 0.0 : 0.0007;
@@ -604,7 +604,7 @@
       this.cres.position.copy(c.position).addScaledVector(this.moonDir, 1900);
       // heavens animate
       if (this.heaven >= 0) { const D = this.domes[this.heaven]; D.dome.material.uniforms.uTime.value = w.time; D.upd(); D.floor.rotation.y += dt * 0.02; }
-      this.domes.forEach(D => { if (D.nameT >= 0) { D.nameT += dt; D.name.material.opacity = U.smooth(0, 1.2, D.nameT) * (1 - U.smooth(7, 10, D.nameT)); if (D.nameT > 10) D.nameT = -1; } });
+      this.domes.forEach(D => { if (D.nameT >= 0) { D.nameT += dt; D.name.visible = true; D.name.material.opacity = U.smooth(0, 1.2, D.nameT) * (1 - U.smooth(7, 10, D.nameT)); if (D.nameT > 10) { D.nameT = -1; D.name.visible = false; } } });
       this.gates.forEach(G => { if (!G.disc.visible) return; G.disc.rotation.z = G.move ? w.time * 0.5 * (G.k % 2 ? 1 : -1) : G.disc.rotation.z + dt * 0.05; });
       // sound by speed
       this.rush.set('gain', U.clamp((this.v - 20) / 30) * 0.05, 0.2); this.wind.set('freq', 300 + this.v * 8, 0.3);

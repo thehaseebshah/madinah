@@ -21,10 +21,10 @@
   const CAVE = { x: -1.5, z: -159 };
   // per section: platform count, radius, step heights (scaled to fit), kind
   const SECTIONS = [
-    { n: 8, r: [1.8, 2.3], dy: [0.6, 0.6, 0.7, 0.6, 0.7, 0.6, 0.6, 0.6, 0.6], zig: 2.2, name: 'Part 1 of 3 · The foot of the mountain', step: 'Jump from stone to stone — light the lantern ahead' },
-    { n: 6, r: [1.6, 1.8], dy: [0.5, 0.4, 0.6, 0.5, 0.6, 0.6, 0.8], zig: 2.6, name: 'Part 1 of 3 · The foot of the mountain', step: 'Wider gaps: hold Shift to run before you jump', side: 3 },
+    { n: 9, r: [1.8, 2.3], dy: [0.6, 0.6, 0.7, 0.6, 0.7, 0.6, 0.6, 0.6, 0.6], zig: 2.2, name: 'Part 1 of 3 · The foot of the mountain', step: 'Jump from stone to stone — light the lantern ahead' },
+    { n: 7, r: [1.6, 1.8], dy: [0.5, 0.4, 0.6, 0.5, 0.6, 0.6, 0.8], zig: 2.6, name: 'Part 1 of 3 · The foot of the mountain', step: 'Wider gaps: hold Shift to run before you jump', side: 3 },
     { n: 9, r: [1.45, 1.6], dy: [1.65, 1.6, 1.7, 1.6, 1.7, 1.6, 1.7, 1.65, 1.6, 1.65], zig: 1.6, name: 'Part 2 of 3 · The boulder slope', step: 'Jump at a high ledge and keep pressing forward to pull yourself up' },
-    { n: 7, r: [1.4, 1.6], dy: [0.4, 1.6, 0.3, 1.7, 0.4, 1.8, 0.3, 1.5], zig: 2.8, name: 'Part 2 of 3 · The boulder slope', step: 'Run, jump and climb', side: 4 },
+    { n: 8, r: [1.4, 1.6], dy: [0.4, 1.6, 0.3, 1.7, 0.4, 1.8, 0.3, 1.5, 0.4], zig: 2.8, name: 'Part 2 of 3 · The boulder slope', step: 'Run, jump and climb', side: 4 },
     { n: 8, r: [1.35, 1.5], dy: [0.5, 1.5, 0.5, 1.5, 0.5, 1.5, 0.5, 1.5, 0.5], zig: 2.0, crumble: true, name: 'Part 3 of 3 · The cliff path', step: 'Loose stones slip away — do not linger on them' },
     { n: 6, box: true, len: 3.6, wid: 1.4, dy: [0.6, 1.5, 0.6, 1.5, 0.6, 1.5, 1.2], zig: 1.4, gust: true, name: 'Part 3 of 3 · The cliff path', step: 'The wind gusts from the east — lean into it', side: 3 },
   ];
@@ -249,23 +249,28 @@
         for (let k = 0; k < pp.count; k++) { const n = SCAPE.fbm(pp.getX(k) * 0.7 + x, pp.getY(k) * 0.7 + pp.getZ(k) * 0.5, 3) * 0.35; pp.setXYZ(k, pp.getX(k) * (1 + n * 0.3), pp.getY(k) * (1 + n * 0.15), pp.getZ(k) * (1 + n * 0.3)); }
         const uv = g.attributes.uv; for (let k = 0; k < uv.count; k++) uv.setXY(k, uv.getX(k) * Math.max(sx, sz) / 3, uv.getY(k) * sy / 3);
         g.computeVertexNormals();
-        const m = new T.Mesh(g, mat || rockM2); m.position.set(x, y, z); m.rotation.set(rx, ry, rz); m.castShadow = m.receiveShadow = true; S.add(m); return m;
+        const m = new T.Mesh(g, mat || rockM); m.position.set(x, y, z); m.rotation.set(rx, ry, rz); m.castShadow = m.receiveShadow = true; S.add(m); return m;
       };
       slab(5, 7.5, 3.2, CAVE.x - 2.7, cy + 2.6, CAVE.z - 0.5, 0.08, 0.25, -0.3);
       slab(4.6, 7, 3.4, CAVE.x + 2.6, cy + 2.4, CAVE.z - 1.0, -0.06, -0.3, 0.32);
       slab(7, 3, 5.5, CAVE.x, cy + 6.2, CAVE.z - 2.2, 0.15, 0.1, 0.05);
       slab(8, 6, 4, CAVE.x - 0.3, cy + 2.5, CAVE.z - 5.5, 0, 0.1, 0);
+      // scanned cliff faces round the cleft
+      PHOTO.place(w, 'namaqualand_cliff_01', { pos: [CAVE.x - 7, cy - 1, CAVE.z - 4], s: 1.3, ry: 0.6 });
+      PHOTO.place(w, 'namaqualand_cliff_01', { pos: [CAVE.x + 7.5, cy - 1, CAVE.z - 5], s: 1.2, ry: 2.4 });
+      PHOTO.place(w, 'namaqualand_boulder_02', { pos: [CAVE.x + 5, undefined, CAVE.z + 1.5], s: 1.1, ry: 1 });
+      PHOTO.place(w, 'namaqualand_boulder_04', { pos: [CAVE.x - 5, undefined, CAVE.z + 2], s: 1.0, ry: 2 });
       w.addCircle(CAVE.x - 2.9, CAVE.z - 0.5, 2.1); w.addCircle(CAVE.x + 2.9, CAVE.z - 1, 2.1);
       this.caveLight = new T.PointLight(0xfff0d0, 0, 24, 1.6); this.caveLight.position.set(CAVE.x, cy + 1.4, CAVE.z - 2.2); S.add(this.caveLight);
       this.caveGlow = KIT.glow(w, 0xfff2d8, 7, 0.0); this.caveGlow.position.copy(this.caveLight.position); S.add(this.caveGlow);
 
       /* ---------- the city of Makkah far below: houses, lamps and hearths ---------- */
-      const plaster = PHOTO.mat(w, 'clay_plaster', { triplanar: 0.25, fallback: SCAPE.tex.mud(w), color: 0xe6d6c0 });
+      const plaster = PHOTO.mat(w, 'clay_plaster', { triplanar: 0.25, fallback: SCAPE.tex.mud(w), color: 0xfff4e4 });
       const brick = PHOTO.mat(w, 'clay_block_wall', { rep: [1, 1], fallback: KIT.mudBrick(w, [1, 1]), color: 0xd8c4a8 });
       const planks = PHOTO.mat(w, 'old_planks_02', { rep: [1, 1], fallback: KIT.wood(w), color: 0xb89a7a });
       const beamM = PHOTO.mat(w, 'medieval_wood', { rep: [0.3, 1], fallback: KIT.wood(w), color: 0xa08868 });
       const stoneM = PHOTO.mat(w, 'old_stone_wall', { rep: [1, 1], fallback: granite, color: 0xc0b0a0 });
-      const hs = SCAPE.scatter(w, { kind: 'house', n: 520, area: { x: CITY.x, z: CITY.z, r: 240 }, scale: [6, 10], seed: 41, density: (x, z) => 1 - U.smooth(60, 240, Math.hypot(x - CITY.x, z - CITY.z)) * 0.7, avoid: (x, z) => Math.hypot(x - CITY.x, z - CITY.z) < 26 || Math.hypot(x - LANE.x, z - LANE.z) < 45 });
+      const hs = SCAPE.scatter(w, { kind: 'house', n: 760, area: { x: CITY.x, z: CITY.z, r: 240 }, scale: [8, 14], seed: 41, density: (x, z) => 1 - U.smooth(60, 240, Math.hypot(x - CITY.x, z - CITY.z)) * 0.7, avoid: (x, z) => Math.hypot(x - CITY.x, z - CITY.z) < 26 || Math.hypot(x - LANE.x, z - LANE.z) < 45 });
       hs.meshes.forEach(m => { m.material = plaster; });
       // a proper lane at the edge of the city, where the film begins
       const r2 = U.seeded(57);
@@ -308,6 +313,8 @@
       // hearths and lamps across the city: one cloud of warm points
       const fires = []; const r3 = U.seeded(9);
       for (let i = 0; i < 320; i++) { const a = r3() * 6.283, dd = Math.pow(r3(), 0.8) * 230; const x = CITY.x + Math.cos(a) * dd, z = CITY.z + Math.sin(a) * dd; fires.push([x, ground(x, z) + 1.5 + r3() * 4, z, 3 + r3() * 5]); }
+      // a lamp in a window or a doorway of one house in three
+      hs.list.forEach((h, i) => { if (i % 3) return; const a = h.ry, d = (h.sx || h.s) * 0.52; fires.push([h.x + Math.sin(a) * d, (h.y || ground(h.x, h.z)) + 1.4 + (i % 2) * 1.6, h.z + Math.cos(a) * d]); });
       const fg = new T.BufferGeometry(); fg.setAttribute('position', new T.BufferAttribute(new Float32Array(fires.flatMap(f => f.slice(0, 3))), 3));
       const firePts = new T.Points(fg, new T.PointsMaterial({ map: KIT.glowTex(w), color: 0xffa858, size: 4.5, transparent: true, depthWrite: false, blending: T.AdditiveBlending, fog: false, opacity: 0.85 }));
       firePts.frustumCulled = false; S.add(firePts);
@@ -674,6 +681,7 @@
       const ahead = this.plats.filter(p => p.on && !p.side && (p.sec > this.sec || (p.sec === this.sec && this.alongOf(p) > this.alongOf({ x: w.pos.x, z: w.pos.z }) + 0.5)) && p.top > w.y - 3).slice(0, 3);
       this.marks.forEach((m, i) => { const p = ahead[i]; if (!p) { m.material.opacity = 0; return; } m.position.set(p.x, p.top + 0.25, p.z); m.material.opacity = (0.32 - i * 0.08) * (0.75 + 0.25 * Math.sin(w.time * 3 - i)); });
       // the cave
+      if (this.phase === 'climb' && !this.done) { this.caveLight.intensity = 0.5 + 0.1 * Math.sin(w.time * 1.3); this.caveGlow.material.opacity = 0.18; }
       if (Math.hypot(w.pos.x - CAVE.x, w.pos.z - CAVE.z) < 3.2 && this.phase === 'climb' && !this.done) this.startRevelation(env);
       this.cam(env, dt, 0);
       this.focusItems();

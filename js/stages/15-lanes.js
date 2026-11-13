@@ -32,14 +32,15 @@
   function catMesh(w, col, eyeMat) {
     const parts = [];
     const add = (g, x, y, z, sx, sy, sz, rx, ry, rz) => { g.scale(sx || 1, sy || 1, sz || 1); g.rotateX(rx || 0); g.rotateY(ry || 0); g.rotateZ(rz || 0); g.translate(x, y, z); parts.push(g); };
-    add(new T.SphereGeometry(0.2, 14, 10), 0, 0.17, 0, 1.0, 0.85, 1.45);            // body
+    add(new T.SphereGeometry(0.2, 14, 10), 0, 0.15, -0.02, 1.0, 0.75, 1.55);            // body
     add(new T.SphereGeometry(0.16, 14, 10), 0, 0.26, 0.2, 1.0, 1.05, 1.0);          // chest
     add(new T.SphereGeometry(0.115, 14, 10), 0, 0.42, 0.27, 1.05, 0.92, 1.0);       // head
     add(new T.SphereGeometry(0.05, 8, 6), 0, 0.39, 0.37, 1.1, 0.8, 0.9);            // muzzle
     add(new T.ConeGeometry(0.045, 0.09, 6), -0.06, 0.53, 0.26, 1, 1, 0.6, 0, 0, 0.25);
     add(new T.ConeGeometry(0.045, 0.09, 6), 0.06, 0.53, 0.26, 1, 1, 0.6, 0, 0, -0.25);
     const tail = new T.TorusGeometry(0.2, 0.035, 6, 14, Math.PI * 1.1); add(tail, 0.03, 0.04, -0.02, 1, 1, 1.3, Math.PI / 2, 0, 0.2);
-    const body = new T.Mesh(SCAPE.merge(parts), new T.MeshStandardMaterial({ color: col, roughness: 0.92 }));
+    const fur = w._fur || (w._fur = w.tex(128, (g, S) => { g.fillStyle = '#d8d0c8'; g.fillRect(0, 0, S, S); for (let i = 0; i < 14; i++) { g.fillStyle = 'rgba(40,30,24,0.55)'; const y = i * S / 14 + Math.random() * 3; g.beginPath(); g.moveTo(0, y); for (let x = 0; x <= S; x += 8) g.lineTo(x, y + Math.sin(x * 0.1 + i) * 3); g.lineTo(S, y + 4); g.lineTo(0, y + 4); g.fill(); } for (let i = 0; i < 900; i++) { g.fillStyle = `rgba(${Math.random() < 0.5 ? '255,250,240' : '30,24,20'},0.25)`; g.fillRect(Math.random() * S, Math.random() * S, 1, 3); } }, [2, 2]));
+    const body = new T.Mesh(SCAPE.merge(parts), new T.MeshStandardMaterial({ color: col, map: fur, roughness: 0.95 }));
     body.castShadow = true;
     const eyes = new T.Mesh(SCAPE.merge([new T.SphereGeometry(0.02, 6, 4).translate(-0.04, 0.44, 0.375), new T.SphereGeometry(0.02, 6, 4).translate(0.04, 0.44, 0.375)]), eyeMat);
     const g = new T.Group(); g.add(body, eyes); g.scale.setScalar(1.25); g.userData.dynamic = true; w.scene.add(g);
@@ -79,7 +80,7 @@
           path: [[[0, 14, Z(2)], [0, 22, SQUARE_Z - 40]], [[0, 40, Z(10)], [0, 18, SQUARE_Z - 40]]], ease: 'glide',
           start: () => SND.glow(env.bus, 196, { gain: 0.05, dur: 6 }) },
         { dur: 6, fade: 'dip', line: 'Light every lamp of the lanes before your oil runs out.', ar: 'أشعِل كلَّ مصابيح الأزقّة قبل أن ينفد زيتُك.',
-          path: [[[X(START[0]) + 6, 22, Z(START[1]) + 18], [X(START[0]), 0, Z(START[1])]]] },
+          path: [[[X(START[0]) + 10, 30, Z(START[1]) + 26], [X(START[0]), 0, Z(START[1])]]] },
       ];
     },
     filmOpts: { end() { const s = ENGINE.cur; s.filmDoorOpen = 1; s.purrBoost = 0; s.startPlay && s.startPlay(); } },
@@ -95,8 +96,8 @@
         y += SCAPE.fbm(x * 0.02, z * 0.02, 3) * 1.4 * U.smooth(120, 200, d);
         return y;
       };
-      const w = this.w = WORLD.create(env, { start: { x: X(START[0]), z: Z(START[1]) + 7.2, yaw: 0, pitch: -1.36 }, exposure: 1.0, far: 2200, fov: 46, fog: { color: 0x10162a, density: 0.0021 } });
-      const S = w.scene;
+      const w = this.w = WORLD.create(env, { start: { x: X(START[0]), z: Z(START[1]) + 9.5, yaw: 0, pitch: -1.38 }, exposure: 1.0, far: 2200, fov: 46, fog: { color: 0x10162a, density: 0.0021 } });
+      const S = w.scene; w.eye = 50;   // the film hands over to the high lantern view
       const ter = SCAPE.terrain(w, { size: 1900, seg: 280, height: H, rock: [0.82, 0.93], rockHeight: [30, 70], colors: { low: '#a89880', high: '#988870', rock: '#5a5048', dark: '#3a3430' },
         tex: 'gravel', rockTex: 'lava', photo: { ground: 'dry_ground_rocks', rock: 'dark_rock', normal: 1 }, rep: 0.3, rockRep: 0.05 });
       w.ground = ter.ground;
@@ -119,6 +120,7 @@
         lattice: new T.MeshStandardMaterial({ map: KIT.lattice(w, [2, 3]), alphaTest: 0.45, side: T.DoubleSide, color: 0x9a7048, roughness: 0.8 }),
         glowWin: new T.MeshBasicMaterial({ color: 0xffb060 }), darkWin: new T.MeshStandardMaterial({ color: 0x120e0c, roughness: 1 }),
         doorGlow: new T.MeshBasicMaterial({ color: 0xffc078 }),
+        roof: PHOTO.mat(w, 'mud_cracked_dry_03', { triplanar: 0.3, color: '#7a6858', fallback: KIT.sand(w, [1, 1]) }),
       };
       if (!PHOTO.enabled) M.base.map = KIT.basalt(w, [1, 1]);
 
@@ -132,6 +134,7 @@
         const h = heightAt(i, j) + (r() < 0.15 ? 2.6 : 0); this.heights[j * N + i] = h;
         const mat = M.plaster[(Math.floor(i / 3) * 7 + Math.floor(j / 3) * 3) % M.plaster.length];
         box(statics, mat, CS + 0.02, h, CS + 0.02, X(i), h / 2, Z(j));
+        box(statics, M.roof, CS - 0.2, 0.08, CS - 0.2, X(i), h + 0.04, Z(j), 0, false);
         box(statics, M.base, CS + 0.08, 0.9, CS + 0.08, X(i), 0.45, Z(j));
         // facades that face a lane
         for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
@@ -252,7 +255,7 @@
       if (this.purr.gain) SND.lfo(b, this.purr.gain.gain, 23, 0.02);
       this.flameN = SND.noise(b, { color: 'brown', type: 'highpass', freq: 1600, q: 0.4, gain: 0.004 });
       this.clocks = { cricket: 1, voice: 4, owl: 12, step: 0 };
-      this.post = w.post({ bloom: 0.85, threshold: 0.6, vignette: 0.45, grain: 0.04, sat: 1.0, contrast: 1.06, lift: [0.0, 0.01, 0.03], gain: [1.05, 0.98, 0.92] });
+      this.post = w.post({ bloom: 0.6, threshold: 0.72, vignette: 0.45, grain: 0.04, sat: 1.0, contrast: 1.06, lift: [0.0, 0.01, 0.03], gain: [1.05, 0.98, 0.92] });
       this.state = 'film'; this.region = 0; this.oil = 100; this.view = 'top';
       this.pl = { i: START[0], j: START[1], x: X(START[0]), z: Z(START[1]), dir: [0, 0], want: [0, -1] };
       this.placeLantern(0);
@@ -494,8 +497,8 @@
       this.lantern.position.set(P.x, 1.5 + Math.sin(t * 2.2) * 0.07, P.z);
       this.lantern.rotation.z = (P.dir[0] || 0) * -0.12; this.lantern.rotation.x = (P.dir[1] || 0) * 0.12;
       const fl = 1 + Math.sin(t * 21) * 0.05 + (o < 0.25 ? Math.sin(t * 9) * 0.15 : 0);
-      this.lLight.intensity = (0.6 + 2.4 * Math.sqrt(o)) * fl; this.lLight.distance = 8 + 12 * o;
-      this.lHalo.scale.setScalar((3 + 5 * o) * fl); this.lHalo.material.opacity = 0.2 + 0.18 * o;
+      this.lLight.intensity = (0.5 + 1.6 * Math.sqrt(o)) * fl; this.lLight.distance = 7 + 9 * o;
+      this.lHalo.scale.setScalar((1.6 + 2.6 * o) * fl); this.lHalo.material.opacity = (this.view === 'lane' ? 0.08 : 0.16) + 0.12 * o;
       this.lCore.scale.setScalar((0.5 + 0.8 * o) * fl);
     },
     camTick(dt) {
@@ -507,9 +510,9 @@
         this.camP.lerp(want, 1 - Math.exp(-dt * 2));
         w.camera.position.copy(this.camP); w.camera.lookAt(U.lerp(P.x, -10, k), 0, U.lerp(P.z, SQUARE_Z - 30, k));
       } else if (this.view === 'top') {
-        want = new T.Vector3(P.x, 36, P.z + 7.6);
+        want = new T.Vector3(P.x, 50, P.z + 9.5);
         this.camP.lerp(want, 1 - Math.exp(-dt * 5));
-        w.camera.position.copy(this.camP); w.camera.lookAt(this.camP.x, 0, this.camP.z - 7.6);
+        w.camera.position.copy(this.camP); w.camera.lookAt(this.camP.x, 0, this.camP.z - 9.5);
       } else {
         const d = (this.pl.dir[0] || this.pl.dir[1]) ? this.pl.dir : (this.lastDir || [0, -1]); this.lastDir = d;
         this.yawC = this.yawC == null ? Math.atan2(-d[0], -d[1]) : this.yawC;
