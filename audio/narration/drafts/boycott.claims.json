@@ -1,0 +1,16 @@
+[
+  {
+    "claim": "The boycott went on for two or three years until the two clans were exhausted, for nothing reached them except what was sent secretly by those of Quraysh who wished to keep ties with them.",
+    "grade": "sirah",
+    "ref": "Ibn Ishaq (Ibn Hisham), the account of the pact; Guillaume's translation, The Life of Muhammad",
+    "url": "https://en.wikipedia.org/wiki/Meccan_boycott_of_the_Hashemites",
+    "note": "Ibn Ishaq's wording as quoted in the article (Guillaume): 'This state of affairs continued for two or three years, until the two clans were exhausted, since nothing reached any of them except what was sent secretly by those of the Quraysh who wished to maintain relations with them.' Supports the line 'food reached them only in secret'. No isnad."
+  },
+  {
+    "claim": "The boycott document was hung inside the Ka'bah, and the sirah names its writer as Mansur ibn Ikrimah.",
+    "grade": "sirah",
+    "ref": "Ibn Ishaq (Ibn Hisham), the account of the pact",
+    "url": "https://en.wikipedia.org/wiki/Meccan_boycott_of_the_Hashemites",
+    "note": "Already in the note of claim 60 of sources.verified.json (boycott); listed here because the film and a discovery use it directly. Some name the writer as al-Nadr ibn al-Harith."
+  }
+]

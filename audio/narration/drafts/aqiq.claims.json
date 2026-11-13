@@ -1,0 +1,37 @@
+[
+  {
+    "claim": "While he passed the night at his resting place at Dhul-Hulayfah in the bottom of the valley (al-'Aqiq), he saw a dream and it was said to him: 'You are in a blessed valley.'",
+    "grade": "sahih",
+    "ref": "Sahih al-Bukhari 2336, 1535 (Ibn 'Umar)",
+    "url": "https://sunnah.com/bukhari:2336",
+    "note": "The place is called al-Mu'arras in Bukhari 1535."
+  },
+  {
+    "claim": "'Abd Allah ibn 'Umar used to make his camel kneel at that spot in the valley, seeking the place where the Prophet used to rest.",
+    "grade": "sahih",
+    "ref": "Sahih al-Bukhari 1535",
+    "url": "https://sunnah.com/bukhari:1535",
+    "note": "Narrated by Musa ibn 'Uqbah from Salim from his father."
+  },
+  {
+    "claim": "The Prophet fixed Dhul-Hulayfah as the miqat (the place to enter ihram) for the people of Madinah.",
+    "grade": "sahih",
+    "ref": "Sahih al-Bukhari 1524, 1526 (Ibn 'Abbas); Sahih Muslim 1181",
+    "url": "https://sunnah.com/bukhari:1524",
+    "note": "Dhul-Hulayfah is today called Abyar 'Ali."
+  },
+  {
+    "claim": "Wadi al-'Aqiq is a seasonal valley, dry most of the year, that runs northward along the western side of Madinah and can flood in winter; it meets the city's other great wadis, Buthan and Qanat, to the north-west.",
+    "grade": "history",
+    "ref": "Madain Project, 'al-Aqeeq Valley'; Saudipedia, 'Geography of Al-Madinah Al-Munawwarah'; Wikipedia, 'Wadi Qanat'",
+    "url": "https://madainproject.com/al_aqeeq_valley",
+    "note": "No length is asserted."
+  },
+  {
+    "claim": "The Hejaz Railway crossed the 'Aqiq valley near Madinah on a bridge; the old bridge was demolished in 2005 after rain damage.",
+    "grade": "history",
+    "ref": "Wikipedia, 'Hejaz railway'",
+    "url": "https://en.wikipedia.org/wiki/Hejaz_railway",
+    "note": "Shared with the railway station."
+  }
+]

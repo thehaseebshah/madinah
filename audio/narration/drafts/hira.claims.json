@@ -1,0 +1,30 @@
+[
+  {
+    "claim": "Revelation began with true dreams that came like the light of dawn (falaq al-subh); then seclusion was made dear to him, and he would retreat to the Cave of Hira to worship for many nights, taking provisions with him and returning to Khadijah for more.",
+    "grade": "sahih",
+    "ref": "Sahih al-Bukhari 3 (from 'A'ishah); also Sahih al-Bukhari 6982; Sahih Muslim 160",
+    "url": "https://sunnah.com/bukhari:3",
+    "note": "Wording of translations varies ('bright daylight' / 'the break of dawn'); 'provisions' renders zad / tazawwud."
+  },
+  {
+    "claim": "Revelation came to him when he was forty years old; he then stayed in Makkah thirteen years before migrating.",
+    "grade": "sahih",
+    "ref": "Sahih al-Bukhari 3851, 3902 (Ibn 'Abbas)",
+    "url": "https://sunnah.com/bukhari:3851",
+    "note": "Arabic: wa-huwa ibnu arba'in. Used only for 'about forty'."
+  },
+  {
+    "claim": "The Qur'an was first sent down in the month of Ramadan.",
+    "grade": "quran",
+    "ref": "Qur'an 2:185",
+    "url": "https://quran.com/2/185",
+    "note": "'The month of Ramadan in which the Qur'an was sent down, a guidance for people.'"
+  },
+  {
+    "claim": "The Qur'an was sent down in the Night of Decree (Laylat al-Qadr), which is better than a thousand months.",
+    "grade": "quran",
+    "ref": "Qur'an 97:1-3",
+    "url": "https://quran.com/97",
+    "note": "Quoted directly; no date for the night is asserted."
+  }
+]

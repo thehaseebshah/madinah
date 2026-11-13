@@ -1,502 +1,572 @@
-/* Station VIII — The Well of Rumah (walkable).
-   Dusk in a palm garden west of the city. A basalt well-head with a wooden frame and pulley, a stone
-   channel, and the evening sky lying in a small circle at the bottom of the shaft. Haul the bucket up
-   hand over hand, then carry it to five places in the garden: the flock's trough, a traveller's
-   waterskin, a palm's channel, a house's jar and a mosque's ablution basin. Each fills and glows,
-   and with each one the evening choir gains a voice. No person is shown. */
+/* Madinah — The Well of Rumah, about 2 AH.
+   Genre: flow puzzle (Pipe Mania, water routing). A sweet-water well in the al-‘Aqiq area: palm
+   gardens to the north, pasture and troughs to the east, the edge of the town to the south, the sandy
+   bed of the wadi to the west. The bucket rises; while it rises you lay and turn stone channel pieces
+   on the ground; then the water runs, piece by piece, and must reach the gardens, troughs and town
+   before it spills into the sand. A spill is only a wet patch: the bucket is drawn again and the water
+   tries once more. Three networks, each harder; then the well is given freely to all and every
+   channel runs at once.
+   Feeling: generosity. Colour script: noon sand and palm green; water blue-silver; gold for the
+   piece in hand. */
 (function () {
   'use strict';
   if (!window.WORLD) return;
-  const MOUTH_R = 0.82, MOUTH_Y = 0.92, WATER_Y = -3.4, BUCKET_TOP = 1.25, BUCKET_LOW = WATER_Y + 0.12;
-  const PULLS = 12, SLIP = 0.035;
-  const HAUL = { x: 0, z: 1.9 };
+  const T = THREE;
 
-  const WATER_VERT = `varying vec3 vW; void main(){ vec4 wp = modelMatrix*vec4(position,1.); vW = wp.xyz; gl_Position = projectionMatrix*viewMatrix*wp; }`;
-  const WATER_FRAG = `
-uniform float uTime; uniform vec3 uTop; uniform vec3 uHor; uniform vec3 uSunDir; uniform vec3 uSun; uniform vec4 uRip[8];
-uniform float uShaft; uniform float uMouthY; uniform float uMouthR; uniform float uGlow; uniform vec3 uGlowCol; uniform float uFill;
-varying vec3 vW;
-void main(){
-  vec2 p = vW.xz;
-  vec2 g = vec2(0.);
-  g += vec2(0.7, 0.7) * cos(dot(p, vec2(0.7, 0.7))*7.0 + uTime*1.3) * 0.012;
-  g += vec2(-0.8, 0.6) * cos(dot(p, vec2(-0.8, 0.6))*11.0 + uTime*1.9) * 0.008;
-  for (int i=0;i<8;i++){
-    vec4 r = uRip[i];
-    if (r.w <= 0.) continue;
-    float age = uTime - r.z; if (age < 0. || age > 3.5) continue;
-    vec2 dv = p - r.xy; float d = length(dv) + 1e-4;
-    float front = age * 0.9;
-    float ring = sin((d - front) * 34.) * exp(-pow(d - front, 2.) * 40.) * exp(-age * 1.2) * r.w;
-    g += dv / d * ring * 0.5;
+  /* ---------------- the three networks (local grids, row 0 nearest the well) ---------------- */
+  const CS = 2.2, D0 = 3.6;            // cell size; first row's distance from the well's centre
+  const N = 1, E = 2, S = 4, W = 8;
+  const DIRS = [[N, 0, 1], [E, 1, 0], [S, 0, -1], [W, -1, 0]];   // mask, di, dj
+  const OPP = { 1: 4, 2: 8, 4: 1, 8: 2 };
+  const rot = m => ((m << 1) | (m >> 3)) & 15;
+  const PIECES = { straight: 5, bend: 3, tee: 7, cross: 15 };
+  const LEVELS = [
+    { name: 'The first garden', ang: 0, nx: 5, nz: 5, src: 2, cd: 22, speed: 2.3, palette: true,
+      targets: [{ i: 3, j: 4, d: N, kind: 'garden' }], rocks: [[2, 2], [1, 3], [4, 1]], fixed: [],
+      title: 'Part 1 of 3 · The first garden', step: 'While the bucket rises, lay channels from the well to the garden · click to lay, R to turn' },
+    { name: 'Garden and trough', ang: -Math.PI / 2, nx: 6, nz: 6, src: 2, cd: 18, speed: 1.7, palette: false,
+      targets: [{ i: 0, j: 3, d: W, kind: 'trough' }, { i: 4, j: 5, d: N, kind: 'garden' }], rocks: [[2, 3], [3, 2], [5, 1], [1, 1]], fixed: [],
+      title: 'Part 2 of 3 · Garden and trough', step: 'The pieces now come in turn. Branch the water to the trough and the garden' },
+    { name: 'To the town', ang: Math.PI, nx: 7, nz: 6, src: 3, cd: 18, speed: 1.3, palette: false,
+      targets: [{ i: 1, j: 5, d: N, kind: 'cistern' }, { i: 6, j: 2, d: E, kind: 'trough' }, { i: 5, j: 5, d: N, kind: 'garden' }], rocks: [[2, 2], [4, 3], [0, 2], [6, 4], [3, 4]],
+      fixed: [[3, 0, PIECES.straight], [3, 1, PIECES.tee]],
+      title: 'Part 3 of 3 · To the town', step: 'Three to reach, and the old channels cannot be moved. Close every open end' },
+  ];
+
+  /* ---------------- ground ---------------- */
+  function H(x, z) {
+    const r = Math.hypot(x, z);
+    let y = (SCAPE.fbm(x * 0.008, z * 0.008 + 6, 3) * 2.4 + SCAPE.fbm(x * 0.05, z * 0.05, 2) * 0.3) * U.smooth(22, 60, r);
+    y += SCAPE.fbm(x * 0.4, z * 0.4, 2) * 0.03;
+    // the bed of al-'Aqiq to the west
+    const wx = x + 70 + Math.sin(z * 0.012) * 18; y -= 2.6 * Math.exp(-wx * wx / (2 * 18 * 18));
+    // the harrah to the east and the far ring
+    y += U.smooth(110, 220, x) * (4 + 8 * SCAPE.ridge(x * 0.02, z * 0.02, 3));
+    y += U.smooth(420, 720, r) * (30 + 110 * SCAPE.ridge(x * 0.004 + 2, z * 0.004, 4));
+    return y;
   }
-  vec3 n = normalize(vec3(-g.x, 1., -g.y));
-  vec3 v = normalize(cameraPosition - vW);
-  vec3 rf = reflect(-v, n);
-  vec3 sky = mix(uHor, uTop, clamp(rf.y*1.3, 0., 1.));
-  float s = max(dot(rf, normalize(uSunDir)), 0.);
-  sky += uSun * (pow(s, 12.)*0.5 + pow(s, 200.)*2.);
-  float fres = 0.04 + 0.96*pow(1. - max(dot(n, v), 0.), 5.);
-  vec3 deep = vec3(0.012, 0.02, 0.03);
-  vec3 col;
-  if (uShaft > 0.5) {
-    // down in the shaft only the small circle of sky at the mouth can be seen in the water
-    float t = (uMouthY - vW.y) / max(rf.y, 0.02);
-    vec2 hit = vW.xz + rf.xz * t;
-    float inMouth = smoothstep(uMouthR, uMouthR - 0.07, length(hit));
-    col = mix(deep + sky * 0.16, sky * 1.15, inMouth * 0.92);
-    col += vec3(0.05, 0.04, 0.03) * (1. - inMouth) * pow(1. - max(dot(n, v), 0.), 2.);
-  } else {
-    col = mix(deep * 2., sky, 0.25 + fres * 0.7);
+
+  function cellLocal(L, i, j) { return { x: (i - (L.nx - 1) / 2) * CS, z: -(D0 + CS / 2 + j * CS) }; }
+  function toWorld(L, x, z) { const c = Math.cos(L.ang), s = Math.sin(L.ang); return { x: x * c + z * s, z: -x * s + z * c }; }
+  function cellWorld(L, i, j) { const l = cellLocal(L, i, j); return toWorld(L, l.x, l.z); }
+  // a mask's connector in local terms, turned into a world-space yaw for meshes
+  const maskRot = (base, m) => { for (let r = 0; r < 4; r++) { if (m === base) return r; base = rot(base); } return -1; };
+  const typeOf = m => { const c = [N, E, S, W].filter(d => m & d).length; if (c === 4) return 'cross'; if (c === 3) return 'tee'; if (m === 5 || m === 10) return 'straight'; return 'bend'; };
+
+  /* ---------------- channel geometry: stone walls round a bed, with the arms that are open ---------------- */
+  function channelGeo(mask, part) {
+    // a 5 x 5 sub-grid of the cell: the channel runs through the middle strip of each open arm
+    const sub = CS / 5, list = [], open = new Set(['2,2']);
+    if (mask & N) { open.add('2,3'); open.add('2,4'); } if (mask & S) { open.add('2,1'); open.add('2,0'); }
+    if (mask & E) { open.add('3,2'); open.add('4,2'); } if (mask & W) { open.add('1,2'); open.add('0,2'); }
+    for (let a = 0; a < 5; a++) for (let b = 0; b < 5; b++) {
+      const k = a + ',' + b, x = (a - 2) * sub, z = -(b - 2) * sub;
+      if (part === 'water') { if (open.has(k)) list.push(new T.BoxGeometry(sub * 1.02, 0.2, sub * 1.02).translate(x, 0.1, z)); continue; }
+      if (open.has(k)) { list.push(new T.BoxGeometry(sub, 0.06, sub).translate(x, -0.05, z)); continue; }
+      // walls only next to the channel
+      const near = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([da, db]) => open.has((a + da) + ',' + (b + db)));
+      if (near) list.push(new T.BoxGeometry(sub * 0.98, 0.34, sub * 0.98).translate(x, 0.12, z));
+    }
+    return SCAPE.merge(list);
   }
-  col += uGlowCol * uGlow * (0.35 + 0.25 * sin(uTime * 2. + p.x * 3.));
-  gl_FragColor = vec4(col, uFill);
-}`;
 
   ENGINE.register(WORLD.stage({
     key: 'well',
-    arabic: 'بئر رومة',
+    arabic: 'بِئْرُ رُومَة',
     title: 'The Well of Rumah',
-    era: 'An endowment of ‘Uthman ibn ‘Affan',
-    hint: 'WASD to walk · E at the pulley, then A and D in turn to haul · E to pour',
-    sound: { reverb: 0.45 },
-    story: `<p>In early Madinah, sweet water was scarce, and the best well, Rumah, belonged to a man who sold its water. The Prophet ﷺ asked who would buy it and give it freely to all. ‘Uthman ibn ‘Affan bought it and made it a <i>waqf</i>, an endowment whose water belonged to everyone.</p>
-            <p class="q"><span class="ar">مَنْ يَشْتَرِي بِئْرَ رُومَةَ فَيَجْعَلَ دَلْوَهُ مَعَ دِلَاءِ الْمُسْلِمِينَ</span>“Whoever buys the well of Rumah and makes his bucket one among the buckets of the Muslims…” (Jami‘ at-Tirmidhi 3703, graded hasan)</p>
-            <p>The well still stands in the north-west of the city, among palm groves. Draw its water, and carry it to whoever needs it.</p>`,
+    era: 'al-‘Aqiq, Madinah · the early years after the Hijrah',
+    hint: 'While the bucket rises, click cells to lay channel · R or right-click turns the piece · 1–4 choose (first garden) · V to walk',
+    hintTouch: 'Tap cells to lay channel · ⟳ turns the piece · reach every garden and trough before the water spills',
+    sound: { reverb: 0.3 },
+    story: `<p>When the Prophet ﷺ came to Madinah there was no sweet water but the well of Rumah. He asked: <span class="q">“Who will buy the well of Rumah and place his bucket alongside the buckets of the Muslims, for something better than it in Paradise?”</span> ‘Uthman bought it from his own wealth (Jami‘ al-Tirmidhi 3703).</p>
+            <p>The well lies in the area of al-‘Aqiq, north-west of the Prophet’s Mosque.</p>`,
 
     enter(env) {
-      const T = THREE, self = this;
-      const fogCol = new T.Color(0x4a4058);
       const w = this.w = WORLD.create(env, {
-        start: { x: 0.6, z: 7.5, yaw: 0.05, pitch: -0.08 }, exposure: 1.0, far: 900,
-        fog: { color: fogCol, density: 0.018 }, bounds: [-27, -27, 27, 27],
-        surface: (x, z) => (Math.abs(x + 12) < 1.1 ? 'gravel' : Math.hypot(x, z) < 2.2 ? 'stone' : 'sand'),
+        start: { x: 0, z: 8, yaw: 0, pitch: -0.1 }, exposure: 0.8, far: 2600, speed: 3.2, run: 6.4,
+        fog: { color: 0xd8ccb8, density: 0.0011 }, bounds: [-150, -150, 150, 150], ground: H,
+        surface: (x, z) => (Math.hypot(x, z) < 3 ? 'stone' : 'sand'),
       });
-      const S = w.scene;
-      this.carrying = false; this.hauling = false; this.depth = 0; this.lastHand = null; this.idle = 0; this.given = 0;
-      this.pours = []; this.seen = {};
+      const S = w.scene, r = U.seeded(3703);
+      this.queue = []; this.dipV = 0; this.dipGoal = 0; this.li = -1; this.mode = 'build'; this.hand = { type: 'straight', m: PIECES.straight }; this.nextQ = [];
+      this.cells = []; this.watered = new Set(); this.done = false;
 
-      /* ---------- dusk ---------- */
-      const sunDir = new T.Vector3(-0.95, 0.035, 0.3).normalize();
-      this.skyM = w.sky({ top: '#1b2452', mid: '#e8946c', bot: '#2a2230', sunDir: sunDir.toArray(), sun: '#ff9858', sunSize: 0.0011, stars: 0.35 });
-      S.add(new T.HemisphereLight(0x7080c0, 0x2e2428, 0.6));
-      const sun = new T.DirectionalLight(0xff9a68, 0.6); sun.position.copy(new T.Vector3(-0.9, 0.22, 0.3).normalize()).multiplyScalar(40); S.add(sun);
+      /* ---------- sky: a clear, hot day ---------- */
+      w.sky({ top: '#5a88c8', mid: '#e8dcc8', bot: '#d8ccb8', sunDir: [0.5, 0.68, 0.4], sun: '#fff0d8', sunSize: 0.0014, clouds: 0.15, haze: 0.35 });
+      this.sun = new T.DirectionalLight(0xfff0dc, 2.0); this.sun.position.set(50, 68, 40); S.add(this.sun);
+      S.add(new T.HemisphereLight(0xc8d8f0, 0x9a7a5a, PHOTO.enabled ? 0.06 : 0.6));
+      w.followShadow(this.sun, 36, 2048);
+      PHOTO.sky(w, 'kloofendal_43d_clear_puresky', { sun: this.sun, intensity: 0.7, rotation: 0.67 - 0.629, haze: '#d8ccb8', horizon: 0.4, ground: '#b89a78', bounce: 0.5 });
 
-      /* ---------- the garden floor, with a hole for the shaft ---------- */
-      const gs = new T.Shape(); gs.moveTo(-80, -80); gs.lineTo(80, -80); gs.lineTo(80, 80); gs.lineTo(-80, 80); gs.lineTo(-80, -80);
-      const hole = new T.Path(); hole.absarc(0, 0, MOUTH_R + 0.05, 0, Math.PI * 2, true); gs.holes.push(hole);
-      const gg = new T.ShapeGeometry(gs, 48); gg.rotateX(-Math.PI / 2);
-      const ground = new T.Mesh(gg, KIT.std({ map: KIT.sand(w, [0.14, 0.14]), color: 0xa48a74 }));
-      S.add(ground);
-      const path = new T.Mesh(new T.PlaneGeometry(2.2, 56), KIT.std({ map: KIT.sand(w, [0.6, 14]), color: 0xd8c0a0 }));
-      path.rotation.x = -Math.PI / 2; path.position.set(-12, 0.01, 0); S.add(path);
+      /* ---------- the land ---------- */
+      SCAPE.terrain(w, { size: 1600, seg: 300, height: H, rock: [0.82, 0.94], rockHeight: [5, 16], colors: { low: '#ccb08a', high: '#b89a74', rock: '#4a3e3a', dark: '#2a2422' },
+        tex: 'dune', rockTex: 'lava', photo: { ground: 'dense_sand', rock: 'dark_rock', normal: 1 }, rep: 0.22, rockRep: 0.06 });
+      SCAPE.horizon(w, { haze: '#d8ccb8', layers: [{ r: 1000, h: 80, color: '#6e5e54', seed: 6 }, { r: 1450, h: 120, color: '#948478', seed: 10 }, { r: 2050, h: 150, color: '#b6aaa0', seed: 14 }] });
+      const inGrid = (x, z, pad) => LEVELS.some(L => { const c = Math.cos(-L.ang), s = Math.sin(-L.ang), lx = x * c + z * s, lz = -x * s + z * c; return Math.abs(lx) < L.nx * CS / 2 + (pad || 3) && lz < 0 && lz > -(D0 + L.nz * CS + (pad || 3) + 5); }) || Math.hypot(x, z) < 6 + (pad || 0);
+      const wadi = (x, z) => Math.abs(x + 70 + Math.sin(z * 0.012) * 18) < 26;
+      SCAPE.scatter(w, { kind: 'palm', n: 280, area: [-200, -220, 200, 60], scale: [7, 13], density: (x, z) => (z < -10 ? 1 : 0.3) * U.smooth(-0.3, 0.2, SCAPE.fbm(x * 0.012 + 9, z * 0.012, 2)) * (wadi(x, z) ? 0.15 : 1), avoid: (x, z) => inGrid(x, z, 5), seed: 81, collide: 0.03 });
+      SCAPE.scatter(w, { kind: 'palm', n: 240, area: [-650, -650, 650, 650], scale: [8, 13], density: (x, z) => U.smooth(210, 250, Math.hypot(x, z)) * (1 - U.smooth(380, 460, Math.hypot(x, z))), seed: 82, castShadow: false });
+      SCAPE.scatter(w, { kind: 'acacia', n: 40, area: [-140, -150, -10, 150], scale: [0.9, 1.5], density: (x, z) => (wadi(x, z) ? 1 : 0.1), avoid: (x, z) => inGrid(x, z, 6), seed: 83, collide: true });
+      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_02', fallback: 'boulder', n: 50, area: [60, -150, 150, 150], scale: [0.8, 2.4], avoid: (x, z) => inGrid(x, z, 6), seed: 84, collide: 0.4 });
+      SCAPE.scatter(w, { kind: 'boulder', tex: 'lava', n: 300, area: [80, -600, 700, 600], density: (x, z) => U.smooth(100, 160, x), scale: [1, 5], seed: 85 });
+      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_stones_01', variant: 0, fallback: 'pebble', n: 1300, area: [-150, -150, 150, 150], scale: [0.8, 1.6], avoid: (x, z) => inGrid(x, z, 0), seed: 86 });
+      SCAPE.scatter(w, { kind: 'rock', n: 500, area: [-150, -150, 150, 150], scale: [0.2, 0.9], avoid: (x, z) => inGrid(x, z, 1), seed: 87 });
+      SCAPE.scatter(w, { kind: 'model', model: 'grass_medium_01', variant: 2, fallback: 'grass', n: 600, area: [-150, -150, 150, 150], scale: [0.8, 1.5], avoid: (x, z) => inGrid(x, z, 1), seed: 88 });
+      SCAPE.scatter(w, { kind: 'grass', n: 1300, area: [-150, -150, 150, 150], scale: [0.4, 0.9], color: '#d8cc9a', avoid: (x, z) => inGrid(x, z, 1), seed: 89, castShadow: false });
+      SCAPE.scatter(w, { kind: 'model', model: 'wild_rooibos_bush', variant: 0, fallback: 'shrub', n: 120, area: [-150, -150, 150, 150], scale: [0.7, 1.3], avoid: (x, z) => inGrid(x, z, 3), seed: 90 });
+      SCAPE.scatter(w, { kind: 'thorn', n: 80, area: [-150, -150, 150, 150], scale: [0.6, 1.2], avoid: (x, z) => inGrid(x, z, 3), seed: 91 });
+      SCAPE.birds(w, { n: 9, x: 0, z: -30, y: 45, r: 70 });
+      // the edge of the town, beyond the southern network
+      const plaster = PHOTO.mat(w, 'clay_plaster', { triplanar: 0.35, color: 0xffeedd, fallback: SCAPE.tex.mud(w) });
+      const hs = SCAPE.scatter(w, { kind: 'house', n: 40, area: [-80, 30, 80, 140], scale: [5, 9], avoid: (x, z) => inGrid(x, z, 8), density: (x, z) => U.smooth(150, 40, Math.hypot(x, z - 40)), seed: 92, collide: true });
+      hs.meshes.forEach(m => { m.material = plaster; });
+      SCAPE.smoke(w, { sources: [[-30, H(-30, 70) + 3, 70], [40, H(40, 90) + 3, 90]], height: 14, opacity: 0.12 });
 
-      /* ---------- the well-head: basalt, a wooden frame, a pulley ---------- */
-      const basalt = KIT.basalt(w, [3, 0.6]);
-      const basaltM = KIT.std({ map: KIT.mudBrick(w, [3, 0.55]), color: 0x8a8284, relief: 0.07 });
-      const head = new T.Mesh(new T.CylinderGeometry(MOUTH_R + 0.5, MOUTH_R + 0.6, MOUTH_Y, 28, 1, true), basaltM); head.position.y = MOUTH_Y / 2; S.add(head);
-      const capG = new T.RingGeometry(MOUTH_R, MOUTH_R + 0.5, 28, 1); capG.rotateX(-Math.PI / 2);
-      const cap = new T.Mesh(capG, KIT.std({ map: basalt, color: 0xe8e0dc })); cap.position.y = MOUTH_Y; S.add(cap);
-      const shaftTex = KIT.basalt(w, [4, 5]);
-      const shaft = new T.Mesh(new T.CylinderGeometry(MOUTH_R, MOUTH_R, MOUTH_Y - WATER_Y + 0.3, 28, 1, true), KIT.std({ map: shaftTex, color: 0x9a928e, side: T.BackSide, relief: 0.08 }));
-      shaft.position.y = (MOUTH_Y + WATER_Y - 0.3) / 2; shaft.userData.noCast = true; S.add(shaft);
-      w.addCircle(0, 0, MOUTH_R + 0.6);
-      const woodM = KIT.std({ map: KIT.wood(w, [1, 3], '#6a4a2e'), color: 0xc0a080, roughness: 0.85 });
-      for (const sx of [-1, 1]) { const post = new T.Mesh(new T.BoxGeometry(0.16, 2.9, 0.16), woodM); post.position.set(sx * (MOUTH_R + 0.4), 1.45, 0); S.add(post); }
-      const beam = new T.Mesh(new T.CylinderGeometry(0.07, 0.07, 2 * MOUTH_R + 1.1, 8), woodM); beam.rotation.z = Math.PI / 2; beam.position.set(0, 2.8, 0); S.add(beam);
-      // the pulley: a wooden wheel turning on the beam
-      this.wheel = new T.Group(); this.wheel.position.set(0, 2.55, 0); this.wheel.userData.dynamic = true; S.add(this.wheel);
-      const wh = new T.Mesh(new T.CylinderGeometry(0.22, 0.22, 0.08, 18), woodM); wh.rotation.z = Math.PI / 2; this.wheel.add(wh);
-      for (let i = 0; i < 4; i++) { const sp = new T.Mesh(new T.BoxGeometry(0.1, 0.05, 0.44), KIT.std({ color: 0x4a3220 })); sp.rotation.x = i * Math.PI / 4; this.wheel.add(sp); }
-      const hang = new T.Mesh(new T.BoxGeometry(0.04, 0.26, 0.04), woodM); hang.position.set(0, 2.68, 0); S.add(hang);
-      // the rope and the bucket
-      const ropeM = KIT.std({ color: 0x6a5038, roughness: 1 });
-      this.rope = new T.Mesh(new T.CylinderGeometry(0.01, 0.01, 1, 5), ropeM); this.rope.userData.dynamic = true; S.add(this.rope);
-      this.ropeH = new T.Mesh(new T.CylinderGeometry(0.01, 0.01, 1, 5), ropeM); this.ropeH.userData.dynamic = true; S.add(this.ropeH);
-      const leather = KIT.std({ color: 0x5a3a22, roughness: 0.75 });
-      const makeBucket = () => {
-        const g = new T.Group();
-        const body = new T.Mesh(new T.CylinderGeometry(0.17, 0.13, 0.28, 14, 1, true), new T.MeshStandardMaterial({ color: 0x5a3a22, roughness: 0.75, side: T.DoubleSide })); g.add(body);
-        const bot = new T.Mesh(new T.CircleGeometry(0.13, 14), leather); bot.rotation.x = -Math.PI / 2; bot.position.y = -0.14; g.add(bot);
-        const bar = new T.Mesh(new T.BoxGeometry(0.36, 0.025, 0.025), woodM); bar.position.y = 0.16; g.add(bar);
-        const water = new T.Mesh(new T.CircleGeometry(0.155, 14), new T.MeshBasicMaterial({ color: 0x16223a })); water.rotation.x = -Math.PI / 2; water.position.y = 0.08; water.visible = false; g.add(water);
-        g.userData.water = water;
-        return g;
-      };
-      this.bucket = makeBucket(); this.bucket.userData.dynamic = true; S.add(this.bucket);
-      this.wellLight = new T.PointLight(0xffb060, 1.4, 9, 2); this.wellLight.position.set(1.2, 2.2, 0.8); S.add(this.wellLight);
-      const lpost = new T.Mesh(new T.CylinderGeometry(0.035, 0.04, 2.2, 6), woodM); lpost.position.set(1.35, 1.1, 0.9); S.add(lpost);
-      this.wellLamp = KIT.glow(w, 0xffc070, 1.0, 0.9); this.wellLamp.position.set(1.35, 2.25, 0.9); S.add(this.wellLamp);
-      this.pulleyGlow = KIT.glow(w, 0xffc070, 2.2, 0); this.pulleyGlow.position.set(0, 1.3, 1.2); S.add(this.pulleyGlow);
+      /* ---------- materials ---------- */
+      const stone = this.stone = PHOTO.mat(w, 'old_stone_wall', { triplanar: 0.9, color: 0xf0e6d8, fallback: SCAPE.tex.granite(w) });
+      this.oldStone = PHOTO.mat(w, 'dry_riverbed_rock', { triplanar: 0.9, color: 0xc8bca8, fallback: SCAPE.tex.granite(w) });
+      const wood = PHOTO.mat(w, 'medieval_wood', { triplanar: 1.2, color: 0xc8b4a0, fallback: KIT.wood(w) });
+      const leather = PHOTO.mat(w, 'brown_leather', { rep: [1, 1], fallback: KIT.wood(w, [1, 1], '#6a4430') });
+      this.waterMat = new T.MeshStandardMaterial({ color: 0x5a8ca4, roughness: 0.08, metalness: 0.1, transparent: true, opacity: 0.86, emissive: 0x0a2230, emissiveIntensity: 0.4 });
+      const cracked = PHOTO.mat(w, 'mud_cracked_dry_03', { rep: [3, 3], fallback: SCAPE.tex.gravel(w) });
 
-      /* ---------- water surfaces: the shaft, and the five places that will fill ---------- */
-      this.ripples = Array.from({ length: 8 }, () => new T.Vector4(0, 0, -99, 0)); this.ripI = 0;
-      const top = new T.Color(0x1b2452), hor = new T.Color(0xe8946c);
-      const waterMat = (shaft, fill) => new T.ShaderMaterial({
-        vertexShader: WATER_VERT, fragmentShader: WATER_FRAG, transparent: !shaft,
-        uniforms: {
-          uTime: { value: 0 }, uTop: { value: top }, uHor: { value: hor }, uSunDir: { value: sunDir }, uSun: { value: new T.Color(0xff9858) },
-          uRip: { value: this.ripples }, uShaft: { value: shaft ? 1 : 0 }, uMouthY: { value: MOUTH_Y }, uMouthR: { value: MOUTH_R },
-          uGlow: { value: 0 }, uGlowCol: { value: new T.Color(0xffb060) }, uFill: { value: fill == null ? 1 : fill },
-        },
-      });
-      this.waterMats = [];
-      const wm = waterMat(true); this.waterMats.push(wm);
-      const wd = new T.Mesh(new T.CircleGeometry(MOUTH_R, 32), wm); wd.rotation.x = -Math.PI / 2; wd.position.y = WATER_Y; S.add(wd);
-
-      const stoneM = KIT.std({ map: KIT.mudBrick(w, [1.5, 0.3]), color: 0x9a9294 });
-      const mud = KIT.std({ map: KIT.mudBrick(w, [2, 0.6]), color: 0xd8b898 });
-      const clay = KIT.std({ color: 0xa8603a, roughness: 0.8 });
-      this.places = [];
-      const place = (o) => {
-        const m = waterMat(false, 0); this.waterMats.push(m);
-        const surf = new T.Mesh(o.geo, m); surf.rotation.x = -Math.PI / 2; surf.position.copy(o.water); surf.userData.dynamic = true; surf.visible = false; S.add(surf);
-        const glow = KIT.glow(w, 0xffb868, o.glowSize || 3, 0.0); glow.position.set(o.at[0], o.at[1] + 0.6, o.at[2]); S.add(glow);
-        const p = Object.assign({ surf, mat: m, glow, k: 0, done: false, pouring: 0 }, o);
-        p.item = w.interact({
-          key: o.key, pos: o.at, r: o.r || 2.6, label: o.label,
-          enabled: () => self.carrying && !p.done,
-          onUse: () => self.pour(env, p),
-        });
-        this.places.push(p);
-        return p;
-      };
-
-      // 1. the stone channel from the well-head to the trough of a small flock
-      const chanLen = 5.4;
-      for (const sz of [-1, 1]) { const side = new T.Mesh(new T.BoxGeometry(chanLen, 0.28, 0.12), stoneM); side.position.set(1.45 + chanLen / 2, 0.14, sz * 0.2); S.add(side); }
-      const cbot = new T.Mesh(new T.BoxGeometry(chanLen, 0.06, 0.4), stoneM); cbot.position.set(1.45 + chanLen / 2, 0.03, 0); S.add(cbot);
-      const trough = new T.Group();
-      [[2.6, 0.12, 0.9, 0, 0.06, 0], [2.6, 0.5, 0.12, 0, 0.25, 0.39], [2.6, 0.5, 0.12, 0, 0.25, -0.39], [0.12, 0.5, 0.9, 1.24, 0.25, 0], [0.12, 0.5, 0.9, -1.24, 0.25, 0]].forEach(([a, b, c, x, y, z]) => { const m = new T.Mesh(new T.BoxGeometry(a, b, c), stoneM); m.position.set(x, y, z); trough.add(m); });
-      trough.position.set(8.2, 0, 0); trough.rotation.y = Math.PI / 2; S.add(trough); w.addBox(7.7, -1.35, 8.7, 1.35);
-      this.chanWater = new T.Mesh(new T.PlaneGeometry(1, 0.28), waterMat(false, 0.92)); this.waterMats.push(this.chanWater.material);
-      this.chanWater.rotation.x = -Math.PI / 2; this.chanWater.position.set(1.45, 0.08, 0); this.chanWater.scale.x = 0.001; this.chanWater.userData.dynamic = true; S.add(this.chanWater);
-      const wool = KIT.std({ color: 0xe8dcc8, roughness: 1 }), dark = KIT.std({ color: 0x3a2e28 });
-      [[9.8, 1.4, -2.2], [10.2, -0.6, -1.7], [9.6, -2.0, -1.2], [10.6, 0.6, -1.9]].forEach(([x, z, ry]) => {
-        const g = new T.Group();
-        const body = new T.Mesh(new T.SphereGeometry(0.34, 12, 8), wool); body.scale.set(1.35, 0.85, 0.85); body.position.y = 0.55; g.add(body);
-        const hd = new T.Mesh(new T.SphereGeometry(0.13, 10, 8), dark); hd.scale.set(1.4, 1, 0.9); hd.position.set(-0.52, 0.5, 0); g.add(hd);
-        for (const [lx, lz] of [[-0.25, -0.13], [-0.25, 0.13], [0.25, -0.13], [0.25, 0.13]]) { const l = new T.Mesh(new T.CylinderGeometry(0.035, 0.03, 0.34, 5), dark); l.position.set(lx, 0.17, lz); g.add(l); }
-        g.position.set(x, 0, z); g.rotation.y = ry + Math.PI; S.add(g); w.addCircle(x, z, 0.4);
-      });
-      place({ key: 'flock', name: 'the flock', label: 'Pour into the channel for the flock', at: [2.4, 0.5, 0.9], target: [1.7, 0.15, 0], r: 2.4,
-        geo: new T.PlaneGeometry(2.4, 0.66), water: new T.Vector3(8.2, 0.42, 0), glowSize: 3.5, chord: 130.81,
-        doneText: 'The water runs down the channel to the trough, and the flock comes to drink.' });
-      this.places[0].surf.rotation.z = Math.PI / 2;
-
-      // 2. a traveller's waterskin hanging by the path
-      const tp = new T.Mesh(new T.CylinderGeometry(0.05, 0.06, 1.9, 6), woodM); tp.position.set(-13.4, 0.95, 3); S.add(tp); w.addCircle(-13.4, 3, 0.12);
-      const tb = new T.Mesh(new T.BoxGeometry(0.7, 0.06, 0.06), woodM); tb.position.set(-13.1, 1.75, 3); S.add(tb);
-      const staff = new T.Mesh(new T.CylinderGeometry(0.025, 0.03, 1.7, 5), woodM); staff.position.set(-13.6, 0.82, 3.35); staff.rotation.z = 0.18; S.add(staff);
-      this.skin = new T.Mesh(new T.SphereGeometry(0.25, 14, 10), KIT.std({ color: 0x5a3820, roughness: 0.55 }));
-      this.skin.position.set(-12.85, 1.38, 3); this.skin.scale.set(0.7, 0.55, 0.45); this.skin.userData.dynamic = true; S.add(this.skin);
-      const fp = new T.MeshBasicMaterial({ color: 0x5a4434, transparent: true, opacity: 0.35, depthWrite: false });
-      for (let i = 0; i < 18; i++) { const f = new T.Mesh(new T.CircleGeometry(0.07, 8), fp); f.rotation.x = -Math.PI / 2; f.scale.y = 1.8; f.position.set(-12 + (i % 2 ? 0.18 : -0.18), 0.02, 26 - i * 1.4); S.add(f); }
-      place({ key: 'skin', name: 'the traveller', label: 'Fill the traveller’s waterskin', at: [-12.85, 1.3, 3], target: [-12.85, 1.5, 3], r: 2.4,
-        geo: new T.CircleGeometry(0.01, 4), water: new T.Vector3(-12.85, -5, 3), glowSize: 2.2, chord: 196,
-        doneText: 'The waterskin is full for the road.' });
-
-      // 3. a young palm in its basin, at the end of a dry channel
-      const yp = KIT.palm(w, 3.2, { lean: 0.1, fronds: 12, frondScale: 0.7 }); yp.position.set(-6, 0, -8); S.add(yp); w.addCircle(-6, -8, 0.3);
-      const rim = new T.Mesh(new T.TorusGeometry(1.3, 0.16, 6, 28), KIT.std({ map: KIT.sand(w, [2, 1]), color: 0x8a6a50 })); rim.rotation.x = -Math.PI / 2; rim.scale.z = 0.6; rim.position.set(-6, 0.04, -8); S.add(rim);
-      const basin = new T.Mesh(new T.CircleGeometry(1.25, 28), KIT.std({ color: 0x5a4434 })); basin.rotation.x = -Math.PI / 2; basin.position.set(-6, 0.012, -8); S.add(basin);
-      place({ key: 'palm', name: 'the palm', label: 'Water the young palm', at: [-5.2, 0.5, -7.2], target: [-6, 0.1, -8], r: 2.6,
-        geo: new T.RingGeometry(0.22, 1.24, 28), water: new T.Vector3(-6, 0.06, -8), glowSize: 3.2, chord: 261.63,
-        doneText: 'The basin drinks the water down to the roots.' });
-
-      // 4. a house with a clay jar by its door
-      const house = new T.Mesh(new T.BoxGeometry(6, 3.2, 5), mud); house.position.set(12, 1.6, -14); S.add(house); w.addBox(9, -16.5, 15, -11.5);
-      const door = new T.Mesh(new T.BoxGeometry(1.0, 1.9, 0.08), KIT.std({ map: KIT.wood(w, [1, 2], '#4a3020'), color: 0xa08068 })); door.position.set(11, 0.95, -11.46); S.add(door);
-      const win = new T.Mesh(new T.PlaneGeometry(0.6, 0.5), new T.MeshBasicMaterial({ color: 0xffb060 })); win.position.set(13.4, 1.9, -11.44); S.add(win);
-      const roofEdge = new T.Mesh(new T.BoxGeometry(6.3, 0.2, 5.3), KIT.std({ map: KIT.wood(w), color: 0x8a6a4a })); roofEdge.position.set(12, 3.25, -14); S.add(roofEdge);
-      const jarPts = []; for (let i = 0; i <= 12; i++) { const t = i / 12; jarPts.push(new T.Vector2(0.05 + Math.sin(t * Math.PI) * 0.3 + (t > 0.85 ? (t - 0.85) * 1.2 : 0), t * 0.85)); }
-      const jar = new T.Mesh(new T.LatheGeometry(jarPts, 18), clay); jar.position.set(9.6, 0, -10.8); S.add(jar); w.addCircle(9.6, -10.8, 0.35);
-      this.houseLight = new T.PointLight(0xffa850, 1.1, 8, 2); this.houseLight.position.set(11, 2.4, -10.6); S.add(this.houseLight);
-      const hl = KIT.glow(w, 0xffb060, 1.4, 0.7); hl.position.set(13.4, 1.9, -11.3); S.add(hl);
-      place({ key: 'jar', name: 'the house', label: 'Fill the jar by the door', at: [9.6, 0.9, -10.8], target: [9.6, 0.9, -10.8], r: 2.4,
-        geo: new T.CircleGeometry(0.16, 16), water: new T.Vector3(9.6, 0.82, -10.8), glowSize: 2.2, chord: 329.63,
-        doneText: 'The household’s jar is full for the night.' });
-
-      // 5. a small mosque of mud brick with a stone basin for ablution at its door
-      const mw = (x0, z0, x1, z1, h) => { const lx = Math.abs(x1 - x0) || 0.5, lz = Math.abs(z1 - z0) || 0.5; const m = new T.Mesh(new T.BoxGeometry(lx, h, lz), mud); m.position.set((x0 + x1) / 2, h / 2, (z0 + z1) / 2); S.add(m); w.addBox(Math.min(x0, x1), Math.min(z0, z1), Math.max(x0, x1), Math.max(z0, z1)); };
-      mw(-8, -26, 4, -26, 2.8); mw(-8, -26, -8, -19, 2.8); mw(4, -26, 4, -19, 2.8); mw(-8, -19, -3.1, -19, 2.8); mw(-0.9, -19, 4, -19, 2.8);
-      const lint = new T.Mesh(new T.BoxGeometry(2.6, 0.5, 0.5), mud); lint.position.set(-2, 2.55, -19); S.add(lint);
-      const roofTex = KIT.frondRoof(w, [3, 2]);
-      const mroof = new T.Mesh(new T.PlaneGeometry(12.4, 7.4), KIT.std({ map: roofTex, alphaTest: 0.5, side: T.DoubleSide, color: 0xb8a888 })); mroof.rotation.x = -Math.PI / 2; mroof.position.set(-2, 2.9, -22.5); S.add(mroof);
-      const inner = new T.PointLight(0xffb060, 1.0, 9, 2); inner.position.set(-2, 1.8, -21.5); S.add(inner);
-      const doorGlow = KIT.glow(w, 0xffb868, 2.4, 0.55); doorGlow.position.set(-2, 1.3, -19.6); S.add(doorGlow);
-      const bas = new T.Group();
-      [[1.6, 0.14, 0.9, 0, 0.07, 0], [1.6, 0.6, 0.12, 0, 0.3, 0.39], [1.6, 0.6, 0.12, 0, 0.3, -0.39], [0.12, 0.6, 0.9, 0.74, 0.3, 0], [0.12, 0.6, 0.9, -0.74, 0.3, 0]].forEach(([a, b, c, x, y, z]) => { const m = new T.Mesh(new T.BoxGeometry(a, b, c), stoneM); m.position.set(x, y, z); bas.add(m); });
-      bas.position.set(1.2, 0, -17.4); S.add(bas); w.addBox(0.35, -17.9, 2.05, -16.9);
-      place({ key: 'basin', name: 'the mosque', label: 'Fill the basin for ablution', at: [1.2, 0.8, -17.4], target: [1.2, 0.5, -17.4], r: 2.6,
-        geo: new T.PlaneGeometry(1.4, 0.66), water: new T.Vector3(1.2, 0.52, -17.4), glowSize: 3, chord: 392,
-        doneText: 'The basin by the mosque door is full for the prayer of the night.' });
-
-      // the garden: palms in loose rows, a low wall round it
-      const r = U.seeded(3703);
-      const clear = [[0, 0, 4.5], [8.5, 0, 3.2], [-12, 0, 2.5], [-6, -8, 2.6], [12, -13, 5], [-2, -22, 7], [1.2, -17, 2.4], [0, 6, 3]];
-      for (let gx = -24; gx <= 24; gx += 5.5) for (let gz = -24; gz <= 24; gz += 5.5) {
-        const x = gx + (r() - 0.5) * 2.4, z = gz + (r() - 0.5) * 2.4;
-        if (Math.abs(x + 12) < 2 || clear.some(([cx, cz, cr]) => Math.hypot(x - cx, z - cz) < cr)) continue;
-        if (r() < 0.2) continue;
-        const p = KIT.palm(w, 5 + r() * 6); p.position.set(x, 0, z); S.add(p); w.addCircle(x, z, 0.32);
+      /* ---------- the well ---------- */
+      const wy = H(0, 0);
+      const ring = new T.Mesh(new T.CylinderGeometry(1.7, 1.85, 1.0, 20, 1, true), stone); ring.position.set(0, wy + 0.45, 0); ring.castShadow = ring.receiveShadow = true; S.add(ring);
+      const ringIn = new T.Mesh(new T.CylinderGeometry(1.3, 1.3, 1.05, 20, 1, true), stone); ringIn.material = stone; ringIn.position.copy(ring.position); S.add(ringIn);
+      const lip = new T.Mesh(new T.RingGeometry(1.3, 1.78, 20).rotateX(-Math.PI / 2), stone); lip.position.set(0, wy + 0.96, 0); S.add(lip);
+      const dark = new T.Mesh(new T.CircleGeometry(1.3, 20).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ color: 0x050403 })); dark.position.set(0, wy + 0.2, 0); S.add(dark);
+      const shine = new T.Mesh(new T.CircleGeometry(0.9, 20).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ color: 0x3a5a6a, transparent: true, opacity: 0.6 })); shine.position.set(0, wy + 0.22, 0); S.add(shine);
+      [-1.6, 1.6].forEach(x => { const p = new T.Mesh(new T.CylinderGeometry(0.12, 0.14, 3.2, 8), wood); p.position.set(x, wy + 1.6, 0); p.castShadow = true; S.add(p); });
+      const bar = new T.Mesh(new T.CylinderGeometry(0.09, 0.09, 3.6, 8).rotateZ(Math.PI / 2), wood); bar.position.set(0, wy + 3.05, 0); bar.castShadow = true; S.add(bar);
+      const pulley = new T.Mesh(new T.CylinderGeometry(0.28, 0.28, 0.14, 14).rotateX(Math.PI / 2), wood); pulley.position.set(0, wy + 2.85, 0); pulley.userData.dynamic = true; S.add(pulley); this.pulley = pulley;
+      w.addCircle(0, 0, 1.9);
+      // the buckets: one now; at the end, the buckets of the Muslims
+      this.buckets = [];
+      for (let k = 0; k < 7; k++) {
+        const a = k ? (k - 1) / 6 * Math.PI * 2 : 0, rr = k ? 0.85 : 0;
+        const g = new T.Group(); g.userData.dynamic = true; S.add(g);
+        const bk = new T.Mesh(new T.CylinderGeometry(0.24, 0.18, 0.34, 10, 1, true), leather); bk.castShadow = true; g.add(bk);
+        const rope = new T.Mesh(new T.CylinderGeometry(0.012, 0.012, 1, 4).translate(0, 0.5, 0), new T.MeshStandardMaterial({ color: 0x8a7050, roughness: 1 })); rope.position.y = 0.17; g.add(rope);
+        g.position.set(Math.cos(a) * rr, wy + 1.4, Math.sin(a) * rr); g.visible = k === 0;
+        this.buckets.push({ g, rope, a, rr, y: wy + 1.4 });
       }
-      const gw = KIT.std({ map: KIT.mudBrick(w, [6, 0.4]), color: 0xc8a888 });
-      [[0, -28, 56, 0.6], [0, 28, 56, 0.6], [-28, 0, 0.6, 56], [28, 0, 0.6, 56]].forEach(([x, z, lx, lz]) => { const m = new T.Mesh(new T.BoxGeometry(lx, 1.3, lz), gw); m.position.set(x, 0.65, z); S.add(m); });
-      // the city's lights to the east, beyond the garden wall
-      const cg = new T.BufferGeometry(), cp = new Float32Array(160 * 3);
-      for (let i = 0; i < 160; i++) cp.set([60 + r() * 200, 0.5 + r() * 5, (r() - 0.5) * 300], i * 3);
-      cg.setAttribute('position', new T.BufferAttribute(cp, 3));
-      const cpts = new T.Points(cg, new T.PointsMaterial({ map: KIT.glowTex(w), color: 0xffb070, size: 2.2, transparent: true, depthWrite: false, blending: T.AdditiveBlending, opacity: 0.8 }));
-      S.add(cpts);
+      this.wy = wy;
+      // a stone basin where the bucket pours into the channels
+      const basin = new T.Mesh(new T.BoxGeometry(1.2, 0.4, 1.2).translate(0, 0.2, 0), stone); basin.position.set(0, wy, -2.4); S.add(basin);
 
-      // fireflies of dust in the lamp light, and the arc of poured water
-      this.dust = KIT.dust(w, 220, [-18, 0.3, -24, 18, 4, 14], 0xffd8a0, 0.04); this.dust.material.opacity = 0.6; S.add(this.dust);
-      const pg = new T.BufferGeometry(); this.pourPos = new Float32Array(60 * 3); pg.setAttribute('position', new T.BufferAttribute(this.pourPos, 3));
-      this.pourPts = new T.Points(pg, new T.PointsMaterial({ map: KIT.glowTex(w), color: 0xb8d0f0, size: 0.09, transparent: true, depthWrite: false, opacity: 0.9 }));
-      this.pourPts.frustumCulled = false; S.add(this.pourPts);
-      this.drops = [];
-
-      w.followShadow(sun, 26); w.receiveAll();
-      this.baked = w.bake();
-
-      // the bucket you carry
-      this.carried = makeBucket(); this.carried.userData.water.visible = true; this.carried.visible = false; this.carried.userData.dynamic = true;
-      S.add(w.camera); w.camera.add(this.carried); this.carried.position.set(0.38, -0.62, -1.05); this.carried.rotation.set(0.3, 0, 0.05); this.carried.scale.setScalar(0.8);
-
-      /* ---------- the haul gauge (2D overlay) ---------- */
-      const ov = document.createElement('div');
-      ov.setAttribute('aria-hidden', 'true');
-      ov.style.cssText = 'position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .4s;';
-      ov.innerHTML = `
-        <div style="position:absolute;right:max(18px,4vw);top:50%;transform:translateY(-50%);width:46px;height:min(46vh,320px);">
-          <div style="position:absolute;left:50%;top:0;bottom:0;width:22px;margin-left:-11px;border-radius:11px;background:linear-gradient(#2a2430,#0d0c12);box-shadow:inset 0 0 0 1px rgba(217,187,133,.35);"></div>
-          <div class="wg-rope" style="position:absolute;left:50%;top:0;width:2px;margin-left:-1px;background:#c8a878;"></div>
-          <div class="wg-bucket" style="position:absolute;left:50%;width:22px;height:18px;margin-left:-11px;border-radius:2px 2px 7px 7px;background:#8a5a34;box-shadow:0 0 10px rgba(255,190,110,.6);"></div>
-          <div style="position:absolute;left:50%;bottom:4px;width:16px;height:6px;margin-left:-8px;border-radius:50%;background:#6a88b8;opacity:.8"></div>
-          <div style="position:absolute;top:-24px;left:-20px;right:-20px;text-align:center;font:11px Marcellus,Georgia,serif;letter-spacing:.14em;color:#d9bb85;">MOUTH</div>
-        </div>
-        <div style="position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom) + 96px);transform:translateX(-50%);display:flex;gap:18px;">
-          <button type="button" class="wg-L" style="pointer-events:auto;width:88px;height:64px;border-radius:14px;border:1px solid rgba(217,187,133,.5);background:rgba(20,16,24,.6);color:#f2e9d6;font:15px Marcellus,Georgia,serif;transition:transform .08s,background .2s;">A · left</button>
-          <button type="button" class="wg-R" style="pointer-events:auto;width:88px;height:64px;border-radius:14px;border:1px solid rgba(217,187,133,.5);background:rgba(20,16,24,.6);color:#f2e9d6;font:15px Marcellus,Georgia,serif;transition:transform .08s,background .2s;">right · D</button>
-        </div>`;
-      w.ui.layer.appendChild(ov);
-      this.gauge = { ov, rope: ov.querySelector('.wg-rope'), bucket: ov.querySelector('.wg-bucket'), L: ov.querySelector('.wg-L'), R: ov.querySelector('.wg-R') };
-      const btn = (el, hand) => { el.addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); self.pull(env, hand); }); el.addEventListener('contextmenu', e => e.preventDefault()); };
-      btn(this.gauge.L, 'L'); btn(this.gauge.R, 'R');
-      this.noMenu = e => { if (self.hauling) e.preventDefault(); };
-      document.addEventListener('contextmenu', this.noMenu);
-
-      /* ---------- the activity ---------- */
-      w.activity('Water for everyone', 5, 'Go to the pulley at the well and press E to take the rope');
-      w.interact({
-        key: 'pulley', pos: [HAUL.x, 1.3, 1.2], r: 2.6, label: 'Take the rope',
-        enabled: () => !self.carrying && !self.hauling && self.given < 5,
-        onUse: () => self.startHaul(env),
+      /* ---------- each network: its ground, targets and pieces ---------- */
+      const channelMat = stone, oldMat = this.oldStone;
+      this.geos = {}; ['straight', 'bend', 'tee', 'cross'].forEach(t => { this.geos[t] = { stone: channelGeo(PIECES[t], 'stone'), water: channelGeo(PIECES[t], 'water') }; });
+      this.inst = {};
+      ['straight', 'bend', 'tee', 'cross'].forEach(t => {
+        const mk = (geo, mat, cap) => { const im = new T.InstancedMesh(geo, mat, cap); im.count = 0; im.castShadow = mat !== this.waterMat; im.receiveShadow = true; im.frustumCulled = false; im.userData.dynamic = true; im.userData.list = []; S.add(im); return im; };
+        this.inst[t] = { stone: mk(this.geos[t].stone, channelMat, 60), old: mk(this.geos[t].stone, oldMat, 6), water: mk(this.geos[t].water, this.waterMat, 60) };
       });
+      this.levels = LEVELS.map((L, li) => {
+        const grid = []; for (let i = 0; i < L.nx; i++) { grid.push([]); for (let j = 0; j < L.nz; j++) grid[i].push(null); }
+        const gy = H(cellWorld(L, 0, 0).x, cellWorld(L, 0, 0).z);
+        const lv = { L, li, grid, gy, rocks: new Set(L.rocks.map(([i, j]) => i + ',' + j)), targets: L.targets.map(t => Object.assign({ watered: false }, t)) };
+        // the dry earth under the network
+        const c = toWorld(L, 0, -(D0 + L.nz * CS / 2)), ground = new T.Mesh(new T.PlaneGeometry(L.nx * CS + 1.2, L.nz * CS + 1.2).rotateX(-Math.PI / 2), cracked);
+        ground.position.set(c.x, gy + 0.02, c.z); ground.rotation.y = L.ang; ground.receiveShadow = true; S.add(ground);
+        // obstacles: rocks and old stumps where no channel can go
+        L.rocks.forEach(([i, j], k) => { const p = cellWorld(L, i, j); PHOTO.place(w, k % 2 ? 'namaqualand_boulder_05' : 'rock_07', { pos: [p.x, gy - 0.1, p.z], s: k % 2 ? 0.9 : 0.55, ry: k * 1.7 }); if (!PHOTO.enabled) { const m = new T.Mesh(new T.DodecahedronGeometry(0.7, 1), stone); m.position.set(p.x, gy + 0.3, p.z); S.add(m); } });
+        // the old channels that cannot be moved
+        L.fixed.forEach(([i, j, m]) => { grid[i][j] = { m, fixed: true, fill: 0, born: -9 }; });
+        // the targets
+        lv.targets.forEach(t => this.makeTarget(lv, t));
+        return lv;
+      });
+
+      /* ---------- the ghost piece and the flow front ---------- */
+      this.ghostMat = new T.MeshBasicMaterial({ color: 0xffd98a, transparent: true, opacity: 0.45, depthWrite: false });
+      this.ghost = new T.Mesh(this.geos.straight.stone, this.ghostMat); this.ghost.visible = false; this.ghost.userData.dynamic = true; this.ghost.renderOrder = 4; S.add(this.ghost);
+      this.front = KIT.glow(w, 0xd8f0ff, 1.2, 0); this.front.userData.dynamic = true; S.add(this.front);
+      this.spills = [];
+      this.splash = SCAPE.motes(w, { n: 40, area: [-0.6, 0, -0.6, 0.6, 0.6, 0.6], color: '#d8f0ff', size: 0.16, opacity: 0 });
+
+      this.post = w.post({ bloom: 0.42, threshold: 0.78, rays: { strength: 0.2, dir: [0.5, 0.68, 0.4] }, vignette: 0.32, grain: 0.03, sat: 1.05, contrast: 1.06, lift: [0.008, 0.008, 0.01], gain: [1.02, 1.0, 0.97] });
+      w.bake();
+
+      /* ---------- discoveries in the land ---------- */
+      const D = (x, z, h, o) => w.discover(Object.assign({ pos: [x, H(x, z) + (h || 1.4), z] }, o));
+      D(3.2, 2.4, 1.2, { title: 'Sweet water', label: 'Look into the well', text: 'When the Prophet ﷺ came to Madinah, there was no sweet water but the well of Rumah. (Jami‘ al-Tirmidhi 3703)', ar: 'وَلَيْسَ بِهَا مَاءٌ يُسْتَعْذَبُ غَيْرَ بِئْرِ رُومَةَ' });
+      D(-70, -30, 1.4, { title: 'The blessed valley', label: 'Stand in the wadi', text: 'In Wadi al-‘Aqiq he said that one had come to him from his Lord and said: <span class="q">“Pray in this blessed valley.”</span> (Sahih al-Bukhari 1534)', ar: 'صَلِّ فِي هَذَا الْوَادِي الْمُبَارَكِ' });
+      D(36, 24, 1.4, { title: 'Where it lies', label: 'Look toward the city', text: 'The well of Rumah lies in the area of al-‘Aqiq, about six kilometres north-west of the Prophet’s Mosque. (Bi’r Rumah; Saudi Awqaf)' });
+      D(-30, 40, 1.4, { title: 'Years later', label: 'Rest in the shade', text: 'Years later, besieged in his house, ‘Uthman reminded the people that he had bought the well of Rumah for the Muslims, while now they kept him from its water. (Jami‘ al-Tirmidhi 3703)' });
+      D(24, -40, 1.4, { title: '“Whoever digs Rumah”', label: 'Look at the gardens', text: 'Al-Bukhari cites, without a full chain, the words: <span class="q">“Whoever digs Rumah will have Paradise,”</span> and ‘Uthman did it. Al-Tirmidhi gives the report of the purchase with a good chain. (Sahih al-Bukhari, before 2778; Jami‘ al-Tirmidhi 3703)' });
+
+      /* ---------- controls ---------- */
+      const Lr = w.ui.layer, touchy = matchMedia('(pointer: coarse)').matches, sz = touchy ? 52 : 44;
+      const bar2 = this.bar = document.createElement('div');
+      bar2.style.cssText = 'position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 96px);transform:translateX(-50%);display:flex;gap:8px;align-items:center;padding:6px 10px;border-radius:999px;background:rgba(6,9,20,.5);border:1px solid rgba(242,233,214,.18);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;transition:opacity .4s;pointer-events:auto;';
+      const icon = (m, col) => { const seg = { 1: 'M20 20 L20 3', 2: 'M20 20 L37 20', 4: 'M20 20 L20 37', 8: 'M20 20 L3 20' }; return `<svg width="26" height="26" viewBox="0 0 40 40"><rect x="1" y="1" width="38" height="38" rx="6" fill="rgba(0,0,0,.25)" stroke="rgba(242,233,214,.25)"/><path d="${[1, 2, 4, 8].filter(d => m & d).map(d => seg[d]).join(' ')}" stroke="${col || '#9cc8e0'}" stroke-width="8" stroke-linecap="round" fill="none"/></svg>`; };
+      this.icon = icon;
+      const mk = (html, title, fn) => { const b = document.createElement('button'); b.type = 'button'; b.title = title; b.setAttribute('aria-label', title); b.innerHTML = html;
+        b.style.cssText = `min-width:${sz}px;height:${sz}px;border-radius:12px;border:1px solid rgba(242,233,214,.25);background:rgba(255,255,255,.04);color:#f6efe2;font-size:1.05rem;display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:none;padding:0 4px;`;
+        b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); SND.init(); fn(); }); bar2.appendChild(b); return b; };
+      this.palBtns = ['straight', 'bend', 'tee', 'cross'].map((t, i) => mk(icon(PIECES[t]), `${i + 1} ${t}`, () => this.choose(t)));
+      this.queueEl = document.createElement('div'); this.queueEl.style.cssText = 'display:flex;gap:4px;align-items:center;padding:0 4px;'; bar2.appendChild(this.queueEl);
+      mk('⟳', 'Turn the piece (R)', () => this.turnHand());
+      this.walkBtn = mk('🚶', 'Walk the land (V)', () => this.toggleWalk());
+      Lr.appendChild(bar2);
+      this.fadeEl = Lr.querySelector('.w-fade');
+      const host = document.getElementById('host');
+      this.noMenu = e => { if (this.mode === 'build') e.preventDefault(); };
+      host.addEventListener('contextmenu', this.noMenu);
+      w.onPointer = (e, p, phase) => {
+        if (this.mode !== 'build' || w.filmS) return false;
+        if (phase === 'down') { if (e.button === 2) this.turnHand(); else { const c = this.pickCell(e.clientX, e.clientY); if (c) this.lay(c.i, c.j); } }
+        return true;
+      };
 
       /* ---------- sound ---------- */
       const b = env.bus;
-      this.breeze = SND.noise(b, { color: 'pink', type: 'bandpass', freq: 450, q: 0.5, gain: 0.03 });
-      this.fronds = SND.noise(b, { color: 'white', type: 'bandpass', freq: 4200, q: 0.7, gain: 0.006 });
-      SND.lfo(b, this.fronds.gain && this.fronds.gain.gain, 0.09, 0.005);
-      this.choir = this.places.map(p => SND.drone(b, p.chord, { vowel: 'o', gain: 0 }));
-      this.cricketClock = 0.5; this.dripClock = 1; this.cooClock = 4;
+      this.wind = SND.noise(b, { color: 'pink', type: 'bandpass', freq: 600, q: 0.6, gain: 0.03 });
+      this.waterN = SND.noise(b, { color: 'white', type: 'bandpass', freq: 1800, q: 0.7, gain: 0 });
+      this.choir = SND.drone(b, 146.83, { vowel: 'a', gain: 0 });
+      this.birdClock = 1; this.goatClock = 4;
 
-      /* ---------- entrance: from the water up the shaft into the garden ---------- */
-      const E = [w.pos.x, 1.62, w.pos.z];
-      w.cinematic([
-        { p: [0, WATER_Y + 0.6, 0.02], l: [0, 20, 0.12] },
-        { p: [0.05, WATER_Y + 2.4, -0.02], l: [0, 20, 0.3] },
-        { p: [0, MOUTH_Y - 0.4, 0.05], l: [0.2, 18, 1.2] },
-        { p: [0.3, 3.4, 0.5], l: [-3, 2.5, -8] },
-        { p: [3.5, 3.2, 6.5], l: [0, 0.8, 0] },
-        { p: E, l: [0, 1, 0] },
-      ], 10);
+      w.activity(LEVELS[0].title, 1, LEVELS[0].step);
     },
 
-    startHaul(env) {
-      const w = this.w;
-      this.hauling = true; this.haulAt = w.time; this.lastHand = null; this.idle = 0; w.enabled = false;
-      this.gauge.ov.style.opacity = '1';
-      w.step('Pull hand over hand: press A and D in turn (or click left and right, or tap the two buttons)');
-      if (!this.seen.sweet) {
-        this.seen.sweet = true;
-        w.say('Sweet Water', 'In early Madinah sweet water was scarce. The best well, Rumah, belonged to a man who sold its water.', { ms: 10000 });
+    makeTarget(lv, t) {
+      const w = this.w, S = w.scene, L = lv.L;
+      // the target sits just outside the grid, past the open side of its cell
+      const dd = DIRS.find(d => d[0] === t.d), p = cellLocal(L, t.i + dd[1] * 1.45, t.j + dd[2] * 1.45), q = toWorld(L, p.x, p.z), y = lv.gy;
+      t.pos = new T.Vector3(q.x, y, q.z);
+      const g = new T.Group(); g.position.copy(t.pos); g.rotation.y = L.ang; S.add(g); g.userData.dynamic = true; t.g = g;
+      if (t.kind === 'garden') {
+        const bed = new T.Mesh(new T.BoxGeometry(3.6, 0.1, 3.6), new T.MeshStandardMaterial({ color: 0x9a7a58, roughness: 1 })); bed.position.y = 0.02; bed.receiveShadow = true; g.add(bed); t.bed = bed;
+        const rimG = SCAPE.merge([[0, 1.85, 3.9, 0.3], [0, -1.85, 3.9, 0.3], [1.85, 0, 0.3, 3.9], [-1.85, 0, 0.3, 3.9]].map(([x, z, a, c]) => new T.BoxGeometry(a, 0.3, c).translate(x, 0.12, z)));
+        const rim = new T.Mesh(rimG, this.stone); rim.castShadow = true; g.add(rim);
+        for (let k = 0; k < 3; k++) { const pl = KIT.palm(w, 5 + k * 1.3, { lean: 0.15 * (k - 1) }); pl.position.set((k - 1) * 1.2, 0, 0.6 - (k % 2) * 1.2); pl.scale.setScalar(0.9); g.add(pl); }
+        t.sprouts = SCAPE.scatter(w, { kind: 'grass', points: Array.from({ length: 24 }, (_, k) => { const a = toWorld(L, p.x + (k % 6 - 2.5) * 0.55, p.z + (Math.floor(k / 6) - 1.5) * 0.7); return [a.x, a.z, 0.01]; }), scale: [0.01, 0.01], color: '#7aa050', seed: 93 + t.i, castShadow: false, ground: () => y + 0.05 });
+      } else if (t.kind === 'trough') {
+        const tr = new T.Mesh(SCAPE.merge([new T.BoxGeometry(3.2, 0.12, 1.1).translate(0, 0.06, 0), new T.BoxGeometry(3.2, 0.6, 0.15).translate(0, 0.3, 0.5), new T.BoxGeometry(3.2, 0.6, 0.15).translate(0, 0.3, -0.5), new T.BoxGeometry(0.15, 0.6, 1.1).translate(1.6, 0.3, 0), new T.BoxGeometry(0.15, 0.6, 1.1).translate(-1.6, 0.3, 0)]), this.stone);
+        tr.castShadow = tr.receiveShadow = true; g.add(tr);
+        const wat = new T.Mesh(new T.BoxGeometry(3.0, 0.4, 0.9).translate(0, 0.2, 0), this.waterMat); wat.position.y = 0.1; wat.scale.y = 0.01; g.add(wat); t.wat = wat;
+        // goats wait by the trough
+        t.goats = [];
+        for (let k = 0; k < 4; k++) { const gt = this.goat(k); gt.position.set((k - 1.5) * 0.95, 0, 1.3 + (k % 2) * 0.4); gt.rotation.y = Math.PI + (k - 1.5) * 0.15; g.add(gt); t.goats.push(gt); }
+      } else {
+        const cis = new T.Mesh(new T.CylinderGeometry(1.4, 1.5, 0.8, 18, 1, true), this.stone); cis.position.y = 0.4; cis.castShadow = true; g.add(cis);
+        const wat = new T.Mesh(new T.CylinderGeometry(1.3, 1.3, 0.6, 18).translate(0, 0.3, 0), this.waterMat); wat.scale.y = 0.01; g.add(wat); t.wat = wat;
+        [['jug_01', 1.9, 0.5, 1.6], ['ceramic_vase_01', 2.2, -0.6, 1.8], ['jug_01', -2, 0.3, 1.5]].forEach(([id, x, z, s]) => { const a = toWorld(L, p.x + x, p.z + z); PHOTO.place(w, id, { pos: [a.x, y, a.z], s }); });
       }
-      SND.knock(env.bus, { f: 160, gain: 0.15, click: 800 });
+      t.glow = KIT.glow(w, 0x9fd4ff, 2.2, 0.0); t.glow.position.copy(t.pos).add(new T.Vector3(0, 1.4, 0)); S.add(t.glow);
+      w.addCircle(t.pos.x, t.pos.z, 1.8);
     },
-    stopHaul() {
-      this.hauling = false; if (this.w) { this.w.enabled = true; this.gauge.ov.style.opacity = '0'; }
+    goat(k) {
+      const g = new T.Group(), m = new T.MeshStandardMaterial({ color: [0x3a302a, 0xd8ccb8, 0x6a5444, 0x2a2420][k % 4], roughness: 1 });
+      const body = new T.Mesh(new T.SphereGeometry(1, 10, 8).scale(0.42, 0.22, 0.2), m); body.position.y = 0.52; g.add(body);
+      const head = new T.Mesh(new T.SphereGeometry(1, 8, 6).scale(0.14, 0.1, 0.09), m); head.position.set(0.48, 0.66, 0); g.add(head); g.userData.head = head;
+      [[0.28, 0.12], [0.28, -0.12], [-0.28, 0.12], [-0.28, -0.12]].forEach(([x, z]) => { const l = new T.Mesh(new T.CylinderGeometry(0.03, 0.025, 0.42, 5), m); l.position.set(x, 0.21, z); g.add(l); });
+      [0.05, -0.05].forEach(z => { const h = new T.Mesh(new T.ConeGeometry(0.02, 0.14, 4), m); h.position.set(0.44, 0.78, z); h.rotation.z = 0.5; g.add(h); });
+      g.rotation.y = 0; g.scale.setScalar(1.05);
+      return g;
     },
-    pull(env, hand) {
-      if (!this.hauling) return;
-      const b = env.bus, g = this.gauge;
-      const el = hand === 'L' ? g.L : g.R;
-      el.style.transform = 'scale(.93)'; setTimeout(() => { el.style.transform = ''; }, 110);
-      if (hand === this.lastHand) {
-        // the same hand twice: the rope only shifts in your grip
-        SND.swell(b, { color: 'white', type: 'highpass', f0: 2500, f1: 3500, dur: 0.18, gain: 0.02 });
-        this.sway = 0.6;
-        return;
+
+    /* ---------------- play ---------------- */
+    startLevel(i) {
+      const w = this.w, L = LEVELS[i], lv = this.levels[i];
+      this.li = i; this.lv = lv; this.flowing = null; this.state = 'drawing'; this.countdown = L.cd; this.cdMax = L.cd;
+      w.activity(L.title, L.targets.length, L.step); w.progress(0);
+      this.palBtns.forEach(b => { b.style.display = L.palette ? 'flex' : 'none'; });
+      if (!L.palette) { this.nextQ = []; this.refillQueue(); this.hand = this.nextQ.shift(); this.refillQueue(); }
+      this.renderQueue();
+      const c = toWorld(L, 0, -(D0 + L.nz * CS / 2) + 1);
+      this.camGoal = { tgt: new T.Vector3(c.x, lv.gy, c.z), ang: L.ang };
+      this.enterBuild();
+      this.drawBucket(L.cd);
+    },
+    refillQueue() {
+      const r = this._qr || (this._qr = U.seeded(57));
+      while (this.nextQ.length < 4) { const x = r(); const t = x < 0.4 ? 'straight' : x < 0.75 ? 'bend' : x < 0.92 ? 'tee' : 'cross'; let m = PIECES[t]; for (let k = Math.floor(r() * 4); k > 0; k--) m = rot(m); this.nextQ.push({ type: t, m }); }
+    },
+    renderQueue() {
+      const L = this.lv ? this.lv.L : LEVELS[0];
+      this.palBtns.forEach((b, i) => { const t = ['straight', 'bend', 'tee', 'cross'][i]; const on = this.hand.type === t; b.innerHTML = this.icon(on ? this.hand.m : PIECES[t], on ? '#ffd98a' : '#9cc8e0'); b.style.background = on ? 'rgba(255,217,138,.18)' : 'rgba(255,255,255,.04)'; });
+      if (L.palette) { this.queueEl.innerHTML = ''; return; }
+      this.queueEl.innerHTML = `<span style="font-family:var(--f-display),serif;font-size:.6rem;letter-spacing:.14em;color:#e8d2a0;margin-right:4px">IN HAND</span>` + this.icon(this.hand.m, '#ffd98a') + `<span style="width:8px"></span>` + this.nextQ.map(q => `<span style="opacity:.6">${this.icon(q.m)}</span>`).join('');
+    },
+    choose(t) { if (!this.lv || !this.lv.L.palette) return; this.hand = { type: t, m: PIECES[t] }; this.renderQueue(); SND.bell(ENGINE.env.bus, 660, { gain: 0.015, glass: true }); },
+    turnHand() { this.hand = { type: this.hand.type, m: rot(this.hand.m) }; this.renderQueue(); this.ghostSpin = 1; SND.knock(ENGINE.env.bus, { f: 300, gain: 0.08, click: 2400 }); },
+    enterBuild() {
+      const w = this.w; this.mode = 'build'; if (!this.camFn) this.camFn = dt => this.buildCam(dt);
+      w.mode = this.camFn; w.focus = null; this.bar.style.opacity = 1; Array.from(this.bar.children).forEach(ch => { ch.style.visibility = ''; });
+      this.walkBtn.innerHTML = '🚶';
+    },
+    toggleWalk() {
+      const w = this.w; if (this.li < 0) return;
+      if (this.mode === 'build') {
+        this.mode = 'walk'; w.mode = null; this.ghost.visible = false;
+        w.pos.set(0, 0, 6); w.yaw = 0; w.pitch = -0.05;
+        Array.from(this.bar.children).forEach(ch => { if (ch !== this.walkBtn) ch.style.visibility = 'hidden'; });
+        this.walkBtn.innerHTML = '⌂'; w.step('Walking the land · press V (or ⌂) to return to the channels');
+      } else { this.enterBuild(); w.step(this.lv.L.step); }
+    },
+    pickCell(cx, cy) {
+      const w = this.w, env = ENGINE.env, lv = this.lv; if (!lv) return null;
+      const ray = this._ray || (this._ray = new T.Raycaster()); ray.setFromCamera(new T.Vector2(cx / env.w * 2 - 1, -(cy / env.h) * 2 + 1), w.camera);
+      const o = ray.ray.origin, d = ray.ray.direction; if (d.y > -0.01) return null;
+      const t = (lv.gy - o.y) / d.y, x = o.x + d.x * t, z = o.z + d.z * t;
+      const L = lv.L, c = Math.cos(-L.ang), s = Math.sin(-L.ang), lx = x * c + z * s, lz = -x * s + z * c;
+      const i = Math.round(lx / CS + (L.nx - 1) / 2), j = Math.round((-lz - D0 - CS / 2) / CS);
+      if (i < 0 || j < 0 || i >= L.nx || j >= L.nz) return null;
+      return { i, j };
+    },
+    lay(i, j) {
+      const lv = this.lv, env = ENGINE.env, w = this.w; if (!lv || this.state === 'won') return;
+      const cell = lv.grid[i][j], p = cellWorld(lv.L, i, j);
+      if (lv.rocks.has(i + ',' + j)) { SND.knock(env.bus, { f: 90, gain: 0.12, click: 500 }); this.nudge(p); return; }
+      if (cell && cell.fixed) { SND.knock(env.bus, { f: 120, gain: 0.1, click: 700 }); this.hintOnce('fixed', 'The old channel is set in stone; build around it.'); return; }
+      if (cell && cell.fill > 0) { SND.drop(env.bus, { f: 600, gain: 0.04 }); this.hintOnce('wet', 'That channel already holds water.'); return; }
+      if (cell) this.puff(p, 0.6);
+      lv.grid[i][j] = { m: this.hand.m, fill: 0, born: w.time };
+      SND.knock(env.bus, { f: 110 + Math.random() * 30, gain: 0.35, click: 900 }); this.later(0.08, () => SND.knock(env.bus, { f: 160, gain: 0.12, click: 1400 }));
+      this.puff(p, 1);
+      if (!lv.L.palette) { this.hand = this.nextQ.shift(); this.refillQueue(); }
+      this.renderQueue(); this.syncInstances();
+    },
+    hintOnce(id, text) { this._h = this._h || {}; if (this._h[id]) return; this._h[id] = 1; this.w.say('The channels', text, { ms: 5000 }); },
+    nudge(p) { this.puff(p, 0.4); },
+    puff(p, k) {
+      this.puffs = this.puffs || [];
+      const s = KIT.glow(this.w, 0xe8d8c0, 1, 0.45 * k); s.material.blending = T.NormalBlending; s.position.set(p.x, this.lv.gy + 0.4, p.z); this.w.scene.add(s);
+      this.puffs.push({ s, t: 0, k });
+    },
+    later(dt, fn) { this.queue.push([this.w.time + dt, fn]); },
+
+    /* ---------- the bucket and the flow ---------- */
+    drawBucket(secs) {
+      this.state = 'drawing'; this.countdown = secs; this.cdMax = secs;
+      SND.sing(ENGINE.env.bus, 196, { vowel: 'o', dur: 1.4, gain: 0.03 });
+    },
+    startFlow() {
+      const lv = this.lv, L = lv.L, env = ENGINE.env;
+      this.state = 'flowing';
+      // the bucket tips into the basin, and the water enters the first row
+      SND.swell(env.bus, { f0: 2200, f1: 500, dur: 1.2, gain: 0.05 }); SND.drop(env.bus, { f: 500, gain: 0.06 });
+      this.flowing = [{ i: L.src, j: 0, from: S, t: 0 }];
+      this.check(L.src, 0, S, true);
+    },
+    check(i, j, from, first) {
+      // water arrives at a cell from `from`: it fills if a channel opens that way; otherwise it spills
+      const lv = this.lv, L = lv.L;
+      if (i < 0 || j < 0 || i >= L.nx || j >= L.nz) return false;
+      const c = lv.grid[i][j];
+      if (!c || !(c.m & from)) { this.spill(i, j, from); return false; }
+      return true;
+    },
+    flowStep(dt) {
+      if (this.state !== 'flowing') return;
+      const lv = this.lv, L = lv.L, env = ENGINE.env, w = this.w, next = [];
+      let any = false;
+      for (const f of this.flowing) {
+        const c = lv.grid[f.i] && lv.grid[f.i][f.j];
+        if (!c || !(c.m & f.from)) continue;
+        any = true;
+        if (c.fill >= 1) continue;
+        c.fill = Math.min(1, c.fill + dt / L.speed);
+        const p = cellWorld(L, f.i, f.j); this.front.position.set(p.x, lv.gy + 0.4, p.z); this.frontK = 1;
+        if (c.fill >= 1) {
+          SND.drop(env.bus, { f: U.rnd(500, 900), gain: 0.04, pan: w.spatial(p, 10).pan });
+          for (const [d, di, dj] of DIRS) {
+            if (!(c.m & d) || d === f.from) continue;
+            const ni = f.i + di, nj = f.j + dj;
+            const tg = lv.targets.find(t => t.i === f.i && t.j === f.j && t.d === d);
+            if (tg) { this.reach(tg); continue; }
+            if (ni < 0 || nj < 0 || ni >= L.nx || nj >= L.nz || lv.rocks.has(ni + ',' + nj)) { this.spill(f.i, f.j, d, true); continue; }
+            const nc = lv.grid[ni][nj];
+            if (!nc || !(nc.m & OPP[d])) { this.spill(ni, nj, OPP[d]); continue; }
+            if (nc.fill <= 0) next.push({ i: ni, j: nj, from: OPP[d] });
+          }
+        } else next.push(f);
       }
-      this.lastHand = hand; this.idle = 0;
-      this.depthV = 1 / PULLS;
-      SND.knock(b, { f: U.rnd(150, 200), gain: 0.16, click: U.rnd(600, 900) });
-      SND.swell(b, { color: 'pink', type: 'bandpass', f0: 900, f1: 1800, dur: 0.32, gain: 0.04 });
-      this.sway = 1;
-      if (this.depth > 0.02) SND.drop(b, { f: U.rnd(700, 1300), gain: 0.04, delay: U.rnd(0.3, 0.9) });
+      this.flowing = next;
+      if (this.state === 'flowing' && !next.length) this.flowEnds(any);
+    },
+    reach(t) {
+      const w = this.w, env = ENGINE.env;
+      if (!t.watered) {
+        t.watered = true; t.wetT = w.time;
+        SND.glow(env.bus, { garden: 220, trough: 246.94, cistern: 196 }[t.kind], { gain: 0.06, dur: 6 }); SND.bell(env.bus, 659.25, { gain: 0.03, delay: 0.3, glass: true });
+        if (t.kind === 'trough') { SND.coo(env.bus, { gain: 0.03, delay: 0.8 }); this.later(1.2, () => this.bleat(t.pos)); }
+        const n = this.lv.targets.filter(x => x.watered).length; w.progress(n);
+        if (n === this.lv.targets.length && this.state === 'flowing') this.levelDone();
+        w.say({ garden: 'The garden drinks', trough: 'The trough fills', cistern: 'The town’s cistern fills' }[t.kind], { garden: 'The water reaches the roots of the palms.', trough: 'The flocks come to drink.', cistern: 'Jars are filled for the houses.' }[t.kind], { ms: 4500 });
+      }
+    },
+    spill(i, j, from, edge) {
+      // water runs out into the sand: a dark patch, a hiss, and the bucket is spent
+      const lv = this.lv, L = lv.L, env = ENGINE.env, w = this.w;
+      if (this.state !== 'flowing') return;
+      const dd = DIRS.find(d => d[0] === (edge ? from : OPP[from]));
+      const l = cellLocal(L, edge ? i + dd[1] * 0.6 : i - dd[1] * 0.4, edge ? j + dd[2] * 0.6 : j - dd[2] * 0.4), p = toWorld(L, l.x, l.z);
+      const wet = new T.Mesh(new T.CircleGeometry(1, 20).rotateX(-Math.PI / 2), new T.MeshStandardMaterial({ color: 0x3a2c22, roughness: 0.5, transparent: true, opacity: 0.55, depthWrite: false }));
+      wet.position.set(p.x, lv.gy + 0.04, p.z); wet.scale.setScalar(0.1); wet.userData.dynamic = true; w.scene.add(wet);
+      this.spills.push({ m: wet, t: 0 });
+      SND.swell(env.bus, { f0: 1600, f1: 400, dur: 1.4, gain: 0.04 });
+      this.state = 'spilt'; this.flowing = [];
+      this.splash.pts.position.set(p.x, lv.gy + 0.1, p.z); this.splashK = 1;
+      w.step('The water spilt into the sand. Mend the channel; the bucket is being drawn again');
+      this.later(2.4, () => this.resetFlow());
+    },
+    flowEnds(any) {
+      // every branch closed: if every target drinks, the network is done; otherwise draw again
+      const lv = this.lv;
+      if (lv.targets.every(t => t.watered)) return this.levelDone();
+      this.state = 'spilt';
+      this.w.step(any ? 'The water stopped short. Lay more channel; the bucket is being drawn again' : this.lv.L.step);
+      this.later(1.6, () => this.resetFlow());
+    },
+    resetFlow() {
+      const lv = this.lv; if (this.state === 'won') return;
+      lv.grid.forEach(col => col.forEach(c => { if (c) c.drain = true; }));
+      this.drawBucket(9);
+      this.w.step('The bucket rises again · ' + (lv.targets.filter(t => !t.watered).length) + ' still to reach');
+    },
+    levelDone() {
+      const w = this.w, env = ENGINE.env, li = this.li;
+      this.state = 'won';
+      SND.glow(env.bus, [196, 220, 246.94][li], { gain: 0.07, dur: 7 }); SND.bell(env.bus, 587.33, { gain: 0.035, delay: 0.4, glass: true });
+      w.progress(this.lv.L.targets.length);
+      this.later(3, () => { if (li < 2) this.startLevel(li + 1); else this.givenFreely(); });
+    },
+    givenFreely() {
+      // the well is bought, and made free: every bucket goes down at once, and every channel runs
+      const w = this.w, env = ENGINE.env;
+      this.state = 'free'; this.freeT = 0; this.bar.style.opacity = 0; this.bar.style.pointerEvents = 'none';
+      w.activity('Given freely', 1, 'The well is open to all');
+      this.camGoal = { tgt: new T.Vector3(0, this.wy, -2), ang: Math.PI / 4, dist: 34 };
+      this.buckets.forEach(b => { b.g.visible = true; });
+      this.levels.forEach(lv => { lv.grid.forEach(col => col.forEach(c => { if (c) { c.drain = false; c.fill = 0; c.free = 1; } })); lv.targets.forEach(t => { t.watered = true; t.wetT = t.wetT || w.time; }); });
+      SND.glow(env.bus, 146.83, { gain: 0.08, dur: 14, vowel: 'a' }); SND.glow(env.bus, 220, { gain: 0.05, dur: 12, delay: 1.5, vowel: 'o' });
+      this.later(2, () => w.say('Given freely to all', 'He asked: <span class="q">“Who will buy the well of Rumah and place his bucket alongside the buckets of the Muslims, for something better than it in Paradise?”</span> ‘Uthman bought it from his own wealth, and the well was open to everyone. (Jami‘ al-Tirmidhi 3703)', { ar: 'مَنْ يَشْتَرِي بِئْرَ رُومَةَ فَيَجْعَلُ دَلْوَهُ مَعَ دِلَاءِ الْمُسْلِمِينَ', ms: 16000 }));
+      this.later(11, () => { w.finish('The well of Rumah is given to all'); this.done = true; this.dip('#000', 0.3, () => { this.mode = 'walk'; w.mode = null; w.pos.set(0, 0, 7); w.yaw = 0; w.pitch = -0.05; w.step('Walk among the gardens; every channel runs'); }); });
+    },
+    bleat(p) { const sp = this.w.spatial(p, 12); SND.sing(ENGINE.env.bus, 380 + Math.random() * 60, { vowel: 'a', dur: 0.5, gain: 0.03 * sp.gain + 0.005, pan: sp.pan, attack: 0.02, hold: 0.2, vib: 0.06 }); },
+    dip(color, hold, fn) { this.fadeEl.style.background = color; this.dipGoal = 1; this.later(0.6, () => { fn && fn(); this.later(hold || 0.2, () => { this.dipGoal = 0; }); }); },
+
+    syncInstances() {
+      const m4 = new T.Matrix4(), q = new T.Quaternion(), up = new T.Vector3(0, 1, 0), v = new T.Vector3(), sc = new T.Vector3();
+      const lists = {}; ['straight', 'bend', 'tee', 'cross'].forEach(t => { lists[t] = { stone: [], old: [], water: [] }; });
+      const t = this.w.time;
+      this.levels.forEach(lv => lv.grid.forEach((col, i) => col.forEach((c, j) => {
+        if (!c) return;
+        const ty = typeOf(c.m), r = maskRot(PIECES[ty], c.m), p = cellWorld(lv.L, i, j);
+        const yaw = lv.L.ang - r * Math.PI / 2;
+        const pop = U.clamp((t - c.born) / 0.5), s = pop < 1 ? U.easeOut(pop) + Math.sin(pop * Math.PI) * 0.12 : 1;
+        lists[ty][c.fixed ? 'old' : 'stone'].push(m4.compose(v.set(p.x, lv.gy + 0.04, p.z), q.setFromAxisAngle(up, yaw), sc.set(s, s, s)).clone());
+        if (c.fill > 0.001) lists[ty].water.push(m4.compose(v.set(p.x, lv.gy - 0.06, p.z), q.setFromAxisAngle(up, yaw), sc.set(1, Math.max(0.02, c.fill), 1)).clone());
+      })));
+      Object.keys(lists).forEach(ty => ['stone', 'old', 'water'].forEach(k => { const im = this.inst[ty][k], L2 = lists[ty][k]; im.count = L2.length; L2.forEach((m, n) => im.setMatrixAt(n, m)); im.instanceMatrix.needsUpdate = true; }));
     },
 
-    pour(env, p) {
-      const w = this.w, b = env.bus;
-      this.carrying = false; this.carried.visible = false; w.speed = 3; w.run = 5.6;
-      p.done = true; p.pouring = 0.001;
-      const f = w.forward();
-      const from = new THREE.Vector3(w.pos.x + f.x * 0.6, w.y + 1.2, w.pos.z + f.z * 0.6);
-      const to = new THREE.Vector3(...p.target);
-      this.pours.push({ from, to, t: 0, p });
-      SND.swell(b, { color: 'pink', type: 'bandpass', f0: 1600, f1: 700, dur: 1.8, gain: 0.08 });
-      for (let i = 0; i < 6; i++) SND.drop(b, { f: U.rnd(500, 1200), gain: 0.05, delay: 0.3 + i * 0.18 });
+    buildCam(dt) {
+      const w = this.w, cam = w.camera, g = this.camGoal; if (!g) return;
+      this.camT = this.camT || g.tgt.clone(); this.camA = this.camA == null ? g.ang : this.camA;
+      this.camT.lerp(g.tgt, 1 - Math.exp(-dt * 2)); let da = g.ang - this.camA; da = Math.atan2(Math.sin(da), Math.cos(da)); this.camA += da * (1 - Math.exp(-dt * 2));
+      const dist = U.damp(this.camD || 26, g.dist || 24, 2, dt); this.camD = dist;
+      // looking outward from behind the well, down onto the network
+      const back = new T.Vector3(Math.sin(this.camA), 0, Math.cos(this.camA));
+      const want = this.camT.clone().addScaledVector(back, dist * 0.62).add(new T.Vector3(0, dist * 0.78, 0));
+      if (this.fromFilm) { cam.position.lerp(want, 1 - Math.exp(-dt * 2.5)); if (cam.position.distanceTo(want) < 0.4) this.fromFilm = false; } else cam.position.copy(want);
+      cam.lookAt(this.camT);
+      w.pos.set(this.camT.x, 0, this.camT.z);
+      if (w._shadow) { const L = w._shadow.light; L.target.position.set(this.camT.x, 0, this.camT.z); L.position.copy(L.target.position).add(w._shadow.off); }
+      // the ghost of the piece in hand
+      const p = ENGINE.pointer, c = p.inside && this.state !== 'won' && this.state !== 'free' ? this.pickCell(p.x, p.y) : null;
+      if (c && !matchMedia('(pointer: coarse)').matches) {
+        const lv = this.lv, ty = typeOf(this.hand.m), r = maskRot(PIECES[ty], this.hand.m), q = cellWorld(lv.L, c.i, c.j);
+        this.ghost.geometry = this.geos[ty].stone; this.ghost.position.set(q.x, lv.gy + 0.1, q.z);
+        this.ghostSpin = U.damp(this.ghostSpin || 0, 0, 12, dt);
+        this.ghost.rotation.y = lv.L.ang - r * Math.PI / 2 + this.ghostSpin * Math.PI / 2; this.ghost.visible = true;
+        const bad = lv.rocks.has(c.i + ',' + c.j) || (lv.grid[c.i][c.j] && (lv.grid[c.i][c.j].fixed || lv.grid[c.i][c.j].fill > 0));
+        this.ghostMat.color.set(bad ? 0xff9a7a : 0xffd98a);
+      } else this.ghost.visible = false;
     },
 
-    ripple(x, z, amp) { const r = this.ripples[this.ripI++ % 8]; r.set(x, z, this.w.time, amp); },
-
-    down(env, p, e) {
-      if (this.hauling && (e.pointerType === 'mouse' || !e.pointerType) && (e.button === 0 || e.button === 2)) { this.pull(env, e.button === 0 ? 'L' : 'R'); return; }
-      this.w && this.w.down(p, e);
+    film(env, w) {
+      const wy = this.wy, tr = this.levels[1].targets[0].pos, gd = this.levels[2].targets[2].pos;
+      return [
+        { dur: 7, fade: 'dip', title: true, fov: [46, 40], path: [[[-170, 60, -140], [0, 0, -10]], [[-120, 44, -100], [0, 0, -5]], [[-80, 32, -60], [0, 2, 0]]] },
+        { dur: 6.5, fade: 'dip', line: 'In Madinah, there was no sweet water but the well of Rumah.', ar: 'لَمْ يَكُنْ بِهَا مَاءٌ يُسْتَعْذَبُ غَيْرَ بِئْرِ رُومَةَ', lineAt: 0.5, fov: [44, 38],
+          path: [[[4, wy + 2.2, 4.5], [0, wy + 1.2, 0]], [[2.6, wy + 3.4, 2.6], [0, wy + 0.4, 0]]],
+          during: (w, k) => { const b = this.buckets[0]; b.y = this.wy + 1.4 - Math.sin(k * Math.PI) * 1.2; } },
+        { dur: 6, fade: 'cut', line: 'The gardens wait, and the troughs are dry.', ar: 'الْبَسَاتِينُ تَنْتَظِرُ، وَالْأَحْوَاضُ جَافَّةٌ', lineAt: 0.5,
+          path: [[[tr.x + 5, tr.y + 1.6, tr.z + 4], [tr.x, tr.y + 0.6, tr.z]], [[tr.x + 3.4, tr.y + 1.2, tr.z + 3], [tr.x, tr.y + 0.5, tr.z]]] },
+        { dur: 7, fade: 'dip', lines: [[0.5, '“Who will buy the well of Rumah,', 'مَنْ يَشْتَرِي بِئْرَ رُومَةَ'], [3.4, 'and place his bucket with the buckets of the Muslims?” (Tirmidhi 3703)', 'فَيَجْعَلُ دَلْوَهُ مَعَ دِلَاءِ الْمُسْلِمِينَ']],
+          path: [[[-6, wy + 1.3, 3], [0, wy + 1.6, 0]], [[-3.4, wy + 1.1, 2.2], [0, wy + 2.4, 0]]], fov: [40, 34] },
+        { dur: 6, fade: 'cut', line: 'Every garden, trough and cistern must be reached.', ar: 'لِكُلِّ بُسْتَانٍ وَحَوْضٍ وَصِهْرِيجٍ نَصِيبٌ مِنَ الْمَاءِ', lineAt: 0.4,
+          path: [[[gd.x + 6, gd.y + 3, gd.z + 6], [gd.x, gd.y + 1, gd.z]], [[gd.x - 2, gd.y + 7, gd.z + 9], [gd.x, gd.y, gd.z]]] },
+        { dur: 6.5, fade: 'white', line: 'Lay the channels while the bucket rises. Give the water.', ar: 'مُدَّ الْقَنَوَاتِ وَالدَّلْوُ يَصْعَدُ، وَأَوْصِلِ الْمَاء', lineAt: 0.6,
+          path: [[[0, wy + 26, 18], [0, wy, -10]], [[0, wy + 19, 13], [0, wy, -9]]] },
+      ];
     },
+    filmOpts: { end(w) { const st = ENGINE.cur; if (!st || !st.levels) return; st.fromFilm = true; st.startLevel(0); } },
+
     onKey(env, e) {
-      if (!this.hauling || e.repeat) return;
+      if (e.repeat || !this.w || this.w.filmS) return;
       const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
-      if (k === 'a' || k === 'ArrowLeft') this.pull(env, 'L');
-      else if (k === 'd' || k === 'ArrowRight') this.pull(env, 'R');
-      else if ((k === 'e' && this.haulAt !== this.w.time) || k === 'Escape') { this.stopHaul(); this.w.step('The bucket slips back down; press E at the pulley to take the rope again'); }
+      if (k === 'v') return this.toggleWalk();
+      if (this.mode !== 'build') return;
+      if (k === 'r' || k === 'q' || k === 'e') this.turnHand();
+      const t = { '1': 'straight', '2': 'bend', '3': 'tee', '4': 'cross' }[k]; if (t) this.choose(t);
     },
-    onLeave() { if (this.noMenu) document.removeEventListener('contextmenu', this.noMenu); },
+    wheel(env, dy) { if (this.mode === 'build' && Math.abs(dy) > 2) this.turnHand(); },
+    move(env, p, e) { if (this.w && this.mode !== 'build') this.w.move(p, e); },
 
     update(env, dt) {
       const w = this.w; if (!w) return;
+      if (this.queue.length) { const due = this.queue.filter(q => w.time >= q[0]); this.queue = this.queue.filter(q => w.time < q[0]); due.forEach(q => q[1]()); }
+      if (!w.filmS) { this.dipV = U.damp(this.dipV, this.dipGoal, 9, dt); this.fadeEl.style.opacity = this.dipV < 0.004 ? 0 : this.dipV.toFixed(3); }
+      // the bucket rises while you build
+      if (this.state === 'drawing') {
+        this.countdown -= dt;
+        const k = 1 - U.clamp(this.countdown / this.cdMax);
+        this.buckets[0].y = this.wy - 2.6 + k * 4.0; this.pulley.rotation.z -= dt * 3;
+        if (Math.floor((this.countdown + dt) / 3) !== Math.floor(this.countdown / 3) && this.countdown > 0.5) SND.knock(env.bus, { f: 220, gain: 0.05, click: 1600 });
+        w.step && this.li >= 0 && this.countdown > 0 && (this._cdShown !== Math.ceil(this.countdown)) && (this._cdShown = Math.ceil(this.countdown), w.step(`The bucket rises · the water runs in ${Math.ceil(this.countdown)} s`));
+        if (this.countdown <= 0) { this.buckets[0].y = this.wy + 1.4; this.startFlow(); w.step('The water runs'); }
+      }
+      this.flowStep(dt);
+      // drained channels empty slowly; in the end every channel runs
+      this.levels.forEach(lv => lv.grid.forEach(col => col.forEach(c => { if (!c) return; if (c.drain) { c.fill = Math.max(0, c.fill - dt * 0.8); if (c.fill <= 0) c.drain = false; } if (c.free) c.fill = Math.min(1, c.fill + dt * 0.5); })));
+      this.syncInstances();
       w.update(dt);
-      const t = w.time, b = env.bus;
-      this.waterMats.forEach(m => { m.uniforms.uTime.value = t; });
-      KIT.driftDust(this.dust, dt, t, [0.04, 0.01]);
-
-      /* hauling: the bucket rises with each alternation and slips back if you stop */
-      if (this.depthV) { const s = Math.min(this.depthV, dt * 0.9); this.depth += s; this.depthV -= s; this.spin = (this.spin || 0) + s; if (this.depthV < 1e-4) this.depthV = 0; }
-      if (this.hauling) {
-        this.idle += dt;
-        if (this.idle > 1.2 && this.depth > 0) { this.depth = Math.max(0, this.depth - SLIP * dt); this.spin -= SLIP * dt; if (Math.random() < dt * 3) SND.knock(b, { f: 240, gain: 0.03, click: 1200 }); }
-      } else if (!this.carrying && this.depth > 0 && !this.depthV) {
-        this.depth = Math.max(0, this.depth - dt * 0.4); this.spin -= dt * 0.4;
-        if (this.depth === 0) { this.ripple(0, 0, 1); SND.drop(b, { f: 300, gain: 0.08, dur: 0.3 }); }
-      }
-      if (this.hauling && this.depth >= 1) {
-        this.depth = 1; this.stopHaul();
-        this.carrying = true; this.carried.visible = true; w.speed = 2.4; w.run = 3.4;
-        SND.knock(b, { f: 120, gain: 0.2, click: 1000 }); SND.drop(b, { f: 600, gain: 0.06 }); SND.bell(b, 392, { gain: 0.03 });
-        const left = this.places.filter(p => !p.done).map(p => p.name);
-        w.step(`Carry the bucket to ${left.length === 5 ? 'one of the five places that wait for water (follow the warm lights)' : left.join(', ')}`);
-        if (!this.seen.hadith) {
-          this.seen.hadith = true;
-          w.say('A Bucket Among the Buckets', 'The Prophet ﷺ said: “Whoever buys the well of Rumah and makes his bucket one among the buckets of the Muslims…” <span class="q">(Jami‘ at-Tirmidhi 3703, graded hasan; also reported by al-Bukhari without a full chain, 2778)</span>', { ar: 'مَنْ يَشْتَرِي بِئْرَ رُومَةَ فَيَجْعَلَ دَلْوَهُ مَعَ دِلَاءِ الْمُسْلِمِينَ', ms: 14000 });
-        }
-      }
-      const atTop = this.carrying || this.depth >= 1;
-      const by = atTop && this.carrying ? BUCKET_TOP + 5 : U.lerp(BUCKET_LOW, BUCKET_TOP, this.depth);
-      this.sway = U.damp(this.sway || 0, 0, 3, dt);
-      this.bucket.visible = !this.carrying;
-      this.bucket.position.set(Math.sin(t * 7) * 0.025 * this.sway, by, -0.2 + Math.cos(t * 5) * 0.02 * this.sway);
-      this.bucket.rotation.z = Math.sin(t * 6) * 0.08 * this.sway;
-      this.bucket.userData.water.visible = this.depth > 0.03;
-      this.wheel.rotation.x = -(this.spin || 0) * 22;
-      // rope from the wheel down to the bucket, and from the wheel to the hands
-      const ry0 = 2.33, ry1 = this.carrying ? 2.0 : by + 0.17;
-      this.rope.scale.y = Math.max(0.05, ry0 - ry1); this.rope.position.set(this.bucket.position.x * 0.5, (ry0 + ry1) / 2, -0.2);
-      const hx = this.hauling ? w.pos.x + 0.25 : HAUL.x, hz = this.hauling ? w.pos.z - 0.35 : 0.75, hy = this.hauling ? w.y + 0.85 : 0.95;
-      const a = new THREE.Vector3(0, 2.55, 0.2), c = new THREE.Vector3(hx, hy, hz);
-      this.ropeH.position.copy(a).add(c).multiplyScalar(0.5); this.ropeH.scale.y = a.distanceTo(c);
-      this.ropeH.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), c.clone().sub(a).normalize());
-      // the gauge
-      const gh = this.gauge.ov.firstElementChild.clientHeight || 300, bpos = (1 - this.depth) * (gh - 26);
-      this.gauge.bucket.style.top = `${bpos}px`; this.gauge.rope.style.height = `${bpos}px`;
-      const next = this.lastHand === 'L' ? 'R' : this.lastHand === 'R' ? 'L' : null;
-      this.gauge.L.style.background = next === 'L' || !next ? 'rgba(160,110,50,.55)' : 'rgba(20,16,24,.6)';
-      this.gauge.R.style.background = next === 'R' || !next ? 'rgba(160,110,50,.55)' : 'rgba(20,16,24,.6)';
-      // drips from the rising bucket ring in the stone throat
-      this.dripClock -= dt;
-      if (this.dripClock < 0) {
-        this.dripClock = this.depth > 0.05 && !this.carrying ? U.rnd(0.15, 0.5) : U.rnd(2, 5);
-        const sp = w.spatial({ x: 0, z: 0 }, 5);
-        SND.drop(b, { f: U.rnd(800, 1500), gain: (this.depth > 0.05 ? 0.05 : 0.025) * sp.gain + 0.004, pan: sp.pan, dur: 0.12 });
-        SND.drop(b, { f: U.rnd(800, 1500), gain: 0.012 * sp.gain, pan: -sp.pan, delay: 0.14, dur: 0.2 });
-        this.ripple(U.rnd(-0.3, 0.3), U.rnd(-0.3, 0.3), 0.6);
-      }
-
-      /* pouring: an arc of water, then the place fills and glows */
-      const dp = this.pourPos; let n = 0;
-      for (const po of this.pours) {
-        po.t += dt;
-        if (po.t < 1.4) for (let i = 0; i < 12 && n < 60; i++, n++) {
-          const k = U.clamp(po.t * 1.4 - i * 0.05); const x = U.lerp(po.from.x, po.to.x, k), z = U.lerp(po.from.z, po.to.z, k);
-          const y = U.lerp(po.from.y, po.to.y, k) + Math.sin(k * Math.PI) * 0.35;
-          dp[n * 3] = x + U.rnd(-0.03, 0.03); dp[n * 3 + 1] = y; dp[n * 3 + 2] = z + U.rnd(-0.03, 0.03);
-        }
-        if (po.t > 0.6) po.p.pouring = Math.min(1, po.p.pouring + dt * 0.45);
-      }
-      for (let i = n; i < 60; i++) dp[i * 3 + 1] = -99;
-      this.pourPts.geometry.attributes.position.needsUpdate = true;
-      this.pours = this.pours.filter(po => po.t < 4);
-      let filled = 0, anyCarry = this.carrying;
-      this.places.forEach((p, i) => {
-        if (p.pouring > 0) {
-          const k = U.easeOut(p.pouring);
-          p.surf.visible = true; p.mat.uniforms.uFill.value = Math.min(1, k * 2) * 0.92; p.mat.uniforms.uGlow.value = 0.25 * k;
-          if (p.key === 'flock') {
-            this.chanWater.scale.x = Math.min(1, k * 1.6) * 5.4; this.chanWater.position.x = 1.45 + this.chanWater.scale.x / 2;
-            p.surf.position.y = 0.2 + 0.24 * k;
-          } else if (p.key === 'skin') this.skin.scale.set(0.7 + 0.45 * k, 0.55 + 0.6 * k, 0.45 + 0.45 * k);
-          else if (p.key === 'palm') p.surf.position.y = 0.02 + 0.05 * k;
-          else if (p.key === 'jar') p.surf.position.y = 0.5 + 0.32 * k;
-          else if (p.key === 'basin') p.surf.position.y = 0.2 + 0.32 * k;
-          p.glow.material.opacity = 0.2 + 0.25 * k;
-          this.choir[i].setGain(0.016 * k, 1.5);
-          if (p.pouring >= 1 && !p.counted) {
-            p.counted = true; this.given++;
-            SND.bell(b, p.chord * 2, { gain: 0.04 }); SND.glow(b, p.chord, { gain: 0.03, dur: 5 });
-            w.progress(this.given, this.given < 5 ? `${p.doneText} Return to the well and draw again (${5 - this.given} still waiting).` : p.doneText);
-            if (this.given === 3) w.say('A Waqf', '‘Uthman ibn ‘Affan bought the well and made it a <i>waqf</i>, an endowment: its water was free to all, and no one could sell it again.', { ms: 11000 });
-            if (this.given === 5) this.endT = 0;
-          }
-          if (p.pouring >= 1) filled++;
-        } else {
-          // places still waiting are the warm lights of the garden, brighter while you carry water
-          p.glow.material.opacity = (anyCarry ? 0.55 + 0.2 * Math.sin(t * 2.4 + i) : 0.18);
-        }
+      const t = w.time;
+      // buckets: the one on the rope, and at the end the buckets of the Muslims going down together
+      this.buckets.forEach((b, k) => {
+        if (this.state === 'free') { this.freeT += k === 0 ? dt : 0; b.y = this.wy + 1.0 - (0.5 + 0.5 * Math.sin(t * 0.9 + k * 0.9)) * 2.4; }
+        b.g.position.y = b.y; b.rope.scale.y = Math.max(0.05, this.wy + 2.85 - b.y - 0.17);
       });
-      // the pulley is the brightest thing when the bucket is waiting
-      this.pulleyGlow.material.opacity = !this.carrying && !this.hauling && this.given < 5 ? 0.35 + 0.15 * Math.sin(t * 2.5) : 0;
-
-      /* the revelation: a hush, then the choir and the endowment */
-      if (this.endT != null && !this.finished) {
-        this.endT += dt;
-        if (this.endT > 3) {
-          this.finished = true;
-          SND.glow(b, 130.81, { gain: 0.06, dur: 12 }); SND.glow(b, 196, { gain: 0.04, dur: 12, delay: 0.8 }); SND.bell(b, 523.25, { gain: 0.04, delay: 1.6 });
-          this.places.forEach(p => { p.mat.uniforms.uGlow.value = 0.45; });
-          w.say('Still Flowing', 'The water that one man once sold became water for everyone: the flock, the traveller, the palms, the households and the mosque. The Well of Rumah still exists in the north-west of Madinah.', { ar: 'بِئْرُ رُومَة', ms: 15000 });
-          w.finish('Water for everyone');
-        }
-      }
-      const hush = this.endT != null && !this.finished ? 0.15 : 1;
-      this.breeze.set('gain', 0.03 * hush, 0.6); this.fronds.set('gain', 0.006 * hush, 0.6);
-      this.wellLamp.material.opacity = 0.8 + 0.15 * U.noise1(t * 6);
-      this.wellLight.intensity = 1.25 + 0.2 * U.noise1(t * 5 + 3);
-
-      this.cricketClock -= dt;
-      if (this.cricketClock < 0) { this.cricketClock = U.rnd(0.3, 1.2) / (0.6 + this.given * 0.15); if (hush > 0.5) SND.cricket(b, { gain: 0.005 }); }
-      this.cooClock -= dt;
-      if (this.cooClock < 0) { this.cooClock = U.rnd(6, 12); if (hush > 0.5) SND.coo(b, { gain: 0.025 }); }
+      this.front.material.opacity = U.damp(this.front.material.opacity, this.state === 'flowing' ? 0.85 : 0, 6, dt); this.front.scale.setScalar(1.1 + Math.sin(t * 9) * 0.15);
+      this.splashK = U.damp(this.splashK || 0, 0, 1.2, dt); this.splash.pts.material.uniforms && (this.splash.pts.visible = this.splashK > 0.02);
+      this.spills.forEach(s => { s.t += dt; s.m.scale.setScalar(Math.min(1.6, 0.2 + s.t * 1.2)); s.m.material.opacity = 0.55 * (1 - U.smooth(4, 9, s.t)); });
+      this.spills = this.spills.filter(s => { if (s.t > 9) { w.scene.remove(s.m); return false; } return true; });
+      (this.puffs || []).forEach(p => { p.t += dt; p.s.material.opacity = 0.45 * (1 - p.t / 1.2) * p.k; p.s.scale.setScalar(1.2 + p.t * 2.5); p.s.position.y += dt * 0.5; });
+      if (this.puffs) this.puffs = this.puffs.filter(p => { if (p.t > 1.2) { w.scene.remove(p.s); return false; } return true; });
+      // the targets come alive
+      let wet = 0;
+      this.levels.forEach(lv => lv.targets.forEach(tg => {
+        const k = tg.watered ? U.smooth(0, 3, t - tg.wetT) : 0; if (tg.watered) wet++;
+        tg.glow.material.opacity = tg.watered ? 0.25 * (1 - U.smooth(2, 6, t - tg.wetT)) : (this.lv === lv && this.mode === 'build' ? 0.35 + 0.15 * Math.sin(t * 2.5) : 0);
+        if (tg.bed) tg.bed.material.color.setRGB(U.lerp(0.6, 0.26, k), U.lerp(0.48, 0.2, k), U.lerp(0.35, 0.14, k));
+        if (tg.sprouts && tg.sprouts.meshes[0]) { const im = tg.sprouts.meshes[0]; if (k > 0 && !tg.grown) { tg.grown = true; } if (tg.grown) { const m4 = new T.Matrix4(); tg.sprouts.list.forEach((it, n) => { m4.compose(new T.Vector3(it.x, lv.gy + 0.05, it.z), new T.Quaternion().setFromAxisAngle(new T.Vector3(0, 1, 0), it.ry), new T.Vector3(0.6 * k, 0.6 * k, 0.6 * k)); im.setMatrixAt(n, m4); }); im.instanceMatrix.needsUpdate = true; } }
+        if (tg.wat) tg.wat.scale.y = Math.max(0.01, k);
+        if (tg.goats) tg.goats.forEach((g, n) => { const dip = tg.watered ? 0.5 + 0.5 * Math.sin(t * 1.4 + n * 1.7) : 0; g.userData.head.position.y = 0.66 - dip * 0.22; g.userData.head.position.x = 0.48 + dip * 0.06; });
+      }));
+      const flowing = this.state === 'flowing' || this.state === 'free';
+      this.waterN.set('gain', flowing ? 0.03 : 0.004 * wet, 0.4);
+      this.choir.setGain(0.002 + 0.006 * wet + (this.state === 'free' ? 0.02 : 0), 1);
+      this.birdClock -= dt;
+      if (this.birdClock < 0) { this.birdClock = 2 + Math.random() * 4; Math.random() < 0.4 ? SND.coo(env.bus, { gain: 0.025 }) : SND.chirp(env.bus, { gain: 0.014 }); }
+      this.goatClock -= dt;
+      if (this.goatClock < 0) { this.goatClock = 5 + Math.random() * 7; const tr = this.levels[1].targets[0]; if (tr && this.lv) this.bleat(tr.pos); }
     },
+    onLeave() { const host = document.getElementById('host'); if (this.noMenu) host.removeEventListener('contextmenu', this.noMenu); },
   }));
 })();

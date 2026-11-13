@@ -1,36 +1,86 @@
-/* Makkah — The Return to Makkah (Fath Makkah), 8 AH / 630 CE.
-   A clear morning. Banners and dust stand on the heights round the valley where the army has come
-   in; no person is shown. Around the Ka'bah stand thirty-six plain, weathered stones and crude
-   pillars, standing for the 360 idols of the report (no faces are carved). Go round the House and
-   topple each: it tips, falls and dissolves into dust with a low sung note. When the last is gone,
-   near-silence, then a wordless sung call rises from the roof of the Ka'bah in a column of light,
-   and the pardon of the city.
-   Feeling: release, and mercy after victory. Colour script: clear morning blue over sand, with warm
-   gold reserved for the next stone, the voice from the roof and the pardon. */
+/* Station — The Return to Makkah (Fath Makkah), Ramadan 8 AH / 630 CE.
+   Genre: first-person aiming, on rails (shooting gallery / Duck Hunt / Doom feel).
+   A clear morning in the valley of Makkah. Banners and dust stand on the heights; doors are shut
+   in the lanes. Around the Ka'bah, on the roofs and across the valley stand idols: plain, weathered
+   standing stones on low plinths (no carved faces, no figures). The rail carries you round the House,
+   up onto the ring of roofs, and onto the slope of Abu Qubays. Aim, and strike: the staff in view
+   sends a line of light, the stone rocks, topples and falls to dust with a low sung note.
+   Part 1: around the House (still stones, learn to aim). Part 2: the roofs (stones behind cloth
+   awnings that the wind lifts — strike while they show, and high ledges). Part 3: the valley seen
+   from the slope (stones revealed as the dust clears, a few at a time, far and small).
+   Then near-silence, "Truth has come and falsehood has vanished" (Qur'an 17:81; Sahih al-Bukhari
+   4287), a sung call from the roof of the House in a column of light. No person is ever shown.
+   Feeling: release, and mercy after victory. Colour script: clear morning blue and sand; gold kept
+   for the light of the staff, the next stone and the column on the roof. */
 (function () {
   'use strict';
   if (!window.WORLD) return;
-  const N = 36, KW = 11, KD = 12.5, KH = 9;
-  const ACCENT = 0xffc65a;
+  const T = THREE;
+  const KW = 11, KD = 12.5, KH = 9;
 
-  // a soft points system for dust with per-particle alpha and size
-  const DUST_VERT = `attribute float aAlpha; attribute float aSize; varying float vA;
-    void main(){ vA = aAlpha; vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_PointSize = aSize * (300.0 / -mv.z); gl_Position = projectionMatrix * mv; }`;
-  const DUST_FRAG = `uniform sampler2D map; uniform vec3 color; varying float vA;
-    void main(){ vec4 t = texture2D(map, gl_PointCoord); gl_FragColor = vec4(color, t.a * vA); }`;
+  /* ---------------- the valley ---------------- */
+  function H(x, z) {
+    const r = Math.hypot(x, z), de = Math.hypot(x * 0.92, z * 0.6);
+    let y = 0.3 + SCAPE.fbm(x * 0.02, z * 0.02, 3) * 0.7;
+    y += Math.max(0, -z - 140) * 0.05;                     // the valley climbs gently north, toward upper Makkah
+    const a = Math.atan2(x, -z);                            // 0 = north
+    const gap = 1 - 0.8 * Math.exp(-Math.pow(a / 0.32, 2)) - 0.65 * Math.exp(-Math.pow((Math.abs(a) - Math.PI) / 0.38, 2));
+    y += U.smooth(140, 430, de) * (60 + SCAPE.ridge(x * 0.0055, z * 0.0055, 5) * 170) * gap;
+    y += 128 * Math.exp(-((x - 270) * (x - 270) / (2 * 105 * 105) + (z + 20) * (z + 20) / (2 * 150 * 150)));   // Abu Qubays, east
+    y += 112 * Math.exp(-((x + 300) * (x + 300) / (2 * 115 * 115) + (z + 60) * (z + 60) / (2 * 210 * 210)));  // Qu'ayqi'an, west
+    y += SCAPE.ridge(x * 0.03, z * 0.03, 3) * 6 * U.smooth(60, 160, r);
+    return U.lerp(0.3 + SCAPE.fbm(x * 0.05, z * 0.05, 2) * 0.12, y, U.smooth(28, 70, r));
+  }
 
-  /* The kit's valley climbs without limit toward its edges; fold the high slopes down into a ring
-     of mountains so that the sky stays open over the city. */
-  function squashValley(w, g0) {
-    const sq = y => (y <= 16 ? y : 16 + (y - 16) * 0.3);
-    w.scene.traverse(m => {
-      if (m.isMesh && m.geometry.attributes.color && m.geometry.attributes.position.count > 10000) {
-        const p = m.geometry.attributes.position;
-        for (let i = 0; i < p.count; i++) p.setY(i, sq(p.getY(i)));
-        m.geometry.computeVertexNormals(); m.geometry.computeBoundingSphere();
-      }
-    });
-    return (x, z) => sq(g0(x, z));
+  /* ---------------- helpers ---------------- */
+  const PV = `attribute float aSize; attribute float aAlpha; varying float vA; uniform float uScale;
+    void main(){ vA = aAlpha; vec4 mv = modelViewMatrix * vec4(position,1.); gl_PointSize = aSize * uScale / -mv.z; gl_Position = projectionMatrix * mv; }`;
+  const PF = `uniform sampler2D tMap; uniform vec3 uColor; varying float vA;
+    void main(){ vec4 t = texture2D(tMap, gl_PointCoord); gl_FragColor = vec4(uColor, t.a * vA); if (gl_FragColor.a < 0.004) discard; }`;
+  function sprites(w, n, color, additive) {
+    const geo = new T.BufferGeometry(), P = new Float32Array(n * 3), S = new Float32Array(n), A = new Float32Array(n);
+    geo.setAttribute('position', new T.BufferAttribute(P, 3)); geo.setAttribute('aSize', new T.BufferAttribute(S, 1)); geo.setAttribute('aAlpha', new T.BufferAttribute(A, 1));
+    const mat = new T.ShaderMaterial({ vertexShader: PV, fragmentShader: PF, transparent: true, depthWrite: false, blending: additive ? T.AdditiveBlending : T.NormalBlending,
+      uniforms: { tMap: { value: SCAPE.tex.soft(w) }, uColor: { value: new T.Color(color) }, uScale: { value: w.env.h * 0.9 } } });
+    const pts = new T.Points(geo, mat); pts.frustumCulled = false; pts.userData.dynamic = true; w.scene.add(pts);
+    return { pts, P, S, A, geo, n, upd() { geo.attributes.position.needsUpdate = geo.attributes.aSize.needsUpdate = geo.attributes.aAlpha.needsUpdate = true; } };
+  }
+  function burstPool(w, n, color, additive) {
+    const sp = sprites(w, n, color, additive), V = new Float32Array(n * 3), L = new Float32Array(n), L0 = new Float32Array(n), S0 = new Float32Array(n), A0 = new Float32Array(n);
+    let k = 0;
+    return {
+      emit(x, y, z, vx, vy, vz, life, size, alpha) { const i = k++ % n; sp.P.set([x, y, z], i * 3); V.set([vx, vy, vz], i * 3); L[i] = L0[i] = life; S0[i] = size; A0[i] = alpha; },
+      step(dt, drag, grav) {
+        for (let i = 0; i < n; i++) {
+          if (L[i] <= 0) { sp.A[i] = 0; continue; }
+          L[i] -= dt; const t = 1 - Math.max(0, L[i]) / L0[i], f = 1 - drag * dt;
+          V[i * 3] *= f; V[i * 3 + 1] = V[i * 3 + 1] * f - grav * dt; V[i * 3 + 2] *= f;
+          sp.P[i * 3] += V[i * 3] * dt; sp.P[i * 3 + 1] += V[i * 3 + 1] * dt; sp.P[i * 3 + 2] += V[i * 3 + 2] * dt;
+          sp.S[i] = S0[i] * (0.5 + t * 1.5); sp.A[i] = A0[i] * Math.sin(Math.PI * Math.pow(t, 0.45));
+        }
+        sp.upd();
+      },
+    };
+  }
+  const rot = (g, q) => g.applyMatrix4(new T.Matrix4().makeRotationFromQuaternion(q));
+  function cylBetween(a, b, r0, r1, seg) {
+    const d = new T.Vector3().subVectors(b, a), len = d.length();
+    const g = new T.CylinderGeometry(r1, r0, len, seg || 7, 1); g.translate(0, len / 2, 0);
+    rot(g, new T.Quaternion().setFromUnitVectors(new T.Vector3(0, 1, 0), d.normalize())); g.translate(a.x, a.y, a.z);
+    return g;
+  }
+  // a weathered stone: a box with many segments, pushed about by noise
+  function stoneGeo(wd, ht, dp, seed, round) {
+    const g = new T.BoxGeometry(wd, ht, dp, 4, 8, 3), p = g.attributes.position, v = new T.Vector3();
+    for (let i = 0; i < p.count; i++) {
+      v.fromBufferAttribute(p, i); const yn = (v.y + ht / 2) / ht;
+      const n = SCAPE.fbm(v.x * 1.7 + seed, v.y * 1.3 + v.z * 1.7 - seed, 3);
+      const taper = 1 - yn * (round || 0.25);
+      v.x *= taper * (1 + n * 0.25); v.z *= taper * (1 + n * 0.25);
+      if (yn > 0.85) { const k = (yn - 0.85) / 0.15; v.x *= 1 - k * 0.35; v.z *= 1 - k * 0.35; }
+      v.y += n * 0.05 * ht; p.setXYZ(i, v.x, v.y + ht / 2, v.z);
+    }
+    g.computeVertexNormals(); return g;
   }
 
   ENGINE.register(WORLD.stage({
@@ -38,403 +88,526 @@
     arabic: 'فَتْحُ مَكَّة',
     title: 'The Return to Makkah',
     era: 'Makkah · Ramadan, 8 AH · 630 CE · the conquest and the pardon',
-    hint: 'WASD to walk · go round the Ka‘bah · E at each standing stone to topple it',
-    hintTouch: 'Left thumb to walk · go round the Ka‘bah · tap E at each standing stone',
+    hint: 'Move the mouse to aim · click to strike the standing stones · the way goes on when the near stones have fallen',
+    hintTouch: 'Drag to aim · tap a standing stone to strike it',
     sound: { reverb: 0.45 },
-    story: `<p>Eight years after he left Makkah by night, the Prophet ﷺ returned with about ten thousand (Sahih al-Bukhari 4276). The city was entered with little fighting, and he declared that whoever entered the house of Abu Sufyan, laid down arms or shut his door was safe (Sahih Muslim 1780).</p>
+    story: `<p>Eight years after he left Makkah by night, the Prophet ﷺ set out for it in Ramadan with about ten thousand (Sahih al-Bukhari 4276), and entered it from its upper part, by Kada’ (Sahih al-Bukhari 4290). He declared that whoever entered the house of Abu Sufyan, laid down his arms or shut his door was safe (Sahih Muslim 1780).</p>
             <p>Around the Ka‘bah stood 360 idols. He struck them with a stick in his hand, reciting:</p>
             <p class="q"><span class="ar">جَاءَ الْحَقُّ وَزَهَقَ الْبَاطِلُ ۚ إِنَّ الْبَاطِلَ كَانَ زَهُوقًا</span>“Truth has come and falsehood has vanished; falsehood is bound to vanish.” (Qur’an 17:81; Sahih al-Bukhari 4287)</p>
-            <p>Here thirty-six plain stones stand for them. No figure is shown.</p>`,
+            <p>Here sixty plain stones stand for them. No figure is shown.</p>`,
 
     enter(env) {
-      const T = THREE, self = this;
-      const w = this.w = WORLD.create(env, {
-        start: { x: 3, z: 31, yaw: 0.02, pitch: 0.04 }, exposure: 1.0, far: 1600,
-        fog: { color: 0xe6dccb, density: 0.0018 }, bounds: [-80, -80, 80, 80],
-      });
-      const S = w.scene;
-      const sunDir = new T.Vector3(0.62, 0.52, 0.3).normalize();
-      this.skyM = w.sky({ top: '#3f78c8', mid: '#e4dccb', bot: '#c8b090', sunDir: sunDir.toArray(), sun: '#fff0d0', sunSize: 0.0014 });
-      this.hemi = new T.HemisphereLight(0xdfeaff, 0x9a8060, 0.62); S.add(this.hemi);
-      const sun = new T.DirectionalLight(0xfff0d8, 2.3); sun.position.copy(sunDir).multiplyScalar(80); S.add(sun);
-      this.sun = sun;
+      const w = this.w = WORLD.create(env, { start: { x: 16, z: 0, yaw: 0 }, exposure: 0.85, far: 4200, near: 0.12, fov: 66,
+        fog: { color: 0xd8cbb6, density: 0.0009 } });
+      const S = w.scene, Q = w.quality, rnd = U.seeded(630);
+      w.renderer.setClearColor(0xc8d4e4);
+      S.add(w.camera);
 
-      const ground = squashValley(w, KIT.makkahValley(w, { kx: 0, kz: 0, floor: 130, clear: 34, seed: 630, houses: 110 }));
-      w.ground = ground; w.surface = () => 'sand';
-      this.ground = ground;
-      const kabah = KIT.kabah(w, { cloth: 0x0b0909 }); S.add(kabah);
-      kabah.children[1].material.roughness = 0.62;
-      w.addBox(-KW / 2 - 0.5, -KD / 2 - 0.5, KW / 2 + 0.5, KD / 2 + 0.5);
+      /* ---------- land ---------- */
+      const ter = SCAPE.terrain(w, { size: 2600, seg: Q < 1 ? 280 : 340, height: H, rock: [0.8, 0.93], rockHeight: [40, 110],
+        colors: { low: '#cdb594', high: '#c0a582', rock: '#8a7a6e', dark: '#5e5048' }, tex: 'gravel', rockTex: 'granite',
+        photo: { ground: 'gravelly_sand', rock: 'rock_face', normal: 1 }, rep: 0.22, rockRep: 0.035 });
+      w.ground = ter.ground;
+      SCAPE.horizon(w, { haze: '#d8cbb6', layers: [{ r: 1500, h: 120, color: '#8c7c72', seed: 3 }, { r: 2000, h: 170, color: '#a4968c', seed: 8 }, { r: 2700, h: 200, color: '#bcb2a8', seed: 13 }] });
 
-      /* ---------- banners and dust on the heights ---------- */
-      const poleMat = KIT.std({ map: KIT.wood(w, [1, 3], '#5a4030'), color: 0xa08870 });
-      const bannerCols = [[0.92, 0.9, 0.84], [0.16, 0.14, 0.13], [0.86, 0.84, 0.78], [0.55, 0.42, 0.28]];
-      const clothPos = [], clothCol = [], clothIdx = [], this_b = [];
-      const SEGX = 8, SEGY = 3;
-      const sites = [];
-      // banners stand along the ridges, where the slopes have climbed some thirty metres
-      [[-0.15, 0], [Math.PI * 0.5, 1], [Math.PI, 2], [Math.PI * 1.5 - 0.3, 3]].forEach(([a0, gi]) => {
-        for (let k = 0; k < 7; k++) {
-          const a = a0 + (k - 3) * 0.08 + (Math.random() - 0.5) * 0.03, want = 22 + (k % 3) * 9;
-          let d = 120; while (d < 400 && ground(Math.sin(a) * d, -Math.cos(a) * d) < want) d += 2;
-          const x = Math.sin(a) * d, z = -Math.cos(a) * d;
-          sites.push({ x, z, y: ground(x, z), gi });
-        }
-      });
-      sites.forEach((s0, bi) => {
-        const ph = 14 + Math.random() * 4;
-        const p = new T.Mesh(new T.CylinderGeometry(0.2, 0.26, ph, 6), poleMat); p.position.set(s0.x, s0.y + ph / 2 - 0.3, s0.z); S.add(p);
-        const col = bannerCols[(bi + s0.gi) % bannerCols.length], base = clothPos.length / 3;
-        const bw = 6.5, bh = 4.2, top = s0.y + ph - 0.6, yaw = Math.atan2(s0.x, s0.z);
-        for (let j = 0; j <= SEGY; j++) for (let i = 0; i <= SEGX; i++) {
-          const u = i / SEGX, v = j / SEGY;
-          clothPos.push(s0.x + Math.cos(yaw) * u * bw, top - v * bh, s0.z - Math.sin(yaw) * u * bw);
-          clothCol.push(...col);
-        }
-        for (let j = 0; j < SEGY; j++) for (let i = 0; i < SEGX; i++) {
-          const a = base + j * (SEGX + 1) + i, b = a + 1, c = a + SEGX + 1, d = c + 1;
-          clothIdx.push(a, c, b, b, c, d);
-        }
-        this_b.push({ base, x: s0.x, z: s0.z, yaw, bw, ph: Math.random() * 6 });
-      });
-      const cg = new T.BufferGeometry();
-      cg.setAttribute('position', new T.Float32BufferAttribute(clothPos, 3)); cg.setAttribute('color', new T.Float32BufferAttribute(clothCol, 3));
-      cg.setIndex(clothIdx); cg.computeVertexNormals();
-      this.cloth = new T.Mesh(cg, KIT.std({ vertexColors: true, side: T.DoubleSide, roughness: 1 }));
-      this.cloth.userData.dynamic = true; this.cloth.frustumCulled = false; S.add(this.cloth);
-      this.clothBase = cg.attributes.position.array.slice();
-      this.banners = this_b; this.bannerSites = sites;
-      // dust raised on the heights: soft billows that drift and breathe
-      const puff = w.tex(128, (g, s) => {
-        for (let i = 0; i < 9; i++) {
-          const x = s * (0.3 + Math.random() * 0.4), y = s * (0.35 + Math.random() * 0.3), r = s * (0.18 + Math.random() * 0.14);
-          const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, 'rgba(255,255,255,0.5)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
-          g.fillStyle = gr; g.fillRect(0, 0, s, s);
-        }
-      });
-      puff.wrapS = puff.wrapT = T.ClampToEdgeWrapping;
-      this.plumes = [];
-      for (let i = 0; i < 18; i++) {
-        const s0 = sites[(i * 3) % sites.length];
-        const sp = new T.Sprite(new T.SpriteMaterial({ map: puff, color: 0xd8c0a0, transparent: true, opacity: 0.5, depthWrite: false }));
-        const sc = 26 + Math.random() * 24; sp.scale.set(sc * 1.6, sc, 1);
-        sp.position.set(s0.x + (Math.random() - 0.5) * 30, s0.y + 6 + Math.random() * 8, s0.z + (Math.random() - 0.5) * 30);
-        S.add(sp); this.plumes.push({ sp, x0: sp.position.x, ph: Math.random() * 6, sc });
-      }
+      /* ---------- sky and light: a clear morning ---------- */
+      this.sun = new T.DirectionalLight(0xfff0dc, 1.9); this.sun.position.set(60, 50, 30); S.add(this.sun);
+      S.add(new T.HemisphereLight(0xcfe0ff, 0xa08868, PHOTO.enabled ? 0.08 : 0.6));
+      w.followShadow(this.sun, 55, Q < 1 ? 1024 : 2048);
+      if (PHOTO.enabled) PHOTO.sky(w, 'qwantani_morning_puresky', { sun: this.sun, rotation: Math.PI * 0.5, intensity: 0.8, haze: '#d8cbb6', horizon: 0.45, ground: '#b89a78' }).then(o => { this.sunDir = o && o.sunDir; });
+      else w.sky({ top: '#3f78c8', mid: '#e4dccb', bot: '#c8b090', sunDir: [0.6, 0.45, 0.2], sun: '#fff0d0', sunSize: 0.0014, clouds: 0.25 });
 
-      /* ---------- the stones: 36 plain, weathered stelae and crude pillars ---------- */
-      const weathered = w.tex(512, (g, s) => {
-        g.fillStyle = '#8c8070'; g.fillRect(0, 0, s, s);
-        for (let i = 0; i < 70; i++) {
-          const x = Math.random() * s, y = Math.random() * s, r = 20 + Math.random() * 70;
-          const gr = g.createRadialGradient(x, y, 0, x, y, r);
-          gr.addColorStop(0, Math.random() < 0.5 ? 'rgba(60,52,44,0.35)' : 'rgba(190,176,150,0.3)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
-          g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2);
-        }
-        for (let i = 0; i < 7000; i++) { g.fillStyle = Math.random() < 0.5 ? 'rgba(40,34,30,0.5)' : 'rgba(210,198,176,0.4)'; g.fillRect(Math.random() * s, Math.random() * s, 1 + Math.random() * 2, 1 + Math.random() * 2); }
-        g.strokeStyle = 'rgba(40,32,26,0.45)'; g.lineWidth = 1.2;
-        for (let i = 0; i < 26; i++) { g.beginPath(); let x = Math.random() * s, y = Math.random() * s; g.moveTo(x, y); for (let k = 0; k < 6; k++) { x += (Math.random() - 0.5) * 30; y += Math.random() * 24; g.lineTo(x, y); } g.stroke(); }
-        // pale lichen and old soot streaks
-        for (let i = 0; i < 40; i++) { g.fillStyle = 'rgba(180,170,120,0.25)'; g.beginPath(); g.arc(Math.random() * s, Math.random() * s, 3 + Math.random() * 9, 0, 6.283); g.fill(); }
-      }, [1, 2]);
-      const stoneMat = KIT.std({ map: weathered, color: 0xd8ccb8, roughness: 0.96, relief: 0.08 });
-      const rough = (geo, amt, seed) => {
-        const r = U.seeded(seed), p = geo.attributes.position, key = new Map();
-        for (let i = 0; i < p.count; i++) {
-          const k = `${p.getX(i).toFixed(3)},${p.getY(i).toFixed(3)},${p.getZ(i).toFixed(3)}`;
-          if (!key.has(k)) key.set(k, [(r() - 0.5) * amt, (r() - 0.5) * amt * 0.4, (r() - 0.5) * amt]);
-          const o = key.get(k), y = p.getY(i);
-          const taper = 1 - y * 0.18;
-          p.setXYZ(i, p.getX(i) * taper + o[0], y + (y > 0.01 ? o[1] : 0), p.getZ(i) * taper + o[2]);
-        }
-        geo.computeVertexNormals(); return geo;
+      /* ---------- materials ---------- */
+      const M = this.M = {
+        plaster: PHOTO.mat(w, 'clay_plaster', { triplanar: 0.32, color: '#e6d8c2', fallback: KIT.plaster(w, [1, 1], '#d8c8b0') }),
+        brick: PHOTO.mat(w, 'clay_block_wall', { triplanar: 0.3, color: '#d8c4a8', fallback: KIT.mudBrick(w, [1, 1]) }),
+        stone: PHOTO.mat(w, 'old_stone_wall', { triplanar: 0.3, color: '#cbbcaa', fallback: SCAPE.tex.granite(w) }),
+        mud: PHOTO.mat(w, 'brown_mud_dry', { triplanar: 0.35, color: '#d0b896', fallback: SCAPE.tex.mud(w) }),
+        wood: PHOTO.mat(w, 'medieval_wood', { triplanar: 0.9, color: '#a08870', fallback: KIT.wood(w, [1, 1]) }),
+        door: PHOTO.mat(w, 'old_planks_02', { rep: [1, 1], color: '#9a8068', fallback: KIT.wood(w, [1, 2], '#5a4030') }),
+        kstone: PHOTO.mat(w, 'rock_face', { triplanar: 0.45, color: '#6a6662', fallback: SCAPE.tex.granite(w) }),
+        dark: new T.MeshStandardMaterial({ color: 0x1a1410, roughness: 1 }),
+        idol: PHOTO.mat(w, 'rock_boulder_dry', { triplanar: 0.6, color: '#c8b8a6', fallback: SCAPE.tex.granite(w) }),
+        plinth: PHOTO.mat(w, 'quarry_wall', { triplanar: 0.5, color: '#bcae9c', fallback: SCAPE.tex.granite(w) }),
+        cloth: PHOTO.mat(w, 'rough_linen', { rep: [2, 2], color: '#d8c8a8', side: T.DoubleSide }),
       };
-      const steleGeo = rough(new T.BoxGeometry(1, 1, 1, 2, 5, 1).translate(0, 0.5, 0), 0.07, 36);
-      const pillarGeo = rough(new T.CylinderGeometry(0.5, 0.56, 1, 7, 4).translate(0, 0.5, 0), 0.09, 360);
-      this.steles = new T.InstancedMesh(steleGeo, stoneMat, N / 2);
-      this.pillars = new T.InstancedMesh(pillarGeo, stoneMat, N / 2);
-      [this.steles, this.pillars].forEach(m => { m.userData.dynamic = true; m.castShadow = true; m.receiveShadow = true; m.instanceMatrix.setUsage(T.DynamicDrawUsage); S.add(m); });
-      // where a stone stood, a pale scatter of dust remains
-      this.marks = new T.InstancedMesh(new T.CircleGeometry(1, 20).rotateX(-Math.PI / 2), KIT.std({ color: 0xd8c4a0, roughness: 1, transparent: true, opacity: 0.55, polygonOffset: true, polygonOffsetFactor: -2, depthWrite: false }), N);
-      this.marks.userData.dynamic = true; this.marks.receiveShadow = true; this.marks.userData.noCast = true; S.add(this.marks);
-      const r = U.seeded(8630);
-      this.idols = [];
-      for (let i = 0; i < N; i++) {
-        const a = (i / N) * Math.PI * 2 + (r() - 0.5) * 0.08, rad = 13 + (i % 3) * 2.4 + r() * 1.2;
-        const x = Math.cos(a) * rad, z = Math.sin(a) * rad * 1.05;
-        const kind = i % 2, h = kind ? 1.7 + r() * 1.3 : 2.0 + r() * 1.4;
-        const sx = kind ? 0.6 + r() * 0.25 : 0.8 + r() * 0.35, sz = kind ? sx : 0.36 + r() * 0.14;
-        const id = { i, kind, slot: Math.floor(i / 2), x, z, y: ground(x, z) - 0.05, h, sx, sz, yaw: a + Math.PI / 2 + (r() - 0.5) * 0.4, tilt: (r() - 0.5) * 0.06, state: 'stand', t: 0, ang: 0 };
-        w.addCircle(x, z, Math.max(sx, sz) * 0.55 + 0.1); id.circle = w.circles[w.circles.length - 1];
-        this.idols.push(id); this.place(id);
-        const m4 = new T.Matrix4().makeScale(0.0001, 0.0001, 0.0001); this.marks.setMatrixAt(i, m4);
-        w.interact({ key: `idol${i}`, pos: [x, id.y + 1.3, z], r: 2.7, label: 'Topple the stone', enabled: () => id.state === 'stand', onUse: () => self.topple(env, id) });
+
+      /* ---------- the Ka'bah: courses of stone and timber, the raised door on the east ---------- */
+      const kab = new T.Group(); S.add(kab);
+      let y0 = 0;
+      const box = (wd, ht, dp, mat, x, y, z, ry) => { const m = new T.Mesh(new T.BoxGeometry(wd, ht, dp), mat); m.position.set(x, y, z); if (ry) m.rotation.y = ry; m.castShadow = m.receiveShadow = true; return m; };
+      kab.add(box(KW + 1.0, 0.5, KD + 1.0, M.plinth, 0, 0.25, 0)); y0 = 0.5;
+      while (y0 < KH - 0.2) { const h = Math.min(1.15, KH - y0); kab.add(box(KW, h, KD, M.kstone, 0, y0 + h / 2, 0)); y0 += h; if (y0 < KH - 0.5) { kab.add(box(KW + 0.06, 0.24, KD + 0.06, M.wood, 0, y0 + 0.12, 0)); y0 += 0.24; } }
+      kab.add(box(KW + 0.2, 0.35, KD + 0.2, M.kstone, 0, KH + 0.17, 0));
+      kab.add(box(0.12, 2.6, 1.7, M.door, KW / 2 + 0.03, 2.1 + 1.3, -1.6)); kab.add(box(0.2, 0.2, 2.0, M.wood, KW / 2 + 0.06, 4.8, -1.6));
+      this.kabMesh = kab;
+      // the Hijr: a low curved wall on the north side
+      const hijr = []; for (let i = 0; i <= 16; i++) { const a = Math.PI * (i / 16); hijr.push([Math.cos(a) * 5.4, -KD / 2 - Math.sin(a) * 8]); }
+      for (let i = 0; i < hijr.length - 1; i++) { const [x1, z1] = hijr[i], [x2, z2] = hijr[i + 1]; const m = box(Math.hypot(x2 - x1, z2 - z1) + 0.05, 1.3, 0.9, M.stone, (x1 + x2) / 2, 0.65, (z1 + z2) / 2, -Math.atan2(z2 - z1, x2 - x1)); S.add(m); }
+      // Zamzam: a stone well-head with its bucket and jugs
+      PHOTO.place(w, 'stone_fire_pit', { pos: [21, 0.3, 9], s: 1.25 });
+      const well = new T.Mesh(new T.CircleGeometry(0.75, 20), M.dark); well.rotation.x = -Math.PI / 2; well.position.set(21, 0.42, 9); S.add(well);
+      PHOTO.place(w, 'wooden_bowl_01', { pos: [22.6, 0.3, 8.2], s: 1.4 }); PHOTO.place(w, 'jug_01', { pos: [19.8, 0.3, 10.4], s: 1.5 }); PHOTO.place(w, 'ceramic_vase_01', { pos: [20.4, 0.3, 10.9], s: 1.2 });
+
+      /* ---------- houses: a close ring round the courtyard (its roofs are the way in part 2), and the town ---------- */
+      const occluders = [kab];
+      const houses = new T.Group(); S.add(houses);
+      const house = (x, z, ry, wd, dp, ht, kind) => {
+        const g = new T.Group(); g.position.set(x, H(x, z) - 0.25, z); g.rotation.y = ry; houses.add(g);
+        const wm = kind === 0 ? M.plaster : kind === 1 ? M.brick : kind === 2 ? M.stone : M.mud;
+        g.add(box(wd, ht, dp, wm, 0, ht / 2, 0));
+        // parapet with gaps, roof beams through the wall, a door, small windows, a step
+        const ph = 0.55, pt = 0.22;
+        g.add(box(wd, ph, pt, wm, 0, ht + ph / 2, dp / 2 - pt / 2)); g.add(box(wd, ph, pt, wm, 0, ht + ph / 2, -dp / 2 + pt / 2));
+        g.add(box(pt, ph, dp, wm, wd / 2 - pt / 2, ht + ph / 2, 0)); g.add(box(pt, ph, dp, wm, -wd / 2 + pt / 2, ht + ph / 2, 0));
+        for (let bx = -wd / 2 + 0.6; bx < wd / 2 - 0.3; bx += 0.75 + rnd() * 0.3) { const b = new T.Mesh(new T.CylinderGeometry(0.075, 0.09, dp + 0.7, 6), M.wood); b.rotation.x = Math.PI / 2; b.position.set(bx, ht - 0.3, 0); b.castShadow = true; g.add(b); }
+        g.add(box(1.0, 1.95, 0.12, M.door, (rnd() - 0.5) * (wd - 2.4), 0.98 + 0.25, dp / 2 + 0.03));
+        g.add(box(1.3, 0.14, 0.18, M.wood, 0, 2.3, dp / 2 + 0.06));
+        for (let k = 0; k < 2; k++) g.add(box(0.5, 0.6, 0.06, M.dark, (k ? 1 : -1) * wd * 0.3, ht * 0.68, dp / 2 + 0.01));
+        g.add(box(1.6, 0.25, 0.6, M.stone, 0, 0.12, dp / 2 + 0.3));
+        if (rnd() < 0.35) g.add(box(wd * 0.45, 2.2, dp * 0.4, wm, wd * 0.2, ht + 1.1, -dp * 0.2));   // an upper room
+        return g;
+      };
+      // the ring, broken by lanes
+      this.ring = [];
+      const lanes = [0.1, 1.25, 2.4, 3.55, 4.7, 5.6];
+      for (let a = 0; a < Math.PI * 2; ) {
+        const len = 8 + rnd() * 3, da = len / 44;
+        const inLane = lanes.some(l => Math.abs(((a + da / 2 - l + Math.PI * 3) % (Math.PI * 2)) - Math.PI) < 0.07);
+        if (!inLane) {
+          const am = a + da / 2, x = Math.cos(am) * 44, z = -Math.sin(am) * 44, ht = 5.6 + rnd() * 0.9;
+          house(x, z, am + Math.PI / 2, len - 0.2, 9, ht, (rnd() * 4) | 0); this.ring.push({ a0: a, a1: a + da, top: H(x, z) - 0.25 + ht });
+        }
+        a += da + (inLane ? 0.08 : 0);
       }
-      this.marks.instanceMatrix.needsUpdate = true;
-      // the golden glint on the nearest standing stone
-      this.glint = KIT.glow(w, 0xffa630, 2.6, 0); S.add(this.glint);
-      this.glintLight = new T.PointLight(0xffc870, 0, 7, 2); S.add(this.glintLight);
+      // a few houses closer in, and an outer town, with lanes between
+      this.idolSites = [];
+      for (let i = 0; i < 70; i++) {
+        const a = rnd() * Math.PI * 2, d = 58 + rnd() * 70, x = Math.cos(a) * d, z = -Math.sin(a) * d;
+        if (lanes.some(l => Math.abs(((a - l + Math.PI * 3) % (Math.PI * 2)) - Math.PI) < 0.05)) continue;
+        const wd = 7 + rnd() * 4, dp = 7 + rnd() * 4, ht = 4.5 + rnd() * 3.5, ry = a + Math.PI / 2 + (rnd() - 0.5) * 0.3;
+        house(x, z, ry, wd, dp, ht, (rnd() * 4) | 0);
+        this.idolSites.push({ x, z, y: H(x, z) - 0.25 + ht, d });
+      }
+      // a lane of shut doors on the way in from the north (the film passes through it)
+      this.doors = [];
+      for (let i = 0; i < 6; i++) {
+        const side = i % 2 ? 1 : -1, z = -150 - i * 9, x = side * 6.4;
+        house(x + side * 3.5, z, side > 0 ? -Math.PI / 2 : Math.PI / 2, 8.5, 7, 5.5 + (i % 3) * 0.6, i % 4);
+        const pivot = new T.Group(); pivot.position.set(x - side * 0.52, H(x, z) + 0.25, z - 0.55); pivot.userData.dynamic = true; S.add(pivot);
+        const d = box(1.05, 1.95, 0.1, M.door, 0, 0.98, 0.52); d.rotation.y = 0; pivot.add(d); d.position.set(0, 0.98, 0.52);
+        pivot.rotation.y = side > 0 ? 0 : Math.PI; pivot.userData.open = side > 0 ? -1.3 : Math.PI + 1.3; pivot.userData.shut = pivot.rotation.y; pivot.rotation.y = pivot.userData.open;
+        this.doors.push(pivot);
+      }
+      occluders.push(houses);
+      this.occluders = occluders;
+      // the town beyond, in instanced mud and plaster
+      const town = SCAPE.scatter(w, { kind: 'house', n: 260, area: { x: 0, z: -40, r: 420 }, scale: [7, 11], seed: 61, density: (x, z) => H(x, z) < 34 ? 1 : 0.15,
+        avoid: (x, z) => { const r = Math.hypot(x, z); return r < 135 || (Math.abs(x) < 12 && z < -100); } });
+      town.meshes.forEach(m => { m.material = PHOTO.mat(w, 'clay_plaster', { triplanar: 0.22, fallback: m.material.map, color: '#dccab2' }); });
+      this.town = town.list;
 
-      /* ---------- dust bursts ---------- */
-      const DN = 420;
-      const dg = new T.BufferGeometry();
-      dg.setAttribute('position', new T.BufferAttribute(new Float32Array(DN * 3), 3));
-      dg.setAttribute('aAlpha', new T.BufferAttribute(new Float32Array(DN), 1));
-      dg.setAttribute('aSize', new T.BufferAttribute(new Float32Array(DN), 1));
-      this.dustPts = new T.Points(dg, new T.ShaderMaterial({ vertexShader: DUST_VERT, fragmentShader: DUST_FRAG, transparent: true, depthWrite: false, uniforms: { map: { value: KIT.glowTex(w) }, color: { value: new T.Color(0xcbb594) } } }));
-      this.dustPts.frustumCulled = false; this.dustPts.userData.dynamic = true; S.add(this.dustPts);
-      this.parts = Array.from({ length: DN }, () => ({ life: 0, max: 1, x: 0, y: -50, z: 0, vx: 0, vy: 0, vz: 0, s: 1 }));
-      this.pi = 0;
-      this.motes = KIT.dust(w, 220, [-26, 0.2, -26, 26, 7, 26], 0xfff0d0, 0.05); S.add(this.motes);
+      /* ---------- the scattered life of the valley ---------- */
+      const sc = o => SCAPE.scatter(w, o);
+      const notTown = (x, z) => Math.hypot(x, z) < 52;
+      sc({ kind: 'model', model: 'namaqualand_boulder_02', fallback: 'boulder', n: 220, area: { x: 0, z: 0, r: 700 }, scale: [1, 3], seed: 62, density: (x, z) => U.smooth(18, 50, H(x, z)) });
+      sc({ kind: 'model', model: 'namaqualand_boulder_04', fallback: 'boulder', n: 160, area: { x: 0, z: 0, r: 700 }, scale: [1, 2.6], seed: 63, density: (x, z) => U.smooth(12, 40, H(x, z)) });
+      sc({ kind: 'model', model: 'rock_07', fallback: 'rock', n: 260, area: { x: 0, z: 0, r: 500 }, scale: [0.6, 1.8], seed: 64, avoid: notTown });
+      sc({ kind: 'model', model: 'namaqualand_rocks_01', fallback: 'rock', fallbackScale: 0.4, n: 520, area: { x: 0, z: 0, r: 400 }, scale: [0.6, 1.4], seed: 65, avoid: notTown });
+      sc({ kind: 'model', model: 'namaqualand_stones_01', fallback: 'pebble', fallbackScale: 0.6, n: 1400, area: { x: 0, z: 0, r: 160 }, scale: [0.6, 1.4], seed: 66, castShadow: false, avoid: (x, z) => Math.hypot(x, z) < 9.5 });
+      sc({ kind: 'model', model: 'shrub_01', fallback: 'shrub', n: 180, area: { x: 0, z: 0, r: 520 }, scale: [0.6, 1.3], seed: 67, avoid: notTown });
+      sc({ kind: 'model', model: 'dry_branches_medium_01', fallback: 'thorn', n: 70, area: { x: 0, z: 0, r: 500 }, scale: [0.8, 1.3], seed: 68, avoid: notTown });
+      sc({ kind: 'model', model: 'grass_medium_01', fallback: 'grass', n: 400, area: { x: 0, z: 0, r: 420 }, scale: [0.7, 1.2], seed: 69, castShadow: false, avoid: notTown });
+      sc({ kind: 'boulder', n: 520, area: { x: 0, z: 0, r: 1200 }, scale: [3, 14], seed: 70, tex: 'granite', color: '#b0a294', density: (x, z) => U.smooth(25, 80, H(x, z)) });
+      sc({ kind: 'rock', n: 900, area: { x: 0, z: 0, r: 700 }, scale: [0.3, 1.3], seed: 71, avoid: notTown });
+      sc({ kind: 'thorn', n: 260, area: { x: 0, z: 0, r: 650 }, scale: [0.7, 1.3], seed: 72, avoid: notTown });
+      sc({ kind: 'grass', n: 1200, area: { x: 0, z: 0, r: 500 }, scale: [0.4, 0.8], seed: 73, avoid: notTown });
+      sc({ kind: 'acacia', n: 60, area: { x: 0, z: 0, r: 700 }, scale: [0.9, 1.4], seed: 74, avoid: (x, z) => Math.hypot(x, z) < 140 });
+      sc({ kind: 'palm', n: 30, area: [-200, 120, 200, 380], scale: [7, 12], seed: 75 });
+      SCAPE.birds(w, { n: 14, x: 0, z: 0, y: 70, r: 90, color: 0x3a3430 });
+      SCAPE.smoke(w, { sources: [[80, H(80, 60) + 6, 60], [-90, H(-90, -40) + 6, -40], [40, H(40, -110) + 6, -110], [-60, H(-60, 100) + 6, 100]], n: 18, height: 18, size: 3, opacity: 0.14 });
+      SCAPE.motes(w, { n: 50, area: [-30, 0.5, -30, 30, 6, 30], color: '#fff2d8', size: 0.18, additive: true, opacity: 0.5 });
 
-      /* ---------- the call from the roof: a column of light ---------- */
-      const colTex = w.tex(64, (g, s) => { const gr = g.createLinearGradient(0, s, 0, 0); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, s, s); });
-      colTex.wrapS = colTex.wrapT = T.ClampToEdgeWrapping;
-      this.callCol = new T.Mesh(new T.CylinderGeometry(0.6, 1.4, 120, 20, 1, true), new T.MeshBasicMaterial({ map: colTex, color: ACCENT, transparent: true, opacity: 0, blending: T.AdditiveBlending, depthWrite: false, fog: false }));
-      this.callCol.position.set(KW / 2 - 1.5, KH + 60, -KD / 2 + 1.5); this.callCol.userData.dynamic = true; S.add(this.callCol);
-      this.callGlow = KIT.glow(w, ACCENT, 9, 0); this.callGlow.position.set(KW / 2 - 1.5, KH + 1.4, -KD / 2 + 1.5); S.add(this.callGlow);
-      this.callRings = [0, 1, 2].map(() => { const m = new T.Mesh(new T.RingGeometry(0.9, 1.0, 64).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ color: ACCENT, transparent: true, opacity: 0, blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide, fog: false })); m.position.copy(this.callGlow.position); m.userData.dynamic = true; S.add(m); return m; });
-      // doves, small and abstract, that settle after the call
-      this.doves = [];
-      const doveGeo = new T.ConeGeometry(0.12, 0.42, 4).rotateX(Math.PI / 2);
-      this.doveMesh = new T.InstancedMesh(doveGeo, KIT.std({ color: 0xe8e4dc, roughness: 0.8 }), 24);
-      this.doveMesh.userData.dynamic = true; S.add(this.doveMesh);
-      for (let i = 0; i < 24; i++) this.doves.push({ a: Math.random() * 6.28, r: 14 + Math.random() * 10, y: 16 + Math.random() * 8, sp: 0.25 + Math.random() * 0.2, ph: Math.random() * 6 });
+      /* ---------- banners and dust on the heights: the army that has come in ---------- */
+      this.banners = []; const clothPos = [], clothCol = [], clothIdx = [], SX = 8, SY = 3, poleList = [];
+      const cols = [[0.92, 0.9, 0.84], [0.18, 0.16, 0.15], [0.88, 0.86, 0.8], [0.6, 0.46, 0.3]];
+      const bsites = [];
+      [[-0.3, 0], [Math.PI * 0.5, 1], [Math.PI, 2], [Math.PI * 1.5 - 0.35, 3], [0.15, 0]].forEach(([a0, gi], ri) => {
+        for (let k = 0; k < 6; k++) {
+          const a = a0 + (k - 2.5) * 0.07, want = 22 + (k % 3) * 9;
+          let d = 130; while (d < 520 && H(Math.sin(a) * d, -Math.cos(a) * d) < want) d += 3;
+          if (ri === 4) d = 520 + k * 40;
+          const x = Math.sin(a) * d, z = -Math.cos(a) * d; bsites.push({ x, z, y: H(x, z), gi });
+        }
+      });
+      bsites.forEach((s0, bi) => {
+        const ph = 13 + rnd() * 4; poleList.push(new T.Vector3(s0.x, s0.y, s0.z));
+        const pole = new T.Mesh(new T.CylinderGeometry(0.16, 0.22, ph, 6), M.wood); pole.position.set(s0.x, s0.y + ph / 2 - 0.3, s0.z); pole.castShadow = true; S.add(pole);
+        const col = cols[(bi + s0.gi) % cols.length], base = clothPos.length / 3, bw = 6, bh = 3.8, top = s0.y + ph - 0.6, yaw = Math.atan2(s0.x, s0.z);
+        for (let j = 0; j <= SY; j++) for (let i = 0; i <= SX; i++) { clothPos.push(s0.x + Math.cos(yaw) * i / SX * bw, top - j / SY * bh, s0.z - Math.sin(yaw) * i / SX * bw); clothCol.push(...col); }
+        for (let j = 0; j < SY; j++) for (let i = 0; i < SX; i++) { const a = base + j * (SX + 1) + i, b = a + 1, c = a + SX + 1, d = c + 1; clothIdx.push(a, c, b, b, c, d); }
+        this.banners.push({ base, yaw, bw, ph: rnd() * 6 });
+      });
+      const cg = new T.BufferGeometry(); cg.setAttribute('position', new T.Float32BufferAttribute(clothPos, 3)); cg.setAttribute('color', new T.Float32BufferAttribute(clothCol, 3)); cg.setIndex(clothIdx); cg.computeVertexNormals();
+      this.cloth = new T.Mesh(cg, new T.MeshStandardMaterial({ vertexColors: true, side: T.DoubleSide, roughness: 1 })); this.cloth.userData.dynamic = true; this.cloth.frustumCulled = false; this.cloth.castShadow = true; S.add(this.cloth);
+      this.clothBase = cg.attributes.position.array.slice();
+      this.plumes = sprites(w, 40, '#d6c2a4', false);
+      for (let i = 0; i < 40; i++) { const s0 = bsites[i % bsites.length]; this.plumes.P.set([s0.x + (rnd() - 0.5) * 40, s0.y + 4 + rnd() * 14, s0.z + (rnd() - 0.5) * 40], i * 3); this.plumes.S[i] = 30 + rnd() * 30; this.plumes.A[i] = 0.25; }
+      this.plumes.upd(); this.plumeBase = this.plumes.P.slice();
 
-      w.followShadow(sun, 40); w.receiveAll();
-      this.marks.castShadow = false; this.dustPts.castShadow = false;
-      [this.callCol, ...this.callRings, this.cloth].forEach(m => { m.castShadow = false; });
-      this.cloth.castShadow = true;
-      S.traverse(m => { if (m.isMesh && !m.isInstancedMesh && !Array.isArray(m.material) && m.geometry.groups.length > 1) m.geometry.clearGroups(); });
-      this.baked = w.bake();
+      /* ---------- the idols: plain standing stones on low plinths ---------- */
+      const shapes = [stoneGeo(0.55, 2.3, 0.5, 1, 0.3), stoneGeo(0.9, 1.4, 0.8, 7, 0.45), stoneGeo(1.0, 1.9, 0.32, 13, 0.15)];
+      const plinthG = stoneGeo(1.25, 0.4, 1.25, 4, 0.05);
+      const ID = this.idols = [];
+      const addIdol = (x, z, y, phase, o) => ID.push(Object.assign({ x, z, y: y == null ? H(x, z) : y, phase, shape: ID.length % 3, ry: rnd() * 6.28, s: 0.9 + rnd() * 0.3, alive: true, t: 0, reveal: 1 }, o || {}));
+      // part 1: round the House, in the courtyard (the rail runs at radius 16)
+      [[0.25, 23], [0.55, 10.5], [0.9, 24], [1.25, 21], [1.55, 9.8], [1.9, 25], [2.3, 20], [2.65, 11], [3.0, 24], [3.4, 21], [3.75, 10.2], [4.15, 25], [4.55, 20.5], [4.9, 11.5], [5.3, 23.5], [5.75, 21]]
+        .forEach(([a, r]) => { const x = Math.cos(a) * r, z = -Math.sin(a) * r; addIdol(x, z, null, 0, { a }); });
+      // part 2: on roofs out in the town, on high ledges, and behind cloth awnings the wind lifts
+      const roofIdx = this.idolSites.map((s0, i) => i).filter(i => this.idolSites[i].d < 110).slice(0, 11);
+      roofIdx.forEach((i, k) => { const s0 = this.idolSites[i]; addIdol(s0.x, s0.z, s0.y + 0.55, 1, { awning: k % 2 === 0 }); });
+      [[180, -60], [200, 30], [-230, -10], [-210, -110], [150, 110]].forEach(([x, z]) => addIdol(x, z, null, 1, { s: 1.5 }));
+      // part 3: across the valley, revealed a few at a time as the dust clears
+      const far = this.town.filter(it => it.x < 60 && Math.hypot(it.x - 120, it.z) > 90).sort((a, b) => a.z - b.z);
+      for (let k = 0; k < 28; k++) { const it = far[Math.floor((k + 0.5) / 28 * far.length)]; if (!it) break; addIdol(it.x, it.z, it.y + it.sy - 0.05, 2, { group: Math.floor(k / 4), reveal: 0, s: 1.25 }); }
+      this.count = [0, 1, 2].map(p => ID.filter(o => o.phase === p).length);
+      this.idolMesh = shapes.map((g, k) => { const m = new T.InstancedMesh(g, M.idol, ID.length); m.castShadow = m.receiveShadow = true; m.frustumCulled = false; m.userData.dynamic = true; m.instanceMatrix.setUsage(T.DynamicDrawUsage); S.add(m); return m; });
+      this.plinth = new T.InstancedMesh(plinthG, M.plinth, ID.length); this.plinth.castShadow = this.plinth.receiveShadow = true; this.plinth.frustumCulled = false; this.plinth.userData.dynamic = true; S.add(this.plinth);
+      const m4 = new T.Matrix4(), q = new T.Quaternion(), e = new T.Euler(), zero = new T.Matrix4().makeScale(0, 0, 0);
+      ID.forEach((o, i) => {
+        o.h = [2.3, 1.4, 1.9][o.shape] * o.s; o.r = [0.4, 0.55, 0.55][o.shape] * o.s;
+        m4.compose(new T.Vector3(o.x, o.y, o.z), q.setFromEuler(e.set(0, o.ry, 0)), new T.Vector3(o.s, o.s, o.s)); this.plinth.setMatrixAt(i, m4);
+        o.y += 0.38 * o.s;
+        this.idolMesh.forEach((m, k) => m.setMatrixAt(i, k === o.shape ? m4.compose(new T.Vector3(o.x, o.y, o.z), q, new T.Vector3(o.s, o.s, o.s)) : zero));
+      });
+      this.idolMesh.forEach(m => { m.instanceMatrix.needsUpdate = true; });
+      // awnings: a cloth on two poles in front of a roof idol, lifted by the wind now and then
+      this.awnings = [];
+      ID.filter(o => o.awning).forEach((o, k) => {
+        const toK = Math.atan2(-o.x, -o.z), g = new T.Group(); g.position.set(o.x - Math.sin(toK) * -1.1, o.y - 0.38 * o.s, o.z - Math.cos(toK) * -1.1); g.rotation.y = toK; g.userData.dynamic = true; S.add(g);
+        [-1.3, 1.3].forEach(px => { const p = new T.Mesh(new T.CylinderGeometry(0.04, 0.05, 3.0, 5), M.wood); p.position.set(px, 1.5, 0); g.add(p); });
+        const hinge = new T.Group(); hinge.position.set(0, 2.9, 0); g.add(hinge);
+        const c = new T.Mesh(new T.PlaneGeometry(2.8, 2.7, 4, 4), M.cloth); c.position.set(0, -1.35, 0); c.castShadow = true; hinge.add(c);
+        o.hinge = hinge; o.ph = k * 2.1; o.reveal = 0; this.awnings.push(o);
+      });
+      this.dustClouds = sprites(w, 7 * 10, '#d8c6aa', false);
+      ID.filter(o => o.phase === 2).forEach((o, k) => { for (let j = 0; j < 2; j++) { const i = (k * 2 + j) % 70; this.dustClouds.P.set([o.x + (j - 0.5) * 6, o.y + 1.5, o.z + (j - 0.5) * 4], i * 3); this.dustClouds.S[i] = 22; this.dustClouds.A[i] = 0; } });
+      this.dustClouds.upd();
+      // a soft gold glint marks stones that are ready to fall
+      this.glints = sprites(w, ID.length, '#ffd27a', true);
 
-      /* ---------- the activity ---------- */
-      this.n = 0; this.phase = 'clear'; this.phaseT = 0; this.sinceStart = 0;
-      w.activity('Truth has come', N, 'Go round the Ka‘bah and topple each standing stone');
+      /* ---------- the staff in view, and the line of light it sends ---------- */
+      const staff = this.staff = new T.Group(); w.camera.add(staff);
+      const sg = cylBetween(new T.Vector3(0, -0.9, 0), new T.Vector3(0, 0.75, 0), 0.026, 0.018, 8);
+      const sm = new T.Mesh(sg, M.wood); staff.add(sm);
+      const tip = KIT.glow(w, 0xffd890, 0.22, 0.7); tip.position.y = 0.77; staff.add(tip); this.tip = tip;
+      staff.position.set(0.34, -0.42, -0.62); staff.rotation.set(-0.95, 0.12, -0.32); staff.visible = false;
+      this.staffBase = { p: staff.position.clone(), r: staff.rotation.clone() };
+      const beamG = new T.CylinderGeometry(1, 1, 1, 6, 1, true); beamG.translate(0, 0.5, 0); beamG.rotateX(Math.PI / 2);
+      this.beam = new T.Mesh(beamG, new T.MeshBasicMaterial({ color: 0xffd890, transparent: true, opacity: 0, blending: T.AdditiveBlending, depthWrite: false, fog: false }));
+      this.beam.userData.dynamic = true; this.beam.frustumCulled = false; S.add(this.beam);
+      this.dust = burstPool(w, 220, '#cdb898', false); this.sparks = burstPool(w, 90, '#ffe2a0', true);
+      // the column of light on the roof of the House, at the end
+      const colG = new T.CylinderGeometry(2.2, 3.4, 140, 24, 1, true); colG.translate(0, 70 + KH, 0);
+      this.column = new T.Mesh(colG, new T.MeshBasicMaterial({ color: 0xffe2a8, transparent: true, opacity: 0, blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide, fog: false }));
+      this.column.userData.dynamic = true; S.add(this.column);
+      this.roofGlow = KIT.glow(w, 0xfff0c8, 16, 0); this.roofGlow.position.set(0, KH + 1, 0); S.add(this.roofGlow);
 
+      /* ---------- the rails: round the House, up onto the roofs, and onto the slope ---------- */
+      const A0 = -0.35, circ = []; for (let i = 0; i <= 48; i++) { const a = A0 + i / 48 * Math.PI * 2; circ.push(new T.Vector3(Math.cos(a) * 16, 1.62 + 0.3, -Math.sin(a) * 16)); }
+      this.rail = [new T.CatmullRomCurve3(circ)];
+      const ae = A0 + 0.12, roofT = this.ring.length ? this.ring.reduce((a, r) => a + r.top, 0) / this.ring.length : 6.2;
+      this.roofY = roofT;
+      const p2 = [new T.Vector3(Math.cos(ae) * 16, 1.92, -Math.sin(ae) * 16)];
+      const laneA = lanes[0];
+      [[24, 1.92], [32, 1.92], [36, 3.2], [39, roofT - 1.2], [42, roofT + 1.62]].forEach(([r, y]) => p2.push(new T.Vector3(Math.cos(laneA) * r, y, -Math.sin(laneA) * r)));
+      for (let i = 1; i <= 26; i++) { const a = laneA + 0.12 + i / 26 * 3.3; p2.push(new T.Vector3(Math.cos(a) * 44, roofT + 1.62, -Math.sin(a) * 44)); }
+      this.rail.push(new T.CatmullRomCurve3(p2));
+      const p3 = []; for (let i = 0; i <= 8; i++) { const z = -70 + i * 15, x = 112 + Math.sin(i * 0.7) * 4; p3.push(new T.Vector3(x, H(x, z) + 1.62, z)); }
+      this.rail.push(new T.CatmullRomCurve3(p3));
+      this.railLen = this.rail.map(c => c.getLength());
+      // gates: each stone of parts 1 and 2 holds the rail before it slips out of view
+      ID.forEach(o => {
+        if (o.phase === 0) { let da = o.a - A0; da = ((da % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2); o.gate = Math.min(this.railLen[0] - 0.5, (da + 0.6) * 16); }
+        if (o.phase === 1) { let best = 0, bd = 1e9; for (let k = 0; k <= 60; k++) { const p = this.rail[1].getPointAt(k / 60); const d = Math.hypot(p.x - o.x, p.z - o.z); if (d < bd) { bd = d; best = k / 60; } } o.gate = Math.min(this.railLen[1] - 0.5, (best + 0.08) * this.railLen[1]); }
+      });
+
+      /* ---------- discoveries: aim at the gold light and strike ---------- */
+      this.disc = [];
+      const D = (pos, phase, d) => { const it = w.discover(Object.assign({ pos, size: 2.8, color: 0xffd36a }, d)); this.disc.push({ it, pos: new T.Vector3(...pos), phase }); };
+      D([KW / 2 + 0.7, 5.2, -1.6], 0, { title: 'Into the House', text: 'He would not enter the Ka‘bah while there were idols in it, and ordered them brought out. Then he went in and said “Allahu akbar” in each of its corners. (Sahih al-Bukhari 4288)', ar: 'أَبَى أَنْ يَدْخُلَ الْبَيْتَ وَفِيهِ الآلِهَةُ' });
+      D([-KW / 2 - 0.6, 6.5, KD / 2 + 0.6], 0, { title: 'Truth Has Come', text: 'With each stroke he recited: <span class="q">“Truth has come and falsehood has vanished”</span> (Qur’an 17:81), and: <span class="q">“Truth has come, and falsehood neither begins nor returns”</span> (Qur’an 34:49). (Sahih al-Bukhari 4287)', ar: 'جَاءَ الْحَقُّ وَمَا يُبْدِئُ الْبَاطِلُ وَمَا يُعِيدُ' });
+      const dq = this.doors[2].position; D([dq.x + 0.4, dq.y + 2.6, dq.z], 1, { title: 'Behind Shut Doors', text: 'He declared: whoever enters the house of Abu Sufyan is safe; whoever lays down his arms is safe; whoever locks his door is safe. (Sahih Muslim 1780)', ar: 'وَمَنْ أَغْلَقَ بَابَهُ فَهُوَ آمِنٌ' });
+      D([KW / 2 + 0.6, 3.4, -3.2], 1, { title: 'The Key of the House', text: '‘Uthman ibn Talha, who kept the key of the Ka‘bah, was told to bring it; the door was opened and they went in and stayed long inside. (Sahih al-Bukhari 4289)', ar: 'مِفْتَاحُ الْبَيْتِ' });
+      const k0 = new T.Vector3(0, H(0, -460) + 14, -460); D(k0.toArray(), 2, { title: 'By Kada’', text: 'In the year of the conquest he entered Makkah from its upper part, by the pass of Kada’. (Sahih al-Bukhari 4290)', ar: 'دَخَلَ مِنْ كَدَاءٍ مِنْ أَعْلَى مَكَّةَ' });
+      const bp = poleList[13] || poleList[0]; D([bp.x, bp.y + 16, bp.z], 2, { title: 'Ten Thousand', text: 'He set out in Ramadan with about ten thousand, eight and a half years after his coming to Madinah. (Sahih al-Bukhari 4276)', ar: 'عَشَرَةُ آلاَفٍ' });
+
+      /* ---------- the state of play ---------- */
+      this.G = { on: false, phase: 0, u: 0, recoil: 0, swing: 0, beamT: 0, n: [0, 0, 0], wave: 0, waveT: 0, end: 0, endT: 0 };
+      // the film hands over to the start of the rail
+      const p0 = this.rail[0].getPointAt(0), p1 = this.rail[0].getPointAt(0.01);
+      w.pos.set(p0.x, 0, p0.z); w.eye = p0.y - w.ground(p0.x, p0.z); w.yaw = Math.atan2(-(p1.x - p0.x), -(p1.z - p0.z)) + 0.9; w.pitch = 0.02;
+
+      /* ---------- bake the static town into a few draw calls ---------- */
+      w.bake();
+
+      /* ---------- sound ---------- */
       const b = env.bus;
-      this.wind = SND.noise(b, { color: 'pink', type: 'bandpass', freq: 520, q: 0.5, gain: 0.035 });
-      SND.lfo(b, this.wind.gain && this.wind.gain.gain, 0.07, 0.015);
-      this.host = SND.noise(b, { color: 'brown', type: 'lowpass', freq: 260, q: 0.5, gain: 0.03 });   // the distant army on the heights
-      this.choir = [];                                    // a choir that fills out as the stones fall
-      this.murmurClock = 2; this.birdClock = 3;
-      this.tmpM = new T.Matrix4(); this.tmpQ = new T.Quaternion(); this.tmpV = new T.Vector3(); this.tmpS = new T.Vector3();
-
-      // arrival: from the northern heights with the banners, down into the valley, once round the House
-      const north = sites.filter(s0 => s0.gi === 0), nb = north[3];
-      const above = (x, z, h) => [x, Math.max(ground(x, z) + h, h), z];
-      w.cinematic([
-        { p: above(nb.x - 26, nb.z - 30, 26), l: [nb.x, nb.y + 10, nb.z] },
-        { p: above(nb.x - 6, nb.z + 10, 30), l: [0, 8, 0] },
-        { p: above(30, -95, 46), l: [0, 6, 0] },
-        { p: [52, 22, -10], l: [0, 5, 0] },
-        { p: [30, 14, 42], l: [0, 5, 0] },
-        { p: [-30, 9, 34], l: [0, 4, 0] },
-        { p: [-14, 4, 36], l: [0, 4, 0] },
-        { p: [3, 1.62, 31], l: [3, 1.8, 20] },
-      ], 12);
+      this.wind = SND.noise(b, { color: 'pink', type: 'bandpass', freq: 520, q: 0.5, gain: 0.04 });
+      this.crowd = SND.noise(b, { color: 'pink', type: 'bandpass', freq: 300, q: 1.2, gain: 0.018 });
+      SND.lfo(b, this.crowd.gain && this.crowd.gain.gain, 0.09, 0.008);
+      this.clk = { bird: 1, flap: 2, hum: 4 };
+      this.post = w.post({ bloom: 0.45, threshold: 0.78, vignette: 0.32, grain: 0.025, sat: 1.04, contrast: 1.05, lift: [0.01, 0.008, 0.0], gain: [1.03, 1.0, 0.95], rays: { strength: 0.25, dir: [0.6, 0.4, 0.2] } });
+      w.tick(dt => this.world(env, dt));
     },
 
-    // the instance matrix of a stone, standing, falling or dissolving
-    place(id, k) {
-      const T = THREE, M = this.tmpM || new T.Matrix4(), mesh = id.kind ? this.pillars : this.steles;
-      const s = k == null ? 1 : k;
-      const P = new T.Vector3(id.x, id.y - (1 - s) * 0.35, id.z);
-      const base = new T.Matrix4().makeRotationY(id.yaw);
-      base.premultiply(new T.Matrix4().makeRotationZ(id.tilt));
-      base.multiply(new T.Matrix4().makeScale(id.sx * s, id.h * Math.max(0.05, s), id.sz * s));
-      if (id.ang) {
-        const d = id.dir, half = Math.max(id.sx, id.sz) * 0.4;
-        const E = new T.Vector3(P.x + d.x * half, P.y, P.z + d.z * half);
-        const axis = new T.Vector3(d.z, 0, -d.x).normalize();
-        const m = new T.Matrix4().makeTranslation(E.x, E.y, E.z)
-          .multiply(new T.Matrix4().makeRotationAxis(axis, id.ang))
-          .multiply(new T.Matrix4().makeTranslation(P.x - E.x, P.y - E.y, P.z - E.z));
-        M.copy(m).multiply(base);
-      } else M.makeTranslation(P.x, P.y, P.z).multiply(base);
-      if (s <= 0.001) M.makeScale(0, 0, 0);
-      mesh.setMatrixAt(id.slot, M); mesh.instanceMatrix.needsUpdate = true;
-    },
-
-    topple(env, id) {
-      const w = this.w;
-      // the stone answers at once: it leans away from you, then falls
-      const dx = id.x - w.pos.x, dz = id.z - w.pos.z, l = Math.hypot(dx, dz) || 1;
-      id.dir = { x: dx / l, z: dz / l }; id.state = 'fall'; id.t = 0; id.av = 0.6; id.ang = 0.04;
-      id.circle[2] = -10;
-      const sp = w.spatial(id, 8);
-      SND.knock(env.bus, { f: 80, gain: 0.3, click: 900, pan: sp.pan });
-      SND.swell(env.bus, { f0: 180, f1: 520, dur: 0.9, gain: 0.05, pan: sp.pan });
-      this.n++;
-      w.progress(this.n, this.n < N ? `${N - this.n} stones remain: follow the gold glint` : 'The last has fallen');
-      if (this.n === 1) setTimeout(() => this.w && this.w.say('Truth Has Come', 'Around the Ka‘bah stood 360 idols. He struck them with a stick in his hand, saying: <span class="q">“Truth has come and falsehood has vanished; falsehood is bound to vanish.”</span> (Qur’an 17:81; Sahih al-Bukhari 4287)', { ar: 'جَاءَ الْحَقُّ وَزَهَقَ الْبَاطِلُ', ms: 13000 }), 1600);
-      if (this.n === 18) setTimeout(() => this.w && this.w.say('Whoever Shuts His Door Is Safe', 'He declared that whoever entered the house of Abu Sufyan was safe, whoever laid down his arms was safe, and whoever shut his door was safe. (Sahih Muslim 1780)', { ms: 12000 }), 1600);
-      if (this.n === 9 || this.n === 18 || this.n === 27) {
-        const tones = { 9: [146.83, 'u'], 18: [220, 'o'], 27: [293.66, 'o'] }[this.n];
-        this.choir.push(SND.drone(env.bus, tones[0], { vowel: tones[1], gain: 0.006 }));
-      }
-      if (this.n >= N) { this.phase = 'hush'; this.phaseT = 0; }
-    },
-
-    burst(x, y, z, n, spread, up) {
-      for (let k = 0; k < n; k++) {
-        const p = this.parts[this.pi = (this.pi + 1) % this.parts.length];
-        const a = Math.random() * 6.283, s = Math.random() * spread;
-        Object.assign(p, { life: 0, max: 1.6 + Math.random() * 1.8, x: x + Math.cos(a) * s * 0.4, y: y + Math.random() * 0.4, z: z + Math.sin(a) * s * 0.4, vx: Math.cos(a) * s, vy: up * (0.4 + Math.random()), vz: Math.sin(a) * s, s: 1.2 + Math.random() * 2.2 });
-      }
-    },
-
-    update(env, dt) {
-      const w = this.w; if (!w) return;
-      w.update(dt);
-      const t = w.time, T = THREE;
-      if (w.skyMesh) w.skyMesh.position.copy(w.camera.position);   // the dome travels with the eye, so high shots never clip it
-      KIT.driftDust(this.motes, dt, t, [0.12, 0.04]);
-      if (!w.cine) this.sinceStart += dt;
-      if (this.sinceStart > 1.5 && !this.saidIntro) {
-        this.saidIntro = true;
-        w.say('Ten Thousand', 'In Ramadan of 8 AH the Prophet ﷺ set out for Makkah with about ten thousand, and entered the city. Their banners stand on the heights. (Sahih al-Bukhari 4276)', { ms: 11000 });
-      }
-
-      // banners stir in the morning wind
-      const cp = this.cloth.geometry.attributes.position, base = this.clothBase;
-      for (const bn of this.banners) {
-        for (let j = 0; j <= 3; j++) for (let i = 0; i <= 8; i++) {
-          const k = bn.base + j * 9 + i, u = i / 8, wave = Math.sin(t * 3.2 + u * 5 + bn.ph) * 0.35 * u;
-          cp.setXYZ(k, base[k * 3] + Math.sin(bn.yaw) * wave, base[k * 3 + 1] + Math.sin(t * 2 + u * 3) * 0.06 * u, base[k * 3 + 2] + Math.cos(bn.yaw) * wave);
-        }
-      }
-      cp.needsUpdate = true;
-      this.plumes.forEach(p => { p.sp.position.x = p.x0 + Math.sin(t * 0.05 + p.ph) * 8; p.sp.material.opacity = 0.32 + 0.12 * Math.sin(t * 0.2 + p.ph); const s = p.sc * (1 + 0.08 * Math.sin(t * 0.13 + p.ph)); p.sp.scale.set(s * 1.6, s, 1); });
-
-      // the stones: tip, fall with weight, settle, then dissolve into dust
-      for (const id of this.idols) {
-        if (id.state === 'fall') {
-          id.t += dt;
-          id.av += dt * 5.2; id.ang += id.av * dt;
-          if (id.ang >= Math.PI / 2) {
-            id.ang = Math.PI / 2; id.state = 'settle'; id.t = 0;
-            const sp = this.w.spatial(id, 9), tip = { x: id.x + id.dir.x * id.h, z: id.z + id.dir.z * id.h };
-            SND.thump(env.bus, { f: 46, gain: 0.45, dur: 0.6, pan: sp.pan });
-            SND.knock(env.bus, { f: 70, gain: 0.25, click: 700, pan: sp.pan });
-            SND.sing(env.bus, U.pick([98, 110, 116.54, 130.81]), { vowel: 'o', dur: 3.2, gain: 0.05, voices: 2, attack: 0.25, hold: 0.4, pan: sp.pan, breath: 0.09 });
-            for (let k = 0; k <= 4; k++) this.burst(U.lerp(id.x, tip.x, k / 4), id.y, U.lerp(id.z, tip.z, k / 4), 12, 1.8, 0.8);
-          }
-          this.place(id);
-        } else if (id.state === 'settle') {
-          id.t += dt;
-          id.ang = Math.PI / 2 - Math.abs(Math.sin(id.t * 9)) * 0.1 * Math.exp(-id.t * 6);
-          this.place(id);
-          if (id.t > 0.7) { id.state = 'dissolve'; id.t = 0; }
-        } else if (id.state === 'dissolve') {
-          id.t += dt;
-          const k = 1 - U.smooth(0, 1.8, id.t);
-          if (Math.random() < dt * 30) { const f = Math.random() * id.h; this.burst(id.x + id.dir.x * f, id.y + 0.2, id.z + id.dir.z * f, 2, 0.6, 0.5); }
-          this.place(id, k);
-          if (k <= 0) {
-            id.state = 'gone';
-            this.marks.setMatrixAt(id.i, this.tmpM.compose(this.tmpV.set(id.x + id.dir.x * id.h * 0.4, id.y + 0.04, id.z + id.dir.z * id.h * 0.4), this.tmpQ.setFromAxisAngle(this.tmpS.set(0, 1, 0), Math.atan2(id.dir.x, id.dir.z)), this.tmpS.set(1.1, 1, id.h * 0.6)));
-            this.marks.instanceMatrix.needsUpdate = true;
-          }
-        }
-      }
-      // dust particles
-      const dp = this.dustPts.geometry.attributes;
-      for (let i = 0; i < this.parts.length; i++) {
-        const p = this.parts[i];
-        if (p.life < p.max) {
-          p.life += dt; p.vx *= 1 - dt * 1.8; p.vz *= 1 - dt * 1.8; p.vy = p.vy * (1 - dt * 1.2) + dt * 0.15;
-          p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt;
-          const q = p.life / p.max;
-          dp.aAlpha.array[i] = Math.sin(Math.min(1, q * 4) * Math.PI / 2) * (1 - q) * 0.65;
-          dp.aSize.array[i] = p.s * (1 + q * 2.4);
-        } else dp.aAlpha.array[i] = 0;
-        dp.position.array[i * 3] = p.x; dp.position.array[i * 3 + 1] = p.y; dp.position.array[i * 3 + 2] = p.z;
-      }
-      dp.position.needsUpdate = true; dp.aAlpha.needsUpdate = true; dp.aSize.needsUpdate = true;
-
-      // the next stone: the nearest standing one wears a gold glint
-      let best = null, bd = 1e9;
-      for (const id of this.idols) if (id.state === 'stand') { const d = Math.hypot(id.x - w.pos.x, id.z - w.pos.z); if (d < bd) { bd = d; best = id; } }
-      if (best) {
-        this.glint.position.set(best.x, best.y + best.h + 0.35, best.z);
-        this.glint.material.opacity = 0.65 + 0.25 * Math.sin(t * 3);
-        this.glint.scale.setScalar(2.2 + 0.3 * Math.sin(t * 3));
-        this.glintLight.position.set(best.x, best.y + best.h * 0.6, best.z + 0.01);
-        this.glintLight.intensity = 0.8;
-      } else { this.glint.material.opacity = Math.max(0, this.glint.material.opacity - dt); this.glintLight.intensity = 0; }
-
-      // voices of the host on the heights, fewer as the stones fall and a hush gathers
-      this.murmurClock -= dt;
-      if (this.murmurClock < 0 && this.phase === 'clear') {
-        this.murmurClock = 0.9 + Math.random() * 1.8;
-        const s0 = U.pick(this.bannerSites), sp = w.spatial(s0, 120);
-        SND.sing(env.bus, U.rnd(110, 175), { vowel: U.pick(['a', 'o', 'u']), dur: U.rnd(0.6, 1.4), gain: 0.012 + sp.gain * 0.02, pan: sp.pan, voices: 2, breath: 0.25, attack: 0.15, hold: 0.3, vib: 0.003 });
-      }
-      this.birdClock -= dt;
-      if (this.birdClock < 0) { this.birdClock = 3 + Math.random() * 5; SND.chirp(env.bus, { gain: 0.012 }); }
-
-      // the hush, then the call from the roof, then the pardon
-      if (this.phase === 'hush' || this.phase === 'call' || this.phase === 'after') {
-        const T0 = this.phaseT, T1 = (this.phaseT += dt), cross = s => T0 < s && T1 >= s;
-        if (this.phase === 'hush') {
-          this.wind.set('gain', 0.008, 0.8); this.host.set('gain', 0.004, 0.8);
-          this.choir.forEach(c => c.setGain(0.002, 1));
-          if (T1 > 3) { this.phase = 'call'; this.phaseT = 0; this.callStart(env); }
-        }
-        if (this.phase === 'call') {
-          const k = U.smooth(0, 3, T1);
-          this.callCol.material.opacity = 0.42 * k * (0.85 + 0.15 * Math.sin(t * 2));
-          this.callGlow.material.opacity = 0.9 * k;
-          this.callRings.forEach((m, i) => { const q = ((T1 * 0.35 + i / 3) % 1); m.scale.setScalar(1 + q * 40); m.material.opacity = k * (1 - q) * 0.3; m.position.y = KH + 1.4 + q * 2; });
-          w.renderer.toneMappingExposure = 1 + 0.12 * k;
-          this.choir.forEach(c => c.setGain(0.004 + 0.006 * k, 2));
-          if (cross(1)) w.say('The Call from the Roof', 'The sirah reports that Bilal climbed onto the roof of the Ka‘bah and gave the call to prayer over the city. Here it rises only as a voice and a column of light. (Ibn Ishaq / Ibn Hisham)', { ms: 13000 });
-          if (cross(19)) {
-            this.phase = 'after'; this.phaseT = 0;
-            this.wind.set('gain', 0.03, 3); this.host.set('gain', 0.015, 3);
-            w.finish('The idols have fallen; the city is pardoned');
-            setTimeout(() => this.w && this.w.say('Go, You Are Free', 'The general pardon of Makkah is well established. The sirah adds that he said to the people of Quraysh: <span class="q">“Go, you are free.”</span> It is a well-known report, but its chain is weak; it is told here as tradition. (Ibn Ishaq; tradition)', { ms: 16000 }), 2500);
-          }
-        }
-        if (this.phase === 'after') {
-          this.callCol.material.opacity = 0.42 * (1 - U.smooth(0, 12, T1) * 0.6);
-          this.callRings.forEach((m, i) => { const q = ((t * 0.35 + i / 3) % 1); m.scale.setScalar(1 + q * 40); m.material.opacity = (1 - q) * 0.15 * (1 - U.smooth(0, 10, T1)); });
-        }
-      }
-      // doves circle the House once the call has risen, then keep circling
-      const dv = this.phase === 'call' || this.phase === 'after' ? U.smooth(2, 10, this.phase === 'after' ? 30 : this.phaseT) : 0;
-      this.doves.forEach((d, i) => {
-        d.a += dt * d.sp;
-        const y = U.lerp(-20, d.y, dv) + Math.sin(t * 1.3 + d.ph) * 0.6;
-        this.tmpQ.setFromAxisAngle(this.tmpV.set(0, 1, 0), -d.a);
-        this.tmpM.compose(this.tmpS.set(Math.cos(d.a) * d.r, y, Math.sin(d.a) * d.r), this.tmpQ, this.tmpV.set(1, 1, 1).multiplyScalar(dv > 0.01 ? 1 : 0));
-        this.doveMesh.setMatrixAt(i, this.tmpM);
-      });
-      this.doveMesh.instanceMatrix.needsUpdate = true;
-    },
-
-    /* A wordless call, sung by one voice from the roof: long melismatic phrases, each answered
-       by an echo from the hills. No words are sung. */
-    callStart(env) {
-      const w = this.w, src = { x: KW / 2 - 1.5, z: -KD / 2 + 1.5 };
-      const sp = w.spatial(src, 30);
-      const phrases = [
-        [[293.66, 1.8], [329.63, 0.45], [349.23, 0.5], [329.63, 0.5], [293.66, 2.0]],
-        [[349.23, 1.5], [392, 0.5], [440, 2.0], [392, 0.45], [349.23, 0.5], [329.63, 1.9]],
-        [[440, 1.6], [466.16, 0.4], [440, 0.5], [392, 0.5], [349.23, 0.5], [293.66, 2.6]],
+    film(env, w) {
+      const self = this, P = (x, z, h) => [x, H(x, z) + h, z];
+      return [
+        { dur: 7, fade: 'dip', title: true, fov: [46, 40], path: [[[-420, 260, 520], [0, 20, 0]], [[-300, 190, 380], [0, 10, 0]]],
+          start: () => { self.doors.forEach(d => { d.rotation.y = d.userData.open; }); } },
+        { dur: 7, fade: 'dip', fov: [50, 46], line: 'Ramadan, 8 AH: he sets out for Makkah with about ten thousand (Sahih al-Bukhari 4276).', ar: 'خرج في رمضان في عشرة آلاف',
+          path: [[P(-14, -560, 6), P(0, -380, 8)], [P(-8, -470, 4), P(0, -250, 6)]], during: (w, k, dt) => { self.flap(dt * 2); } },
+        { dur: 6, fade: 'cut', fov: [44, 42], line: 'Whoever locks his door is safe (Sahih Muslim 1780).', ar: 'وَمَنْ أَغْلَقَ بَابَهُ فَهُوَ آمِنٌ',
+          path: [[P(0, -205, 1.7), P(0, -150, 1.8)], [P(0, -178, 1.7), P(0, -130, 1.8)]],
+          during: (w, k) => { self.doors.forEach((d, i) => { const kk = U.smooth(0.1 + i * 0.1, 0.25 + i * 0.1, k); if (kk > 0.98 && !d.userData.thud) { d.userData.thud = true; SND.knock(env.bus, { f: 150, gain: 0.12, click: 900 }); } d.rotation.y = U.lerp(d.userData.open, d.userData.shut, kk); }); } },
+        { dur: 7, fade: 'dip', fov: [40, 36], line: 'Around the House stand three hundred and sixty idols (Sahih al-Bukhari 4287).', ar: 'وحول البيت ثلاثمئة وستون نُصُبًا',
+          path: [[[30, 2.2, 22], [0, 2, 0]], [[22, 1.4, 28], [-4, 1.8, 6]], [[8, 1.2, 30], [-8, 1.6, 8]]],
+          start: () => { self.doors.forEach(d => { d.rotation.y = d.userData.shut; }); SND.glow(env.bus, 130.81, { gain: 0.04, dur: 7 }); } },
+        { dur: 7, fade: 'dip', fov: [50, 66], line: 'He strikes them with a stick in his hand (Sahih al-Bukhari 4287).', ar: 'فجعل يطعنها بعودٍ في يده',
+          path: [[[24, 9, 20], [0, 4, 0]], [[20, 4, 6], [6, 2, -10]]],
+          start: () => { SND.sing(env.bus, 196, { vowel: 'o', dur: 4, gain: 0.03, voices: 2 }); } },
       ];
-      let at = 0.4;
-      phrases.forEach(ph => {
-        let prev = ph[0][0];
-        ph.forEach(([f, d]) => {
-          SND.sing(env.bus, f, { vowel: d > 1.2 ? 'a' : 'o', dur: d + 0.35, delay: at, gain: 0.07, voices: 1, attack: 0.09, hold: 0.75, vib: 0.011, vibRate: 5.4, glide: prev / f, breath: 0.07, pan: sp.pan * 0.6 });
-          SND.sing(env.bus, f, { vowel: 'o', dur: d + 0.4, delay: at + 0.55, gain: 0.014, voices: 1, attack: 0.15, hold: 0.6, vib: 0.01, pan: -sp.pan * 0.8 });   // echo from the hills
-          prev = f; at += d * 0.92;
-        });
-        at += 1.1;
-      });
-      SND.glow(env.bus, 146.83, { gain: 0.05, dur: at + 4, delay: 0.5, vowel: 'o' });
     },
+    filmOpts: {
+      end(w) {
+        const self = ENGINE.cur && ENGINE.cur.w === w ? ENGINE.cur : null; if (!self) return;
+        self.doors.forEach(d => { d.rotation.y = d.userData.shut; });
+        self.start();
+      },
+    },
+
+    start() {
+      const w = this.w, G = this.G;
+      G.on = true; G.phase = 0; G.u = 0; this.staff.visible = true;
+      w.mode = dt => this.play(dt);
+      w.onPointer = (e, p, ph) => this.pointer(e, ph);
+      w.activity('The Return to Makkah', 3, '');
+      this.setPhase(0);
+    },
+    setPhase(i) {
+      const G = this.G, w = this.w; G.phase = i; G.u = 0;
+      const T3 = ['Part 1 of 3 · Around the House', 'Part 2 of 3 · The roofs', 'Part 3 of 3 · The valley'];
+      const ST = ['Aim at a standing stone and strike (click). The way goes on as the near stones fall.', 'Strike the stones on the roofs. Some stand behind cloth: wait for the wind to lift it.', 'The dust is clearing over the valley. Strike each stone as it shows.'];
+      this.phaseTitle = T3[i]; w.step(ST[i]); this.tally();
+      if (i > 0) SND.glow(w.env.bus, [0, 146.83, 164.81][i], { gain: 0.05, dur: 6 });
+      if (i === 2) { G.wave = 0; G.waveT = 0; }
+    },
+    tally() {
+      const G = this.G, w = this.w, i = Math.min(G.phase, 2);
+      w.progress(i + G.n[i] / this.count[i]);
+      const el = w.ui.layer.querySelector('.wq-title'); if (el) el.textContent = `${this.phaseTitle}  ·  ${G.n[i]} / ${this.count[i]}`;
+    },
+
+    /* ---------- aiming and striking ---------- */
+    pointer(e, phase) {
+      const w = this.w; if (!this.G.on || this.G.end) return false;
+      const touch = e.pointerType && e.pointerType !== 'mouse';
+      if (phase === 'down') {
+        if (touch) { w.look = { id: e.pointerId, x: e.clientX, y: e.clientY }; this.tap = { x: e.clientX, y: e.clientY, t: performance.now() }; return true; }
+        if (!w.locked) { try { const host = document.getElementById('host'); const r = host.requestPointerLock && host.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (_) {} }
+        this.strike(w.locked ? null : { x: e.clientX, y: e.clientY });
+        return true;
+      }
+      if (phase === 'up' && touch && this.tap) {
+        w.look = null;
+        if (Math.hypot(e.clientX - this.tap.x, e.clientY - this.tap.y) < 14 && performance.now() - this.tap.t < 400) this.strike({ x: e.clientX, y: e.clientY });
+        this.tap = null;
+      }
+      return true;
+    },
+    onKey(env, e) { const w = this.w; if (!w || !this.G || !this.G.on || w.filmS || e.repeat) return; if (e.key === ' ' || e.key === 'Enter') this.strike(null); },
+    strike(at) {
+      const w = this.w, G = this.G, b = w.env.bus, cam = w.camera;
+      if (G.cool > 0) return; G.cool = 0.28;
+      const ray = new T.Raycaster(); const ndc = new T.Vector2(at ? (at.x / w.env.w) * 2 - 1 : 0, at ? -(at.y / w.env.h) * 2 + 1 : 0);
+      ray.setFromCamera(ndc, cam);
+      const o = ray.ray.origin, d = ray.ray.direction;
+      // what stands in the way?
+      const hits = ray.intersectObjects(this.occluders, true); const block = hits.length ? hits[0].distance : 1e9;
+      // the nearest stone the line passes close to (a little help for far, small stones)
+      let best = null, bt = 1e9;
+      this.idols.forEach(I => {
+        if (!I.alive || I.phase !== G.phase || I.reveal < 0.55) return;
+        for (let k = 0.25; k <= 0.95; k += 0.35) {
+          const px = I.x - o.x, py = I.y + I.h * k - o.y, pz = I.z - o.z, t = px * d.x + py * d.y + pz * d.z; if (t < 0) continue;
+          const dd = Math.hypot(px - d.x * t, py - d.y * t, pz - d.z * t), tol = I.r * 1.5 + t * 0.016;
+          if (dd < tol && t < bt && t < block + I.r * 2) { bt = t; best = I; }
+        }
+      });
+      // a discovery light?
+      let disc = null;
+      this.disc.forEach(D => { if (D.it.done || D.phase > G.phase) return; const px = D.pos.x - o.x, py = D.pos.y - o.y, pz = D.pos.z - o.z, t = px * d.x + py * d.y + pz * d.z; if (t < 0) return; const dd = Math.hypot(px - d.x * t, py - d.y * t, pz - d.z * t); if (dd < 1.4 + t * 0.02 && (!best || t < bt)) { disc = D; bt = t; } });
+      const end = best || disc ? o.clone().addScaledVector(d, bt) : o.clone().addScaledVector(d, Math.min(block, 160));
+      // the staff answers at once: thrust, recoil, light
+      G.swing = 1; G.recoil = 1; G.beamT = 1;
+      const tipW = this.tip.getWorldPosition(new T.Vector3());
+      this.beam.position.copy(tipW); this.beam.lookAt(end); this.beam.scale.set(0.035, 0.035, tipW.distanceTo(end)); this.beam.material.opacity = 0.9;
+      SND.swell(b, { color: 'white', type: 'bandpass', f0: 2600, f1: 900, dur: 0.35, gain: 0.04 });
+      if (disc) { disc.it.done = true; disc.it.onUse(w, disc.it); for (let k = 0; k < 14; k++) this.sparks.emit(end.x, end.y, end.z, (Math.random() - 0.5) * 4, Math.random() * 3, (Math.random() - 0.5) * 4, 1.1, 0.6, 1); return; }
+      if (!best) { for (let k = 0; k < 5; k++) this.dust.emit(end.x, end.y, end.z, (Math.random() - 0.5), Math.random(), (Math.random() - 0.5), 0.9, 0.6, 0.35); return; }
+      this.fell(best, o);
+    },
+    fell(I, from) {
+      const G = this.G, b = this.w.env.bus;
+      I.alive = false; I.t = 0; I.state = 'tip';
+      const dx = I.x - from.x, dz = I.z - from.z, l = Math.hypot(dx, dz) || 1; I.fx = dx / l; I.fz = dz / l;
+      G.n[I.phase]++; this.tally();
+      const notes = [146.83, 164.81, 196, 220, 246.94, 293.66];
+      SND.knock(b, { f: 120, gain: 0.25, click: 2200 });
+      SND.sing(b, notes[(G.n[I.phase] - 1) % notes.length], { vowel: 'o', dur: 1.8, gain: 0.03, voices: 2 });
+      for (let k = 0; k < 10; k++) this.sparks.emit(I.x, I.y + I.h * 0.6, I.z, (Math.random() - 0.5) * 3, Math.random() * 2.5, (Math.random() - 0.5) * 3, 0.7, 0.4, 1);
+      for (let k = 0; k < 8; k++) this.dust.emit(I.x, I.y + I.h * 0.5, I.z, (Math.random() - 0.5) * 2, Math.random() * 1.5, (Math.random() - 0.5) * 2, 1.4, 1.4 * I.s, 0.45);
+      if (G.n[I.phase] === this.count[I.phase]) setTimeout(() => this.next(I.phase), 1400);
+    },
+    next(p) {
+      const G = this.G, w = this.w; if (G.phase !== p || G.end) return;
+      if (p === 0) { w.say('Around the House', 'The stones round the House have fallen. The way leads up onto the roofs.', { ms: 5000 }); this.setPhase(1); }
+      else if (p === 1) { this.trans = 0; G.transit = 1; }
+      else this.climax();
+    },
+    climax() {
+      const G = this.G, w = this.w, b = w.env.bus; G.end = 1; G.endT = 0;
+      this.wind.set('gain', 0.012, 1.5); this.crowd.set('gain', 0.0, 1.5);
+      w.step('…');
+    },
+
+    /* ---------- the rail and the view ---------- */
+    play(dt) {
+      const w = this.w, G = this.G, cam = w.camera, b = w.env.bus;
+      dt = Math.min(dt, 0.06); G.cool = Math.max(0, (G.cool || 0) - dt);
+      // move along the rail unless a near stone still stands at its gate
+      const ph = Math.min(G.phase, 2), rail = this.rail[ph], L = this.railLen[ph];
+      let gate = L;
+      if (ph < 2) this.idols.forEach(I => { if (I.alive && I.phase === ph && I.gate < gate) gate = I.gate; });
+      const sp = [1.35, 2.1, 0.7][ph];
+      if (G.transit) {
+        // a dip to the slope of Abu Qubays for the last part
+        this.trans += dt; const k = this.trans;
+        this.fade(U.smooth(0, 1.2, k) * (1 - U.smooth(1.6, 2.8, k)));
+        if (k > 1.4 && G.phase === 1) { this.setPhase(2); w.yaw = Math.PI * 0.5 + 0.1; w.pitch = -0.12; }
+        if (k > 2.8) G.transit = 0;
+      } else if (!G.end) {
+        const want = Math.min(gate, L);
+        G.u = Math.min(want, G.u + sp * dt * U.smooth(0, 3, want - G.u + 0.5));
+      }
+      const pos = rail.getPointAt(U.clamp(G.u / L));
+      // the view: the mouse (or drag) aims; the strike kicks the view and the staff
+      G.recoil = U.damp(G.recoil, 0, 9, dt); G.swing = U.damp(G.swing, 0, 7, dt);
+      const bob = Math.sin(G.u * 3.1) * 0.025;
+      cam.position.set(pos.x, pos.y + bob, pos.z);
+      cam.rotation.set(w.pitch + G.recoil * 0.035, w.yaw, Math.sin(G.u * 1.55) * 0.004);
+      w.pos.set(pos.x, 0, pos.z); w.y = pos.y - 1.62;
+      if (w._shadow) { const S2 = w._shadow, f = cam.getWorldDirection(new T.Vector3()); const px = Math.round((pos.x + f.x * 25) / 2) * 2, pz = Math.round((pos.z + f.z * 25) / 2) * 2; S2.light.target.position.set(px, 0, pz); S2.light.position.set(px + S2.off.x, S2.off.y, pz + S2.off.z); }
+      const s = this.staff, s0 = this.staffBase;
+      s.position.set(s0.p.x - G.swing * 0.06, s0.p.y + G.swing * 0.06 + Math.sin(G.u * 3.1) * 0.01, s0.p.z - G.swing * 0.28);
+      s.rotation.set(s0.r.x - G.swing * 0.35, s0.r.y, s0.r.z + G.swing * 0.12);
+      this.tip.material.opacity = 0.45 + G.swing * 0.55;
+      // phase 3: the dust clears from a few stones at a time
+      if (G.phase === 2 && !G.end && !G.transit) {
+        G.waveT += dt;
+        const groupLeft = this.idols.some(I => I.phase === 2 && I.group === G.wave && I.alive);
+        if ((!groupLeft || G.waveT > 14) && G.wave < 6 && G.waveT > 1.5) { G.wave++; G.waveT = 0; SND.swell(b, { f0: 200, f1: 900, dur: 2.5, gain: 0.05 }); }
+        this.idols.forEach(I => { if (I.phase === 2 && I.group <= G.wave) I.reveal = Math.min(1, I.reveal + dt * 0.6); });
+      }
+      // the end: near-silence, then the verse, a call from the roof, and light
+      if (G.end) {
+        G.endT += dt; const t = G.endT;
+        if (t > 2.2 && !this._v) { this._v = 1; this.flash = 1; SND.glow(b, 146.83, { gain: 0.08, dur: 10, vowel: 'a' }); w.say('Truth Has Come', '<span class="q">“Truth has come and falsehood has vanished; falsehood is bound to vanish.”</span> (Qur’an 17:81; Sahih al-Bukhari 4287)', { ar: 'جَاءَ الْحَقُّ وَزَهَقَ الْبَاطِلُ ۚ إِنَّ الْبَاطِلَ كَانَ زَهُوقًا', ms: 10000 }); }
+        if (t > 9 && !this._c) { this._c = 1; this.call(); w.say('A Call from the Roof', 'The sirah reports that Bilal gave the call to prayer from the roof of the Ka‘bah that day (Ibn Ishaq; the chains are incomplete).', { ms: 10000 }); }
+        if (t > 20 && !this._f) { this._f = 1; this.wrap(); }
+        this.column.material.opacity = U.smooth(9, 13, t) * 0.32 * (0.85 + 0.15 * Math.sin(w.time * 1.3));
+        this.roofGlow.material.opacity = U.smooth(9, 12, t) * 0.9;
+      }
+      if (this.flash) { this.flash = Math.max(0, this.flash - dt * 0.6); this.fade(this.flash * 0.85, '#fff6e6'); }
+    },
+    fade(k, col) { if (this.post) this.post.set({ fade: k, fadeColor: col || '#000000' }); else { const f = this.w.ui.layer.querySelector('.w-fade'); f.style.background = col || '#000'; f.style.opacity = k; } },
+    call() {
+      const b = this.w.env.bus;
+      // a long sung call, wordless, rising and falling
+      const line = [[293.66, 1.6], [329.63, 0.8], [293.66, 0.9], [261.63, 1.4], [293.66, 2.6], [392, 1.8], [349.23, 0.9], [329.63, 1.0], [293.66, 3.0]];
+      let t = 0; line.forEach(([f, d]) => { SND.sing(b, f, { vowel: 'a', dur: d + 0.4, gain: 0.05, delay: t, attack: 0.15, hold: 0.7, glide: 0.97 }); t += d; });
+    },
+    wrap() {
+      const w = this.w, G = this.G;
+      w.finish('The House is cleared');
+      setTimeout(() => {
+        if (this.w !== w) return;
+        G.on = false; w.mode = null; w.onPointer = null; this.staff.visible = false;
+        const p = this.rail[2].getPointAt(U.clamp(G.u / this.railLen[2])); w.pos.set(p.x, 0, p.z); w.y = w.ground(p.x, p.z); w.eye = 1.62;
+        w.env.hint('WASD to walk on the slope · look down on the valley');
+      }, 6000);
+    },
+
+    flap(dt) {
+      const p = this.cloth.geometry.attributes.position, B = this.clothBase, t = this.w.time;
+      this.banners.forEach(bn => {
+        for (let j = 0; j <= 3; j++) for (let i = 0; i <= 8; i++) {
+          const k = (bn.base + j * 9 + i) * 3, u = i / 8, wave = Math.sin(t * 3.2 - u * 5 + bn.ph) * u * 0.5 + Math.sin(t * 5.1 - u * 8 + j) * u * 0.15;
+          p.array[k] = B[k] + Math.sin(bn.yaw) * wave; p.array[k + 1] = B[k + 1] - u * u * 0.25; p.array[k + 2] = B[k + 2] + Math.cos(bn.yaw) * wave;
+        }
+      });
+      p.needsUpdate = true; this.cloth.geometry.computeVertexNormals();
+    },
+
+    /* ---------- the world around the play ---------- */
+    world(env, dt) {
+      const w = this.w, G = this.G, t = w.time, b = env.bus;
+      this.flap(dt);
+      for (let i = 0; i < this.plumes.n; i++) { this.plumes.P[i * 3] = this.plumeBase[i * 3] + Math.sin(t * 0.05 + i) * 6; this.plumes.P[i * 3 + 1] = this.plumeBase[i * 3 + 1] + Math.sin(t * 0.08 + i * 2) * 2; this.plumes.A[i] = 0.18 + 0.08 * Math.sin(t * 0.1 + i); }
+      this.plumes.upd();
+      // the stones: falling ones tip about their base edge, rock, and go down to dust
+      const m4 = new T.Matrix4(), mR = new T.Matrix4(), mT = new T.Matrix4(), q = new T.Quaternion(), e = new T.Euler(), ax = new T.Vector3(), sc = new T.Vector3(), zero = new T.Matrix4().makeScale(0, 0, 0);
+      let changed = false; const gl = this.glints;
+      this.idols.forEach((I, i) => {
+        gl.A[i] = 0;
+        if (I.alive) {
+          // awnings swing up in the wind and fall back
+          if (I.hinge) { const lift = Math.pow(Math.max(0, Math.sin(t * 0.55 + I.ph)), 2); I.hinge.rotation.x = -lift * 1.25 - Math.sin(t * 2.3 + I.ph) * 0.04; I.reveal = lift; }
+          const ready = I.phase === G.phase && I.reveal > 0.55 && G.on;
+          if (ready) { gl.P.set([I.x, I.y + I.h + 0.5, I.z], i * 3); gl.S[i] = 1.4 + Math.hypot(I.x - w.camera.position.x, I.z - w.camera.position.z) * 0.02; gl.A[i] = 0.55 + 0.25 * Math.sin(t * 3 + i); }
+          return;
+        }
+        if (I.state === 'gone') return;
+        I.t += dt; changed = true;
+        const th = Math.min(Math.PI / 2 * 0.98, 3.2 * I.t * I.t), bounce = I.t > 0.75 ? Math.exp(-(I.t - 0.75) * 6) * Math.sin((I.t - 0.75) * 20) * 0.08 : 0;
+        if (I.t > 0.74 && !I.thud) { I.thud = true; SND.thump(b, { gain: 0.12, f: 55, dur: 0.6 }); for (let k = 0; k < 14; k++) this.dust.emit(I.x + I.fx * I.h * 0.6, I.y + 0.2, I.z + I.fz * I.h * 0.6, (Math.random() - 0.5) * 3, Math.random() * 1.2, (Math.random() - 0.5) * 3, 1.8, 1.8 * I.s, 0.5); }
+        const sink = U.smooth(1.4, 2.6, I.t);
+        if (I.t > 1.6 && !I.crumb) { I.crumb = true; SND.swell(b, { f0: 400, f1: 150, dur: 1.4, gain: 0.04 }); for (let k = 0; k < 12; k++) this.dust.emit(I.x + I.fx * I.h * 0.5 + (Math.random() - 0.5) * I.h, I.y + 0.2, I.z + I.fz * I.h * 0.5, (Math.random() - 0.5), 0.5 + Math.random(), (Math.random() - 0.5), 2.2, 2.2 * I.s, 0.5); }
+        if (I.t > 2.7) { I.state = 'gone'; this.idolMesh[I.shape].setMatrixAt(i, zero); return; }
+        ax.set(I.fz, 0, -I.fx);
+        const ex = I.x + I.fx * I.r, ez = I.z + I.fz * I.r;
+        mT.makeTranslation(ex, I.y - sink * 0.5, ez); mR.makeRotationAxis(ax, th - bounce); m4.multiplyMatrices(mT, mR);
+        mT.makeTranslation(I.x - ex, 0, I.z - ez); m4.multiply(mT);
+        q.setFromEuler(e.set(0, I.ry, 0)); sc.setScalar(I.s * (1 - sink * 0.6)); mT.compose(new T.Vector3(0, 0, 0), q, sc); m4.multiply(mT);
+        this.idolMesh[I.shape].setMatrixAt(i, m4);
+      });
+      if (changed) this.idolMesh.forEach(m => { m.instanceMatrix.needsUpdate = true; });
+      gl.upd();
+      // the dust over the valley clears from each group in turn
+      const dc = this.dustClouds; let k2 = 0;
+      this.idols.forEach(I => { if (I.phase !== 2) return; for (let j = 0; j < 2; j++) { const i = (k2 * 2 + j) % 70; dc.A[i] = G.phase === 2 ? 0.45 * (1 - I.reveal) : 0.3; dc.P[i * 3 + 1] += Math.sin(t * 0.3 + i) * 0.01; } k2++; });
+      dc.upd();
+      // the line of light fades
+      if (G.beamT > 0) { G.beamT = Math.max(0, G.beamT - dt * 4); this.beam.material.opacity = G.beamT * 0.85; this.beam.scale.x = this.beam.scale.y = 0.02 + G.beamT * 0.03; }
+      this.beam.visible = G.beamT > 0.01;
+      this.dust.step(dt, 1.4, 0.3); this.sparks.step(dt, 2.2, -0.4);
+      // sound
+      this.clk.bird -= dt; if (this.clk.bird < 0) { this.clk.bird = 1 + Math.random() * 3; if (Math.random() < 0.6) SND.chirp(b, { gain: 0.012 }); else SND.coo(b, { gain: 0.02 }); }
+      this.clk.flap -= dt; if (this.clk.flap < 0) { this.clk.flap = 2 + Math.random() * 3; SND.swell(b, { color: 'white', type: 'bandpass', f0: 700, f1: 1600, dur: 0.9, gain: 0.012, pan: U.rnd(-1, 1) }); }
+      this.clk.hum -= dt; if (this.clk.hum < 0 && !G.end) { this.clk.hum = 6 + Math.random() * 6; SND.sing(b, U.pick([110, 123.47, 98]), { vowel: 'm', dur: 3, gain: 0.006, voices: 3, pan: U.rnd(-0.8, 0.8) }); }
+    },
+
+    update(env, dt) { const w = this.w; if (!w) return; w.update(Math.min(dt, 0.1)); },
   }));
 })();

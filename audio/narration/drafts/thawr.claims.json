@@ -1,0 +1,16 @@
+[
+  {
+    "claim": "The Prophet and Abu Bakr gave their two camels to the guide they had hired and agreed that he would bring them to the cave of Thawr after three nights; Abdullah ibn Abi Bakr spent the nights with them and left before dawn, bringing news from Makkah; Amir ibn Fuhayrah brought the flock to them after nightfall so they had milk.",
+    "grade": "sahih",
+    "ref": "Sahih al-Bukhari 3905 (also 2263)",
+    "url": "https://sunnah.com/bukhari/63/130",
+    "note": "Extends claim 13 of sources.verified.json (thawr) with the guide's return with the camels after three nights. The route 'by the coast' is in the same hadith ('he took them along the way of the coast')."
+  },
+  {
+    "claim": "The cave of Thawr lies near the summit of Jabal Thawr, a mountain south of Makkah.",
+    "grade": "history",
+    "ref": "Geography of Jabal Thawr (Wikipedia 'Jabal Thawr'); cf. claim 16 (thawr)",
+    "url": "https://en.wikipedia.org/wiki/Jabal_Thawr",
+    "note": "Used for the film line 'Near its summit they hid in a cave, three nights.'"
+  }
+]
