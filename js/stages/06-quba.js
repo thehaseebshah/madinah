@@ -157,7 +157,7 @@
         water: new T.MeshStandardMaterial({ color: 0x24343a, roughness: 0.06, metalness: 0.2 }),
         mudwall: tri(w, 'brown_mud_dry', 0.35, KIT.mudBrick(w, [1, 1]), '#c8b49c'),
         block: PHOTO.mat(w, 'rock_boulder_dry', { rep: [0.9, 0.7], color: '#cfc6b8', normal: 1.5, fallback: KIT.basalt(w, [1, 1]) }),
-        trunk: tri(w, 'palm_tree_bark', 1.2, KIT.bark(w), '#c8b49c'),
+        trunk: tri(w, 'palm_tree_bark', 1.2, KIT.bark(w), '#9c8670'),
         mosque: tri(w, 'clay_block_wall', 0.42, KIT.mudBrick(w, [1, 1]), '#dcc8ac'),
       };
       const statics = new T.Group(); S.add(statics);
@@ -197,10 +197,10 @@
         for (let k = 0; k < L; k += 2) { const px = x + Math.cos(a) * (k + 2), pz = z + Math.sin(a) * (k + 2); const m = new T.Mesh(new T.PlaneGeometry(2.1, 0.45), chM); m.rotation.set(-Math.PI / 2, 0, -a); m.position.set(px, w.ground(px, pz) + 0.03, pz); statics.add(m); }
       });
       // the harrah: black basalt boulders and broken flows
-      SCAPE.scatter(w, { kind: 'boulder', n: 600, area: [-420, -420, -70, 420], scale: [0.8, 3.2], seed: 3, tex: 'lava', color: '#6a6260', density: (x, z) => harrah(x, z) });
-      SCAPE.scatter(w, { kind: 'rock', n: 1600, area: [-400, -400, -60, 400], scale: [0.3, 1.2], seed: 5, tex: 'lava', color: '#5a5450', density: (x, z) => harrah(x, z) });
-      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_04', n: 70, area: [-200, -160, -80, 200], scale: [1, 2.5], seed: 34, color: '#585250', density: (x, z) => harrah(x, z), collide: true, fallback: 'boulder' });
-      SCAPE.scatter(w, { kind: 'model', model: 'rock_07', n: 120, area: [-200, -160, -75, 200], scale: [0.6, 1.6], seed: 35, color: '#4e4846', density: (x, z) => harrah(x, z), fallback: 'rock' });
+      SCAPE.scatter(w, { kind: 'boulder', n: 700, area: [-260, -200, -70, 240], scale: [0.8, 3.2], seed: 3, tex: 'lava', color: '#6a6260', density: (x, z) => harrah(x, z) });
+      SCAPE.scatter(w, { kind: 'rock', n: 1800, area: [-240, -180, -60, 220], scale: [0.3, 1.2], seed: 5, tex: 'lava', color: '#5a5450', density: (x, z) => harrah(x, z) });
+      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_04', n: 110, area: [-200, -160, -80, 200], scale: [0.8, 2.2], seed: 34, color: '#4a4442', density: (x, z) => harrah(x, z), collide: true, fallback: 'boulder' });
+      SCAPE.scatter(w, { kind: 'model', model: 'rock_07', n: 260, area: [-200, -160, -75, 200], scale: [0.6, 1.8], seed: 35, color: '#3e3836', density: (x, z) => harrah(x, z), fallback: 'rock' });
       // scrub, grass and stones of the oasis floor
       SCAPE.scatter(w, { kind: 'grass', n: 1800, area: { x: 0, z: 0, r: 200 }, scale: [0.4, 0.9], seed: 6, avoid: (x, z) => Math.hypot(x, z) < 18, density: (x, z) => (1 - harrah(x, z)) * 0.8 });
       SCAPE.scatter(w, { kind: 'model', model: 'grass_medium_01', variant: 2, n: 500, area: { x: 0, z: 0, r: 140 }, scale: [0.7, 1.3], seed: 36, avoid: notBuilt, density: (x, z) => 1 - harrah(x, z), fallback: 'grass' });
@@ -440,15 +440,15 @@
     raiseColumns(lv) {
       const w = this.w, M = this.M;
       lv.goals.forEach(([x, y], i) => {
-        const v = lv.cell(x, y), m = new T.Mesh(new T.CylinderGeometry(0.24, 0.3, 3.2, 10), M.trunk);
+        const v = lv.cell(x, y), m = new T.Mesh(new T.CylinderGeometry(0.24, 0.3, 2.45, 10), M.trunk);
         m.position.set(v.x, 0.8, v.z); m.castShadow = true; m.userData.dynamic = true; m.scale.y = 0.001; w.scene.add(m);
-        this.cols.push({ m, delay: i * 0.4 });
+        this.cols.push({ m, delay: i * 0.4, h: 2.45 });
       });
       // the rest of the columns of the covered side
       for (let cx = -12; cx <= 12; cx += 4) for (const cz of [-12.6, -9.2]) {
         if (lv.goals.some(([x, y]) => { const v = lv.cell(x, y); return Math.hypot(v.x - cx, v.z - cz) < 1.6; })) continue;
         const m = new T.Mesh(new T.CylinderGeometry(0.22, 0.28, 3.3, 10), M.trunk); m.position.set(cx, 1.65, cz); m.castShadow = true; m.userData.dynamic = true; m.scale.y = 0.001; w.scene.add(m);
-        this.cols.push({ m, delay: 1.6 + Math.abs(cx) * 0.05, full: true });
+        this.cols.push({ m, delay: 1.6 + Math.abs(cx) * 0.05, full: true, h: 3.3 });
       }
     },
     gridTick(dt) {
@@ -578,7 +578,7 @@
         if (lv.sink > 0.3) { lv.wim.position.y = -1.3 * U.smooth(0.3, 1, lv.sink); lv.fim.material.opacity = 0.9 * (1 - lv.sink); lv.goalMeshes.forEach(m => { m.visible = lv.sink < 0.9; }); }
         if (lv.boxRefs && lv.sink >= 1) { w.boxes = w.boxes.filter(b => !lv.boxRefs.includes(b)); lv.boxRefs = null; lv.wim.visible = false; }
       }
-      for (const c of this.cols) { c.delay -= dt; if (c.delay < 0) { c.m.scale.y = U.damp(c.m.scale.y, 1, 1.4, dt); c.m.position.y = (c.full ? 0 : 0.8) + 3.2 * c.m.scale.y / 2; } }
+      for (const c of this.cols) { c.delay -= dt; if (c.delay < 0) { c.m.scale.y = U.damp(c.m.scale.y, 1, 1.4, dt); c.m.position.y = (c.full ? 0 : 0.8) + c.h * c.m.scale.y / 2; } }
       // sound of the oasis
       const C = this.clocks;
       C.dove -= dt; if (C.dove < 0) { C.dove = 3 + Math.random() * 5; SND.coo && SND.coo(env.bus, { gain: 0.02, pan: U.rnd(-0.8, 0.8) }); }

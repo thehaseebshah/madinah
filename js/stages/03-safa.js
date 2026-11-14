@@ -561,8 +561,8 @@
       const t = this.endT;
       // the camera draws back over the valley
       const k = U.ease(U.clamp(t / 10));
-      w.camera.position.lerpVectors(this.endCam.from, new T.Vector3(236, 30, 34), k);
-      w.camera.lookAt(U.lerp(SUMMIT.x, 140, k), U.lerp(SUMMIT.y, 2, k), U.lerp(0, -40, k));
+      w.camera.position.lerpVectors(this.endCam.from, new T.Vector3(232, 34, 52), k);
+      w.camera.lookAt(U.lerp(SUMMIT.x, 150, k), U.lerp(SUMMIT.y, 3, k), U.lerp(0, -30, k));
       this.flameScale = U.damp(this.flameScale, 3.4, 1, dt); this.placeFlame(dt);
       this.summitGlow.material.opacity = 0.6 + 0.2 * Math.sin(t * 2); this.summitGlow.scale.setScalar(3 + k * 6);
       // the lights come out of the houses and gather at the foot of the rock

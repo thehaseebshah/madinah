@@ -160,9 +160,25 @@
         }
       }
       // beyond the maze: more of the city, palm gardens and the old city wall
-      const city = SCAPE.scatter(w, { kind: 'house', n: 900, area: { x: 0, z: -20, r: 300 }, scale: [7, 13], seed: 21, density: (x, z) => { const ax = Math.abs(x), az = Math.abs(z + 0); return (ax > HALF * CS + 6 || az > HALF * CS + 6) && !(Math.abs(x) < 46 && z < Z(0) - 4 && z > SQUARE_Z - 70) ? 1 : 0; } });
-      city.meshes.forEach(m => { m.material = toned(w, 'patterned_clay_plaster', '#d8d0c4', { triplanar: 0.25, fallback: m.material.map }); });
-      const palms = SCAPE.scatter(w, { kind: 'palm', n: 420, area: { x: 0, z: 0, r: 640 }, scale: [8, 13], seed: 10, density: (x, z) => { const d = Math.hypot(x, z); return d > 310 && d < 600 ? 1 : 0; } });
+      // the rest of the old city around the maze: blocks of houses on the same grid, with mud roofs
+      {
+        const cr = U.seeded(1906), list = [];
+        for (let j = -34; j <= 30; j++) for (let i = -30; i <= 30; i++) {
+          if (i >= -HALF - 1 && i <= HALF + 1 && j >= -HALF - 1 && j <= HALF + 1) continue;          // the maze itself
+          const x = i * CS, z = j * CS;
+          if (Math.abs(x) < 50 && z < Z(0) - 3 && z > SQUARE_Z - 72) continue;                        // the square and the mosque
+          if (Math.hypot(x, z) > 292) continue;                                                        // inside the city wall
+          if (i % 4 === 0 || j % 5 === 0 ? cr() < 0.75 : cr() < 0.08) continue;                        // lanes between the blocks
+          list.push([x, z, 5.6 + Math.floor(cr() * 3) * 2.6]);
+        }
+        const bg = new T.BoxGeometry(CS, 1, CS); bg.translate(0, 0.5, 0);
+        const rg = new T.BoxGeometry(CS - 0.3, 0.1, CS - 0.3);
+        const wallsIM = new T.InstancedMesh(bg, toned(w, 'patterned_clay_plaster', '#b8ae9e', { triplanar: 0.25, fallback: KIT.plaster(w, [1, 1], '#b8ae9e') }), list.length);
+        const roofsIM = new T.InstancedMesh(rg, M.roof, list.length), m4 = new T.Matrix4();
+        list.forEach(([x, z, h], k) => { m4.makeScale(1, h, 1).setPosition(x, 0, z); wallsIM.setMatrixAt(k, m4); m4.makeTranslation(x, h + 0.05, z); roofsIM.setMatrixAt(k, m4); });
+        [wallsIM, roofsIM].forEach(m => { m.receiveShadow = true; S.add(m); });
+      }
+      const palms = SCAPE.scatter(w, { kind: 'palm', n: 420, area: { x: 0, z: 0, r: 640 }, scale: [8, 13], seed: 10, density: (x, z) => { const d = Math.hypot(x, z); return d > 310 && d < 375 ? 1 : 0; } });
       void palms;
       const wallR = 300, wallM = PHOTO.mat(w, 'old_stone_wall', { triplanar: 0.4, color: '#a8a096', fallback: KIT.mudBrick(w, [1, 1]) });
       for (let k = 0; k < 64; k++) {
@@ -177,13 +193,19 @@
       sq.rotation.x = -Math.PI / 2; sq.position.set(0, 0.04, SQUARE_Z - 10); sq.receiveShadow = true; mq.add(sq);
       // the mosque's long arcaded wall, its gate, the Green Dome and minarets
       const mz = SQUARE_Z - 46, mW = toned(w, 'patterned_clay_plaster', '#ddd2c0', { triplanar: 0.35, fallback: KIT.plaster(w, [1, 1], '#ddd2c0') });
-      box(mq, mW, 150, 13, 3, 0, 6.5, mz);
-      for (let k = -9; k <= 9; k++) { if (Math.abs(k) < 1) continue; const a = new T.Mesh(new T.PlaneGeometry(4.2, 6.5), M.glowWin); a.position.set(k * 7.5, 4.2, mz + 1.52); mq.add(a); box(mq, mW, 1.2, 9, 0.6, k * 7.5 + 3.75, 4.5, mz + 1.6); }
+      // a lit inner wall behind an arcade of piers and arches
+      const inner = new T.Mesh(new T.PlaneGeometry(150, 12), new T.MeshBasicMaterial({ color: 0x8a5a2a })); inner.position.set(0, 6, mz - 1.4); mq.add(inner);
+      box(mq, mW, 150, 3.4, 4.4, 0, 11.3, mz);
+      box(mq, mW, 150, 0.6, 4.6, 0, 13.2, mz);
+      for (let k = -10; k <= 10; k++) {
+        box(mq, mW, 1.5, 9.6, 1.6, k * 7.5, 4.8, mz + 1.4);
+        if (k < 10) { const a = new T.Mesh(new T.TorusGeometry(3.0, 0.45, 6, 16, Math.PI), mW); a.position.set(k * 7.5 + 3.75, 8.2, mz + 1.4); mq.add(a); }
+      }
       box(mq, mW, 14, 17, 4, 0, 8.5, mz + 1.2); const gate = new T.Mesh(new T.PlaneGeometry(6, 9.5), M.doorGlow); gate.position.set(0, 4.75, mz + 3.25); mq.add(gate); this.gateGlow = gate;
       const dome = KIT.greenDome(w, 1.3); dome.position.set(-14, 13, mz - 22); dome.userData.dynamic = true; S.add(dome);
       const drumBase = new T.Mesh(new T.BoxGeometry(24, 13, 24), mW); drumBase.position.set(-14, 6.5, mz - 22); mq.add(drumBase);
       [[-60, mz - 4], [60, mz - 4], [-40, mz - 60], [30, mz - 40]].forEach(([x, z], k) => { const m = KIT.minaret(w, 46 + k * 3, true); m.position.set(x, 0, z); m.userData.dynamic = true; S.add(m); });
-      this.domeGlow = KIT.glow(w, 0x9affc8, 40, 0.0); this.domeGlow.position.set(-14, 26, mz - 22); S.add(this.domeGlow);
+      this.domeGlow = KIT.glow(w, 0x9affc8, 24, 0.0); this.domeGlow.position.set(-14, 26, mz - 22); S.add(this.domeGlow);
       this.lamps.forEach(l => { const [di, dj] = l.side; box(statics, M.beam, di ? 0.7 : 0.1, 0.1, dj ? 0.7 : 0.1, l.p.x + di * 0.3, 3.95, l.p.z + dj * 0.3); });
       this.doors.forEach((d, k) => {
         const [di, dj] = d.side, fx = X(d.c[0]) + di * CS / 2, fz = Z(d.c[1]) + dj * CS / 2;
@@ -464,7 +486,7 @@
       const w = this.w, P = this.pl; this.sqT += dt;
       // the lantern drifts into the square; the camera rises to show every lit lane behind it
       P.z = U.damp(P.z, SQUARE_Z - 8, 0.6, dt); P.x = U.damp(P.x, 0, 0.6, dt);
-      this.domeGlow.material.opacity = U.smooth(1, 6, this.sqT) * 0.35;
+      this.domeGlow.material.opacity = U.smooth(1, 6, this.sqT) * 0.18;
       this.gateGlow.material.color.setRGB(1, 0.8 + 0.1 * Math.sin(this.sqT * 2), 0.5);
       if (this.sqT > 2 && !this.saidSq) { this.saidSq = true; w.say('The square', 'Every lamp of the lanes is lit, and the lane opens onto the square before the Prophet’s Mosque, where the Green Dome stands.', { ms: 9000 }); }
       if (this.sqT > 10 && !this.finished) { this.finished = true; w.finish('The lamps of the lanes are lit'); }
@@ -497,7 +519,7 @@
       this.lantern.position.set(P.x, 1.5 + Math.sin(t * 2.2) * 0.07, P.z);
       this.lantern.rotation.z = (P.dir[0] || 0) * -0.12; this.lantern.rotation.x = (P.dir[1] || 0) * 0.12;
       const fl = 1 + Math.sin(t * 21) * 0.05 + (o < 0.25 ? Math.sin(t * 9) * 0.15 : 0);
-      this.lLight.intensity = (0.5 + 1.6 * Math.sqrt(o)) * fl; this.lLight.distance = 7 + 9 * o;
+      this.lLight.intensity = (0.5 + 1.6 * Math.sqrt(o)) * fl * (this.view === 'lane' ? 0.55 : 1); this.lLight.distance = 7 + 9 * o;
       this.lHalo.scale.setScalar((1.6 + 2.6 * o) * fl); this.lHalo.material.opacity = (this.view === 'lane' ? 0.08 : 0.16) + 0.12 * o;
       this.lCore.scale.setScalar((0.5 + 0.8 * o) * fl);
     },
@@ -517,7 +539,7 @@
         const d = (this.pl.dir[0] || this.pl.dir[1]) ? this.pl.dir : (this.lastDir || [0, -1]); this.lastDir = d;
         this.yawC = this.yawC == null ? Math.atan2(-d[0], -d[1]) : this.yawC;
         let target = Math.atan2(-d[0], -d[1]), diff = target - this.yawC; diff = Math.atan2(Math.sin(diff), Math.cos(diff)); this.yawC += diff * (1 - Math.exp(-dt * 4));
-        want = new T.Vector3(P.x + Math.sin(this.yawC) * 6.5, 6.2, P.z + Math.cos(this.yawC) * 6.5);
+        want = new T.Vector3(P.x + Math.sin(this.yawC) * 5.2, 4.4, P.z + Math.cos(this.yawC) * 5.2);
         this.camP.lerp(want, 1 - Math.exp(-dt * 5));
         w.camera.position.copy(this.camP); w.camera.lookAt(P.x - Math.sin(this.yawC) * 4, 1.2, P.z - Math.cos(this.yawC) * 4);
       }
@@ -529,7 +551,7 @@
       this.lamps.forEach((l, k) => {
         const open = l.region <= this.region;
         if (l.lit) c.setXYZ(k, 1.0 * (1 + (l.flare || 0)), 0.62, 0.26);
-        else c.setXYZ(k, open ? 0.16 : 0.05, open ? 0.2 : 0.06, open ? 0.3 : 0.08);
+        else c.setXYZ(k, open ? 0.32 : 0.05, open ? 0.4 : 0.06, open ? 0.6 : 0.08);
       });
       this.doors.forEach((d, k) => { const on = d.region <= this.region; const p = on ? 0.5 + (d.pulse || 0) * 0.5 : 0.08; c.setXYZ(this.lamps.length + k, p, p * 0.7, p * 0.35); });
       c.needsUpdate = true;

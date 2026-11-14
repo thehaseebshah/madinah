@@ -24,14 +24,15 @@
     return body + rough;
   }
   function mountain(x, z) {
-    const u = (-z - M_FOOT) / 280;
+    const u = (-z - M_FOOT) / 520;
     if (u < -0.1) return 0;
     const along = 1 - U.smooth(700, 1300, Math.abs(x + 60));
-    const rise = U.smooth(-0.05, 0.35, u) * (1 - 0.3 * U.smooth(0.9, 1.6, u));
+    const rise = Math.pow(U.smooth(-0.04, 0.85, u), 1.25) * (1 - 0.3 * U.smooth(1.0, 1.7, u));
+    const foot = U.smooth(-0.06, 0.12, u) * (1 - U.smooth(0.12, 0.5, u)) * 26 * (0.5 + 0.5 * SCAPE.ridge(x * 0.012, z * 0.012, 3));
     const r = SCAPE.ridge(x * 0.0045 + 3, z * 0.006 + 1, 5);
     const domes = 0.5 + 0.5 * U.noise2(x * 0.004 + 3.3, z * 0.006 + 1.1);
     const swell = 0.6 + 0.4 * Math.cos(U.clamp((x + 60) / 900, -1, 1) * Math.PI * 0.5);
-    return 290 * rise * along * swell * (0.12 + 0.38 * domes + 0.75 * r) + SCAPE.fbm(x * 0.05, z * 0.05, 3) * 3 * rise;
+    return 340 * rise * along * swell * (0.12 + 0.38 * domes + 0.75 * r) + foot * along + SCAPE.fbm(x * 0.05, z * 0.05, 3) * 4 * rise + SCAPE.ridge(x * 0.03, z * 0.03, 3) * 18 * rise;
   }
   // the low hills that close the horizon to the south and the far ranges
   function far(x, z) { const d = Math.hypot(x, z - 100); return SCAPE.ridge(x * 0.002, z * 0.002 + 4, 4) * 160 * U.smooth(900, 1600, d); }
@@ -130,7 +131,7 @@
 
     enter(env) {
       const self = this;
-      const w = this.w = WORLD.create(env, { start: { x: START.x, z: START.z, yaw: yawTo(START.x, START.z, -30, -300), pitch: 0.08 }, fov: FOV, exposure: 0.9, far: 4000, speed: 3.0, run: 5.6,
+      const w = this.w = WORLD.create(env, { start: { x: START.x, z: START.z, yaw: yawTo(START.x, START.z, -30, -300), pitch: 0.08 }, fov: FOV, exposure: 0.76, far: 4000, speed: 3.0, run: 5.6,
         fog: { color: 0xd8b48e, density: 0.00045 }, ground: H, surface: (x, z) => (hill(x, z) > 1 ? 'gravel' : inCem(x, z) ? 'gravel' : 'sand') });
       const S = w.scene;
       this.S = { phase: 'film', i: 0, raised: false, raiseK: 0, align: 0, done: [], revealT: -1, endT: 0, helpT: 0 };
@@ -146,11 +147,11 @@
       /* ---------- terrain: the plain, the hill, the long mountain ---------- */
       warpTerrain(w, { nx: 300, nz: 320, fx: u => 1700 * (0.1 * u + 0.9 * u * u * u), fz: v => -60 + (v < 0 ? 1500 : 1300) * (0.1 * v + 0.9 * v * v * v), height: H, rock: [0.78, 0.92],
         rockAt: (x, y, z) => U.smooth(4, 30, mountain(x, z)) * 0.9 + U.smooth(1.5, 6, hill(x, z)) * 0.7,
-        colors: { low: '#d8b894', high: '#c8a47e', rock: '#9a5a44', dark: '#5e3428' }, tex: 'dune', rockTex: 'granite', photo: { ground: 'dense_sand', rock: 'rock_face', normal: 1 }, rep: 0.2, rockRep: 0.025 });
+        colors: { low: '#c4a07c', high: '#b48e6a', rock: '#9a5a44', dark: '#5e3428' }, tex: 'dune', rockTex: 'granite', photo: { ground: 'dense_sand', rock: 'rock_face', normal: 1 }, rep: 0.2, rockRep: 0.07 });
       SCAPE.horizon(w, { cz: -60, haze: '#e2c0a0', layers: [{ r: 2200, h: 160, color: '#9a7466', seed: 5 }, { r: 2900, h: 220, color: '#b08c80', seed: 9 }, { r: 3600, h: 250, color: '#c8a89a', seed: 13 }] });
 
       /* ---------- the martyrs' resting place: a low walled ground ---------- */
-      const wallM = PHOTO.mat(w, 'plastered_stone_wall', { triplanar: 0.45, color: 0xd8c8b0, fallback: KIT.plaster(w) });
+      const wallM = PHOTO.mat(w, 'plastered_stone_wall', { triplanar: 0.45, color: 0xf0e2cc, fallback: KIT.plaster(w) });
       const capM = PHOTO.mat(w, 'old_stone_wall', { triplanar: 0.6, color: 0xb8a690, fallback: SCAPE.tex.granite(w) });
       const wallH = 1.7, gate = { z: CEM.z1, x: (CEM.x0 + CEM.x1) / 2 };
       const wseg = (x0, z0, x1, z1) => {
@@ -177,13 +178,14 @@
       this.palms = palms;
       SCAPE.scatter(w, { kind: 'palm', n: 30, area: [90, 60, 220, 180], scale: [8, 12], seed: 42 }).meshes.forEach((m, i) => { if (i === 0) m.material = palms.meshes[0] ? palms.meshes[0].material : m.material; });
       SCAPE.scatter(w, { kind: 'acacia', n: 40, area: [-240, -150, 240, 200], density: (x, z) => (mountain(x, z) < 1 && !nearKey(x, z, 12) && hill(x, z) < 0.5 ? 1 : 0), scale: [0.9, 1.5], seed: 43, collide: 0.3 });
-      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_04', n: 70, area: [-300, -260, 300, -150], density: (x, z) => (mountain(x, z) > 0.5 && mountain(x, z) < 40 ? 1 : 0), scale: [1.2, 3.5], seed: 44, collide: 1.0, fallback: 'boulder', fallbackScale: 1.2, color: '#c8a090' });
+      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_04', n: 70, area: [-300, -330, 300, -150], density: (x, z) => (mountain(x, z) > 0.5 && mountain(x, z) < 40 ? 1 : 0), scale: [1.2, 3.5], seed: 44, collide: 1.0, fallback: 'boulder', fallbackScale: 1.2, color: '#c8a090' });
       SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_02', n: 45, area: { x: 0, z: 0, r: 34 }, density: (x, z) => (hill(x, z) > 1 && Math.hypot(x, z) > 6 && Math.abs(Math.atan2(x, z)) > 0.4 ? 1 : 0), scale: [0.8, 1.8], seed: 45, collide: 0.8, color: '#c89a88' });
       SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_05', n: 30, area: [-200, -160, 200, 160], density: (x, z) => (!nearKey(x, z, 6) ? 1 : 0), scale: [0.6, 1.5], seed: 46, color: '#c8a898' });
       SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_rocks_01', n: 160, area: { x: 0, z: -20, r: 200 }, density: (x, z) => (!nearKey(x, z, 2) ? 1 : 0), scale: [2, 6], seed: 47, color: '#d0b8a8' });
       SCAPE.scatter(w, { kind: 'model', model: 'shrub_03', n: 110, area: { x: 0, z: 30, r: 230 }, density: (x, z) => (!nearKey(x, z, 3) && mountain(x, z) < 2 ? 1 : 0), scale: [2.5, 5.5], seed: 48 });
       SCAPE.scatter(w, { kind: 'model', model: 'grass_medium_01', n: 260, area: { x: 0, z: 40, r: 200 }, density: (x, z) => (!nearKey(x, z, 2) && mountain(x, z) < 1 ? 1 : 0), scale: [2, 4], seed: 49 });
-      SCAPE.scatter(w, { kind: 'grass', n: 1300, area: { x: 0, z: 60, r: 260 }, density: (x, z) => (mountain(x, z) < 1 && !nearKey(x, z, 2) ? (SCAPE.fbm(x * 0.02, z * 0.02, 2) > -0.05 ? 0.9 : 0.25) : 0), scale: [0.4, 0.9], seed: 50, color: '#e0d0a8' });
+      SCAPE.scatter(w, { kind: 'grass', n: 2000, area: { x: 0, z: 60, r: 260 }, density: (x, z) => (mountain(x, z) < 1 && !nearKey(x, z, 2) ? (SCAPE.fbm(x * 0.02, z * 0.02, 2) > -0.05 ? 0.9 : 0.25) : 0), scale: [0.4, 0.9], seed: 50, color: '#e0d0a8' });
+      SCAPE.scatter(w, { kind: 'shrub', n: 320, area: { x: 0, z: 20, r: 280 }, density: (x, z) => (!nearKey(x, z, 4) && mountain(x, z) < 8 && hill(x, z) < 2 ? 1 : 0), scale: [0.6, 1.5], seed: 56, color: '#d8d0b0' });
       SCAPE.scatter(w, { kind: 'thorn', n: 160, area: { x: 0, z: 0, r: 260 }, density: (x, z) => (!nearKey(x, z, 4) && mountain(x, z) < 3 ? 1 : 0), scale: [0.6, 1.3], seed: 51, color: '#d0b8a0' });
       SCAPE.scatter(w, { kind: 'pebble', n: 1400, area: { x: 0, z: 0, r: 150 }, scale: [0.05, 0.2], seed: 52, color: '#c8a898' });
       SCAPE.scatter(w, { kind: 'rock', n: 200, area: [-500, -420, 500, -150], density: (x, z) => (mountain(x, z) > 2 ? 1 : 0), scale: [1, 4], seed: 53, color: '#b88070' });
@@ -204,7 +206,7 @@
       SKETCHES.forEach(s => { s.data = makeSketch(w, s, lm); });
       this.ridgeGlow = glowPoints(w, 141 * 2, 0xffc878);
       this.archers = glowPoints(w, 50, 0xffd890);
-      this.rise = glowPoints(w, 70, 0xfff0d0);
+      this.rise = glowPoints(w, 70, 0xffe0a0);
       this.archerPos = []; { const r = U.seeded(50); for (let i = 0; i < 50; i++) { const a = r() * Math.PI * 2, d = Math.sqrt(r()) * 5.5; const x = HILL.x + Math.cos(a) * d, z = HILL.z + Math.sin(a) * d * 0.85; this.archerPos.push([x, H(x, z) + 1.3, z]); } }
       this.lights = { ridge: 0, archers: 0, rise: 0, riseT: 0, love: 0 };
 
@@ -217,7 +219,7 @@
       w.ui.layer.insertBefore(ov, w.ui.layer.firstChild); this.ov = ov; this.octx = ov.getContext('2d');
       const album = document.createElement('div'); album.className = 'uhud-album';
       album.style.cssText = 'position:absolute;left:calc(var(--gut, 16px) + 8px);top:calc(env(safe-area-inset-top, 0px) + 64px);display:flex;gap:8px;pointer-events:none;opacity:0;transition:opacity .6s';
-      this.cards = SKETCHES.map((s, i) => { const c = document.createElement('canvas'); c.width = 192; c.height = 120; c.style.cssText = 'width:96px;height:60px;border-radius:3px;box-shadow:0 2px 10px rgba(0,0,0,.45);transition:transform .5s, opacity .5s, box-shadow .5s;opacity:.55'; album.appendChild(c); this.drawCard(c, s, false); return c; });
+      this.cards = SKETCHES.map((s, i) => { const c = document.createElement('canvas'); c.width = 192; c.height = 120; c.style.cssText = 'width:min(96px,11vw);height:auto;aspect-ratio:8/5;border-radius:3px;box-shadow:0 2px 10px rgba(0,0,0,.45);transition:transform .5s, opacity .5s, box-shadow .5s;opacity:.55'; album.appendChild(c); this.drawCard(c, s, false); return c; });
       w.ui.layer.appendChild(album); this.album = album;
       const meter = document.createElement('div'); meter.className = 'uhud-meter';
       meter.style.cssText = 'position:absolute;left:50%;top:calc(50% + 46px);transform:translateX(-50%);width:160px;height:4px;border-radius:2px;background:rgba(40,24,10,.35);pointer-events:none;opacity:0;transition:opacity .25s';
@@ -267,7 +269,7 @@
           path: [[[-60, 70, 420], [-30, 60, -300]], [[-40, 60, 260], [-30, 70, -300]], [[-20, 46, 150], [-30, 80, -300]]],
           start: () => SND.glow(env.bus, 196, { gain: 0.035, dur: 8 }) },
         { dur: 8, fade: 'dip', ease: 'linear', line: 'North of Madinah rises Uhud, a long mountain of red granite.', ar: 'وإلى شمال المدينة يقوم أُحُد، جبلٌ طويلٌ من الصخر الأحمر.', lineAt: 0.8, fov: [40, 40],
-          path: [[[-420, 40, -60], [-300, 60, -320]], [[-60, 34, -80], [40, 60, -330]], [[260, 40, -60], [360, 60, -320]]] },
+          path: [[[-420, 46, 40], [-280, 110, -460]], [[-80, 40, 30], [60, 110, -470]], [[240, 46, 40], [380, 110, -460]]] },
         { dur: 7, fade: 'dip', ease: 'glide', lines: [[0.5, 'In Shawwal of 3 AH a battle was fought at its foot.', 'وفي شوّال سنة ثلاثٍ للهجرة دارت عند سفحه معركة.'], [3.8, 'About fifty archers were placed on this small hill.', 'ووُضع على هذا التلّ الصغير نحوُ خمسين من الرماة.']],
           path: [[[40, hy + 14, 40], [0, hy, 0]], [[34, hy + 8, -20], [0, hy + 1, 0]], [[-10, hy + 10, -40], [0, hy + 1, 0]]] },
         { dur: 7, fade: 'dip', ease: 'inout', line: 'About seventy were killed, and buried here.', ar: 'وقُتل نحوُ سبعين، ودُفنوا هنا.', lineAt: 0.8, fov: [42, 36],
@@ -292,6 +294,8 @@
     toggleRaise(env) {
       const S = this.S; if (S.phase !== 'play') return;
       S.raised = !S.raised;
+      // the page fills the view: the interface steps back while it is raised
+      env.hint(S.raised ? null : (this.touch && this.hintTouch) || this.hint);
       SND.swell(env.bus, { f0: 1200, f1: 3000, dur: 0.35, gain: 0.035, type: 'highpass' });
     },
     capture(env) {
@@ -376,7 +380,8 @@
       }
       S.raiseK = U.damp(S.raiseK, S.raised && S.phase === 'play' ? 1 : 0, 10, dt);
       this.ov.style.opacity = 1; this.drawOverlay(S.raiseK);
-      this.meter.style.opacity = S.raiseK > 0.5 ? 1 : 0; this.meter.firstChild.style.width = `${(S.align * 100).toFixed(0)}%`;
+      this.meter.style.opacity = S.raiseK > 0.5 ? 1 : 0;
+      { const q = w.ui.layer.querySelector('.w-quest'); if (q) q.style.opacity = S.raiseK > 0.5 ? 0.2 : ''; } this.meter.firstChild.style.width = `${(S.align * 100).toFixed(0)}%`;
       // a sung tone that settles onto a fifth as the lines come true
       this.tone.setGain(S.raiseK * 0.035, 0.2);
       this.tone.set(196 * (1 + (1 - S.align) * 0.07 * Math.sin(t * 2.6)) * (S.align > 0.62 ? 1.4983 : 1), 0.15);
@@ -390,13 +395,13 @@
       { const g = this.ridgeGlow, R0 = SKETCHES[0].data.ridge, R3 = SKETCHES[3].data.ridge;
         for (let i = 0; i < 141; i++) {
           const p0 = R0[i], wave0 = U.clamp(Lg.ridge * 1.6 - i / 141 * 0.6);
-          g.P.set([p0[0], p0[1] + 4, p0[2]], i * 3); g.Sz[i] = 26 * wave0; g.A[i] = wave0 * (0.35 + 0.15 * Math.sin(t * 1.3 + i * 0.4)) * (1 - Lg.love * 0.5);
+          g.P.set([p0[0], p0[1] + 4, p0[2]], i * 3); g.Sz[i] = 70 * wave0; g.A[i] = wave0 * (0.6 + 0.2 * Math.sin(t * 1.3 + i * 0.4)) * (1 - Lg.love * 0.5);
           const p3 = R3[i], wave3 = U.clamp(Lg.love * 2 - Math.abs(i / 140 - 0.5) * 1.4);
           g.P.set([p3[0], p3[1] + 6, p3[2]], (141 + i) * 3); g.Sz[141 + i] = 60 * wave3; g.A[141 + i] = wave3 * (0.5 + 0.2 * Math.sin(t * 0.9 + i * 0.3));
         }
         g.dirty(); }
-      { const g = this.archers; this.archerPos.forEach((p, i) => { const k = U.clamp(Lg.archers * 3 - i / 50 * 2); g.P.set(p, i * 3); g.Sz[i] = 1.4 * k; g.A[i] = k * (0.8 + 0.2 * Math.sin(t * 2 + i)); }); g.dirty(); }
-      { const g = this.rise; this.graves.forEach(([x, z], i) => { if (i >= 70) return; const st = i * 0.18, tt = Math.max(0, Lg.riseT - st), y = H(x, z) + 0.6 + tt * 0.55 * (0.7 + (i % 5) * 0.1); const k = U.clamp(tt * 0.8) * (1 - U.smooth(30, 60, tt)); g.P.set([x + Math.sin(tt * 0.3 + i) * 0.6, y, z + Math.cos(tt * 0.25 + i) * 0.6], i * 3); g.Sz[i] = 1.2 + tt * 0.02; g.A[i] = k * 0.85; }); g.dirty(); }
+      { const g = this.archers; this.archerPos.forEach((p, i) => { const k = U.clamp(Lg.archers * 3 - i / 50 * 2); g.P.set(p, i * 3); g.Sz[i] = 2.8 * k; g.A[i] = k * (0.9 + 0.1 * Math.sin(t * 2 + i)); }); g.dirty(); }
+      { const g = this.rise; this.graves.forEach(([x, z], i) => { if (i >= 70) return; const st = i * 0.18, tt = Math.max(0, Lg.riseT - st), y = H(x, z) + 0.6 + tt * 0.55 * (0.7 + (i % 5) * 0.1); const k = U.clamp(tt * 0.8) * (1 - U.smooth(30, 60, tt)); g.P.set([x + Math.sin(tt * 0.3 + i) * 0.6, y, z + Math.cos(tt * 0.25 + i) * 0.6], i * 3); g.Sz[i] = 3.2 + tt * 0.05; g.A[i] = k; }); g.dirty(); }
 
       /* ---------- after a reveal: let it land, then the next sketch ---------- */
       if (S.phase === 'reveal') {

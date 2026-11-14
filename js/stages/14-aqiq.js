@@ -18,7 +18,7 @@
     let y = U.lerp(-2, 22, U.smooth(-380, 380, z));                       // the valley falls toward Madinah
     const wall = Math.max(0, d - 48);
     let banks = Math.pow(wall, 1.28) * 0.55 * (0.7 + 0.6 * (SCAPE.fbm(x * 0.008, z * 0.008, 3) * 0.5 + 0.5));
-    banks += SCAPE.ridge(x * 0.014, z * 0.014, 4) * 26 * U.smooth(50, 110, d);
+    banks += SCAPE.ridge(x * 0.014, z * 0.014, 4) * 26 * U.smooth(50, 110, d) + SCAPE.ridge(x * 0.05 + 3, z * 0.05, 3) * 7 * U.smooth(46, 70, d) + SCAPE.fbm(x * 0.12, z * 0.12, 2) * 1.6 * U.smooth(46, 60, d);
     if (banks > 75) banks = 75 + (banks - 75) * 0.3;
     // the plain of Dhul-Hulayfah opens wide at the lower end
     banks *= 1 - U.smooth(-150, -260, z) * 0.85;
@@ -77,18 +77,18 @@
 
     enter(env) {
       const self = this;
-      const w = this.w = WORLD.create(env, { start: { x: chan(SPRING.z - 20), z: SPRING.z - 20, yaw: 0, pitch: 0 }, exposure: 0.85, far: 2600, fov: 70, fog: { color: 0xd8c0a0, density: 0.0011 } });
+      const w = this.w = WORLD.create(env, { start: { x: chan(SPRING.z - 20), z: SPRING.z - 20, yaw: 0, pitch: 0 }, exposure: 0.8, far: 2600, fov: 70, fog: { color: 0xd8c0a0, density: 0.0011 } });
       const S = w.scene;
 
       /* ---------- land, sky, light ---------- */
-      const ter = SCAPE.terrain(w, { size: 1500, seg: 360, cx: 0, cz: 0, height, rock: [0.7, 0.9], rockHeight: [30, 60], colors: { low: '#c8ae88', high: '#b49a78', rock: '#6a5e58', dark: '#3e3836' }, photo: { ground: 'gravelly_sand', rock: 'dark_rock', normal: 1.2 }, rep: 0.2, rockRep: 0.05 });
+      const ter = SCAPE.terrain(w, { size: 1500, seg: 360, cx: 0, cz: 0, height, rock: [0.62, 0.84], rockHeight: [26, 50], colors: { low: '#b89e7c', high: '#a48a6c', rock: '#5e524a', dark: '#38322e' }, photo: { ground: 'gravelly_sand', rock: 'rock_face', normal: 1.3 }, rep: 0.2, rockRep: 0.035 });
       const ground = w.ground = ter.ground; this.ground = ground;
       w.sky({ top: '#5f8fc4', mid: '#f0d2a8', bot: '#d8c0a0', sunDir: [0.5, 0.25, 0.6], sun: '#ffd8a0', sunSize: 0.0016, clouds: 0.35, haze: 0.4 });
       const sun = new T.DirectionalLight(0xffe2b8, 1.8); sun.position.set(50, 25, 60); S.add(sun); this.sun = sun;
       this.hemi = new T.HemisphereLight(0xbdd4f0, 0x9a7a5a, PHOTO.enabled ? 0.08 : 0.7); S.add(this.hemi);
       w.followShadow(sun, 70, 2048);
       this.skyA = null;
-      PHOTO.sky(w, 'qwantani_late_afternoon_puresky', { sun, intensity: 0.65, haze: '#e0c8a8', horizon: 0.45, rotation: 2.6, ground: '#b89a78' }).then(o => { this.skyA = o; if (o && o.sunDir) this.sunDir = o.sunDir.clone(); });
+      PHOTO.sky(w, 'qwantani_late_afternoon_puresky', { sun, intensity: 0.45, haze: '#e0c8a8', horizon: 0.45, rotation: 2.6, ground: '#b89a78' }).then(o => { this.skyA = o; if (o && o.sunDir) this.sunDir = o.sunDir.clone(); });
       this.sunDir = new T.Vector3(0.5, 0.25, 0.6).normalize();
       SCAPE.horizon(w, { haze: '#e0c8a8', layers: [{ r: 1250, h: 90, color: '#8a6e5e' }, { r: 1700, h: 140, color: '#a88e7e' }, { r: 2200, h: 170, color: '#c4b0a2' }] });
 
@@ -118,6 +118,7 @@
       const inBed = (x, z) => Math.abs(x - chan(z)) < 6;
       SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_02', fallback: 'boulder', n: 200, area: [-260, -160, 260, 380], scale: [1, 3.5], seed: 11, color: '#6a6260', density: (x, z) => U.smooth(30, 70, Math.abs(x - cx(z))) * U.smooth(-140, 60, z), collide: false });
       SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_04', fallback: 'boulder', n: 120, area: [-200, 100, 200, 380], scale: [0.8, 2.2], seed: 12, color: '#6a6260', avoid: inBed });
+      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_cliff_01', fallback: 'boulder', fallbackScale: 4, n: 70, area: [-200, -150, 200, 380], scale: [2.2, 4], seed: 10, color: '#7a6c64', density: (x, z) => { const d = Math.abs(x - cx(z)); return d > 52 && d < 95 ? 1 : 0; } });
       SCAPE.scatter(w, { kind: 'boulder', n: 300, area: [-600, -500, 600, 500], scale: [3, 10], seed: 13, tex: 'lava', density: (x, z) => U.smooth(60, 140, Math.abs(x - cx(z))) });
       SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_rocks_01', n: 380, area: [-120, -380, 120, 380], scale: [0.8, 2], seed: 14, avoid: inBed, density: (x, z) => Math.abs(x - cx(z)) < 70 ? 1 : 0.2 });
       SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_stones_01', n: 520, area: [-80, -380, 80, 380], scale: [1, 2.2], seed: 15, density: (x, z) => Math.abs(x - chan(z)) < 14 ? 1 : 0.25 });
@@ -190,13 +191,8 @@
       /* ---------- Dhul-Hulayfah: the great acacia, tents, lamps ---------- */
       {
         const gy = ground(TREE.x, TREE.z);
-        const bark = PHOTO.mat(w, 'palm_tree_bark', { rep: [1, 2], fallback: KIT.bark(w), color: 0x7a6656 });
-        const trunk = new T.Mesh(new T.CylinderGeometry(0.55, 0.9, 5, 9), bark); trunk.position.set(TREE.x, gy + 2.4, TREE.z); S.add(trunk);
-        this.treeLimbs = [];
-        for (let i = 0; i < 5; i++) { const a = i * 1.26, g = new T.CylinderGeometry(0.18, 0.4, 6, 7); g.translate(0, 3, 0); const m = new T.Mesh(g, bark); m.position.set(TREE.x, gy + 4.4, TREE.z); m.rotation.set(Math.cos(a) * 0.9, 0, Math.sin(a) * 0.9); S.add(m); }
-        const leafT = SCAPE.tex.leaves(w);
-        const canopyM = new T.MeshStandardMaterial({ map: leafT, alphaTest: 0.45, side: T.DoubleSide, roughness: 0.85, color: 0xc8d0a0 });
-        for (let i = 0; i < 9; i++) { const a = i * 0.7, r = i < 3 ? 2 : 6, d = new T.Mesh(new T.CircleGeometry(5 - (i % 3), 16), canopyM); d.rotation.x = -Math.PI / 2; d.position.set(TREE.x + Math.cos(a) * r, gy + 8.4 + (i % 3) * 0.5, TREE.z + Math.sin(a) * r); S.add(d); }
+        // the great acacia (samurah) of the plain
+        SCAPE.scatter(w, { kind: 'acacia', points: [[TREE.x, TREE.z, 2.9]], seed: 5, color: '#c8d0a0', exact: true });
         w.addCircle(TREE.x, TREE.z, 1);
         const tent = (x, z, ry) => {
           const y = ground(x, z), g = new T.Group(); g.position.set(x, y, z); g.rotation.y = ry;
@@ -227,7 +223,7 @@
       const petalGeo = new T.PlaneGeometry(0.16, 0.3); petalGeo.translate(0, 0.15, 0);
       this.flowers = [];
       const r = U.seeded(77);
-      const addF = (x, z, kind, group) => { const y = ground(x, z); this.flowers.push({ x, y, z, kind, group, k: kind === 'deco' ? 1 : 0, open: kind === 'deco', t: 0, col: new T.Color(PALETTE[(r() * PALETTE.length) | 0]), s: kind === 'deco' ? 0.6 + r() * 0.4 : 1.6, ry: r() * 6.28, chainI: -1 }); return this.flowers.length - 1; };
+      const addF = (x, z, kind, group) => { const y = ground(x, z); this.flowers.push({ x, y, z, kind, group, k: kind === 'deco' ? 1 : 0, open: kind === 'deco', t: 0, col: new T.Color(PALETTE[(r() * PALETTE.length) | 0]), s: kind === 'deco' ? 0.9 + r() * 0.6 : 1.6, ry: r() * 6.28, chainI: -1 }); return this.flowers.length - 1; };
       // Part 1: three clusters in the upper valley
       this.clusters = [[cx(300) + 10, 300], [cx(240) - 14, 240], [cx(175) + 8, 175]].map(([x, z], ci) => {
         const ids = []; for (let i = 0; i < 8; i++) { const a = r() * 6.283, d = 2 + r() * 7; ids.push(addF(x + Math.cos(a) * d, z + Math.sin(a) * d, 'bud', ci)); } return { x, z, ids };
@@ -240,8 +236,9 @@
       });
       // Part 3: a field on the plain to gather petals
       for (let i = 0; i < 18; i++) { const a = r() * 6.283, d = 10 + r() * 50; addF(TREE.x + Math.cos(a) * d, TREE.z + 70 + Math.sin(a) * d * 0.6, 'bud', 9); }
+      this.flowers.forEach(f => { if (f.kind !== 'deco') f.s = 2.2; });
       // decorative open flowers everywhere along the bed
-      for (let i = 0; i < 420; i++) { const z = U.lerp(-370, 370, r()), x = cx(z) + (r() - 0.5) * 100; if (inBed(x, z)) continue; addF(x, z, 'deco', -1); }
+      for (let i = 0; i < 900; i++) { const z = U.lerp(-370, 370, r()), x = cx(z) + (r() - 0.5) * 100; if (inBed(x, z)) continue; addF(x, z, 'deco', -1); }
       const NF = this.flowers.length;
       this.petals = new T.InstancedMesh(petalGeo, this.petalMat, NF * 6); this.petals.frustumCulled = false; this.petals.userData.dynamic = true; S.add(this.petals);
       const stemGeo = new T.CylinderGeometry(0.012, 0.018, 1, 4); stemGeo.translate(0, 0.5, 0);
@@ -425,6 +422,13 @@
       const w = this.w, c = w.camera, h = this.head;
       const fx = -Math.sin(w.yaw), fz = -Math.cos(w.yaw);
       const want = this._cw || (this._cw = new T.Vector3());
+      if (this.final) {
+        // the finale: the camera stands back and watches the petals rise round the great tree
+        const gy = this.ground(TREE.x, TREE.z), a = 0.9 + this.final * 0.05;
+        want.set(TREE.x + Math.cos(a) * 34, gy + 9 + Math.min(6, this.final * 0.4), TREE.z + Math.sin(a) * 34);
+        c.position.lerp(want, 1 - Math.exp(-(snap === 1 ? 50 : snap) * 1.5)); c.up.set(0, 1, 0); c.lookAt(TREE.x, gy + 7 + Math.min(6, this.final * 0.3), TREE.z);
+        w.pos.set(c.position.x, 0, c.position.z); w.y = c.position.y - w.eye; return;
+      }
       want.set(h.x - fx * 6.5, h.y + 2.3, h.z - fz * 6.5);
       const gy = this.ground(want.x, want.z) + 0.8; if (want.y < gy) want.y = gy;
       if (snap === 1) c.position.copy(want); else c.position.lerp(want, 1 - Math.exp(-snap * 5));

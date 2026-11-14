@@ -517,7 +517,7 @@
       const w = this.w, S = this.S, b = env.bus, T0 = S.endT, T1 = (S.endT += dt), at = s => T0 < s && T1 >= s;
       this.meetLight.intensity = U.lerp(this.meetLight.intensity, 1.4, dt * 0.5);
       // the view turns gently toward the circle
-      if (T1 < 6) { const dx = MEET.x - this.L.x, dz = MEET.z - this.L.z, ty = Math.atan2(dx, dz) + Math.PI; let dy = ty - w.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); w.yaw += dy * dt * 0.8; w.pitch = U.damp(w.pitch, -0.75, 1, dt); this.camD = U.damp(this.camD, 22, 0.8, dt); }
+      if (T1 < 6) { const dx = MEET.x - this.L.x, dz = MEET.z - this.L.z, ty = Math.atan2(dx, dz) + Math.PI; let dy = ty - w.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); w.yaw += dy * dt * 0.8; w.pitch = U.damp(w.pitch, -0.48, 1, dt); this.camD = U.damp(this.camD, 19, 0.8, dt); }
       if (at(1.5)) w.say('By Night, at al-‘Aqabah', 'They came by night to al-‘Aqabah. The sirah counts seventy-three men and two women. (Ibn Ishaq; Musnad Ahmad 15798)', { ms: 10000 });
       if (at(2)) SND.glow(b, 146.83, { gain: 0.045, dur: 10 });
       if (T1 > 2 && T1 < 20 && Math.random() < dt * 3) SND.bell(b, U.pick([392, 440, 523.25, 587.33]), { gain: 0.012, glass: true, pan: U.rnd(-0.7, 0.7) });

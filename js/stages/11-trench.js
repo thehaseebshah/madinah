@@ -99,21 +99,21 @@
             <p>The whole community dug it, the Prophet ﷺ among them, carrying earth until the dust covered his belly while they sang verses as they worked (Sahih al-Bukhari 4106). When a rock defied their picks, he struck it, and it crumbled like sand (Sahih al-Bukhari 4101).</p>`,
 
     enter(env) {
-      const w = this.w = WORLD.create(env, { start: { x: 0, z: 60, yaw: 0 }, exposure: 0.9, far: 4000, near: 0.2, fov: 50,
+      const w = this.w = WORLD.create(env, { start: { x: 0, z: 60, yaw: 0 }, exposure: 0.8, far: 4000, near: 0.2, fov: 50,
         fog: { color: 0x3a3a52, density: 0.0011 } });
       const S = w.scene, Q = w.quality, rnd = U.seeded(627);
       w.renderer.setClearColor(0x2a2a40);
 
       /* ---------- the plain (coarse), and the board (fine, dug in place) ---------- */
-      const far = (x, z) => H(x, z) - 1.2 * (1 - U.smooth(0, 6, Math.max(Math.abs(x) - 64, Math.abs(z) - 46, 0)));
+      const far = (x, z) => H(x, z) - 3.6 * (1 - U.smooth(0, 3, Math.max(Math.abs(x) - 57, Math.abs(z) - 21, 0)));
       const ter = SCAPE.terrain(w, { size: 3400, seg: Q < 1 ? 220 : 280, cz: -300, height: far, rock: [0.82, 0.94],
-        colors: { low: '#a49480', high: '#b0a08a', rock: '#4a4442', dark: '#2e2a28' }, tex: 'gravel', rockTex: 'lava',
-        photo: { ground: 'dry_ground_rocks', rock: 'dark_rock', normal: 1 }, rep: 0.2, rockRep: 0.05 });
+        colors: { low: '#84745c', high: '#8e7e64', rock: '#4a4442', dark: '#2e2a28' }, tex: 'gravel', rockTex: 'lava',
+        photo: { ground: 'dry_ground_rocks', rock: 'dark_rock', normal: 1 }, rep: 0.1, rockRep: 0.05 });
       { const p = ter.mesh.geometry.attributes.position, c = ter.mesh.geometry.attributes.color;
         for (let i = 0; i < p.count; i++) { const x = p.getX(i), z = p.getZ(i), k = U.lerp(1, 0.4, U.smooth(70, 150, Math.abs(x)) * (1 - U.smooth(160, 420, z))); c.setXYZ(i, c.getX(i) * k, c.getY(i) * k, c.getZ(i) * k); } c.needsUpdate = true; }
       this.ter = ter;
       this.buildBoard(w, ter.mesh.material);
-      w.ground = (x, z) => (Math.abs(x) < 63 && Math.abs(z) < 45 ? this.boardY(x, z) : ter.ground(x, z));
+      w.ground = (x, z) => (Math.abs(x) < 62.5 && Math.abs(z) < 26.5 ? this.boardY(x, z) : ter.ground(x, z));
 
       /* ---------- dusk sky, cold light ---------- */
       this.sun = new T.DirectionalLight(0xffc8a0, 0.9); this.sun.position.set(-80, 30, 40); S.add(this.sun);
@@ -241,12 +241,12 @@
 
     /* the board: a fine ground mesh whose vertices sink where trench cells are dug */
     buildBoard(w, mat) {
-      const nx = 4 * 30 + 1, nz = 4 * 22 + 1, xs = -63, zs = -45, st = 126 / (nx - 1), stz = 90 / (nz - 1);
+      const nx = 4 * 30 + 1, nz = 4 * 13 + 1, xs = -63, zs = -27, st = 126 / (nx - 1), stz = 54 / (nz - 1);
       const P = new Float32Array(nx * nz * 3), UV = new Float32Array(nx * nz * 2), C = new Float32Array(nx * nz * 3), R = new Float32Array(nx * nz), idx = [];
       const base = new Float32Array(nx * nz);
-      const col = U.hex('#a89880').map(v => Math.pow(v / 255, 2.2));
+      const col = U.hex('#84745c').map(v => Math.pow(v / 255, 2.2));
       for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
-        const k = j * nx + i, x = xs + i * st, z = zs + j * stz, edge = i === 0 || j === 0 || i === nx - 1 || j === nz - 1, y = H(x, z) - (edge ? 1.5 : 0);
+        const k = j * nx + i, x = xs + i * st, z = zs + j * stz, y = H(x, z) + 0.06;
         P.set([x, y, z], k * 3); UV.set([x * 0.2, z * 0.2], k * 2); base[k] = y;
         const m = 0.85 + 0.15 * (SCAPE.fbm(x * 0.03, z * 0.03, 3) + 0.5); C.set([col[0] * m, col[1] * m, col[2] * m], k * 3);
       }
@@ -303,7 +303,7 @@
         { dur: 6, fade: 'dip', fov: [44, 40], line: 'The sirah says Salman al-Farisi advised a trench across the open plain.', ar: 'وأشار سلمان الفارسي بحفر الخندق',
           path: [[Hh(-40, 30, 9), Hh(0, -10, 0)], [Hh(-10, 34, 6), Hh(10, -14, 0)]], start: () => { self.firesK = 1; } },
         { dur: 7, fade: 'dip', fov: [42, 38], line: 'He carried earth until the dust covered his belly (Sahih al-Bukhari 4106).', ar: 'ينقل التراب حتى وارى التراب جلدة بطنه',
-          path: [[Hh(-30, 44, 2.2), Hh(-12, 52, 0.8)], [Hh(-18, 42, 1.8), Hh(4, 54, 0.8)]],
+          path: [[Hh(-33, 46, 2.2), Hh(-15, 56, 0.8)], [Hh(-20, 45, 1.8), Hh(2, 56, 0.8)]],
           start: () => { [0, 1.2, 2.4].forEach(d => SND.sing(env.bus, [196, 220, 196][d / 1.2], { vowel: 'a', dur: 1.1, gain: 0.03, delay: d, voices: 4 })); } },
         { dur: 7, fade: 'dip', fov: [44, 50], line: 'Dig the line before the riders’ torches come.', ar: 'احفر الخط قبل أن تأتي مشاعل الفرسان',
           path: [[Hh(0, 30, 3), Hh(0, -30, 0)], [Hh(0, 70, 40), Hh(0, -10, 0)]] },
@@ -320,7 +320,7 @@
     },
     ui() {
       const w = this.w, L = w.ui.layer, bar = document.createElement('div');
-      bar.style.cssText = 'position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);transform:translateX(-50%);display:flex;gap:10px;pointer-events:auto;z-index:5;font-family:var(--f-display);letter-spacing:.08em';
+      bar.style.cssText = 'position:absolute;left:calc(env(safe-area-inset-left,0px) + 16px);top:34%;display:flex;flex-direction:column;gap:10px;pointer-events:auto;z-index:5;font-family:var(--f-display);letter-spacing:.08em';
       const mk = (t, f) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'trench-btn'; b.textContent = t; b.style.cssText = 'padding:10px 16px;border-radius:999px;border:1px solid rgba(246,220,154,.45);background:rgba(6,9,20,.55);color:#f2e6cc;font-size:13px;text-transform:uppercase;cursor:pointer'; b.addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); f(); }); bar.appendChild(b); return b; };
       this.btnDig = mk('Dig', () => this.setTool('dig')); this.btnPost = mk('Lamp-watch', () => this.setTool('post')); this.btnGo = mk('Let them come', () => this.go());
       L.appendChild(bar); this.bar = bar; this.setTool('dig');
@@ -410,7 +410,7 @@
     /* ---------- the waves ---------- */
     spawn() {
       const G = this.G, W = WAVES[G.wave], c = W.cols[G.spawned % W.cols.length];
-      this.torches.push({ x: cx(c) + (Math.random() - 0.5) * 30, z: Z0 - 120 - Math.random() * 40, tx: cx(c), tz: cz(0), state: 'come', c, r: -1, exp: 0, t: 0, ph: Math.random() * 6, a: 0 });
+      this.torches.push({ x: cx(c) + (Math.random() - 0.5) * 20, z: Z0 - 34 - Math.random() * 16, tx: cx(c), tz: cz(0), state: 'come', c, r: -1, exp: 0, t: 0, ph: Math.random() * 6, a: 0 });
       G.spawned++;
     },
     stepTorch(o, dt) {
@@ -459,7 +459,7 @@
       w.step('Watch the swing. Strike (Space or click) as the light reaches its peak.');
       w.say('The Rock', 'Jabir said: while they were digging, they came upon a great hard rock. They went to the Prophet, and he came down into the trench. (Sahih al-Bukhari 4101)', { ar: 'عَرَضَتْ كُدْيَةٌ شَدِيدَةٌ', ms: 9000 });
       this.meterEl = document.createElement('div');
-      this.meterEl.style.cssText = 'position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 30px);transform:translateX(-50%);width:min(420px,80vw);height:14px;border-radius:8px;background:rgba(6,9,20,.55);border:1px solid rgba(246,220,154,.4);pointer-events:none;z-index:5';
+      this.meterEl.style.cssText = 'position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 110px);transform:translateX(-50%);width:min(420px,80vw);height:14px;border-radius:8px;background:rgba(6,9,20,.55);border:1px solid rgba(246,220,154,.4);pointer-events:none;z-index:5';
       this.meterEl.innerHTML = '<i style="position:absolute;left:44%;width:12%;top:0;bottom:0;background:rgba(255,200,110,.45);border-radius:6px"></i><b style="position:absolute;top:-4px;width:6px;height:22px;margin-left:-3px;border-radius:3px;background:#fff2d0;box-shadow:0 0 10px #ffd890"></b>';
       w.ui.layer.appendChild(this.meterEl);
     },
@@ -489,7 +489,7 @@
     },
     wrap() {
       const w = this.w, G = this.G; if (G.done) return; G.done = 1;
-      w.finish('The line holds');
+      w.finish('The line holds'); w.step('The trench is finished from lava field to lava field, and the rock is sand.');
       if (this.meterEl) this.meterEl.remove();
       setTimeout(() => {
         if (this.w !== w) return;
@@ -516,7 +516,7 @@
       } else {
         // down in the trench, before the rock
         const x = this.rock.position.x, z = this.rock.position.z, y = this.rock.position.y;
-        const want = new T.Vector3(x + 0.6, y + 2.0, z + 3.4); cam.position.lerp(want, 1 - Math.exp(-dt * 3)); cam.lookAt(x, y + 0.6, z);
+        const want = new T.Vector3(x + 5.6, y + 2.1, z + 0.5); cam.position.lerp(want, 1 - Math.exp(-dt * 3)); cam.lookAt(x, y + 0.6, z);
         if (cam.fov !== 60) { cam.fov = 60; cam.updateProjectionMatrix(); }
         G.meter += dt * (2.2 + G.rockN * 0.5); const m = 0.5 + 0.5 * Math.sin(G.meter);
         if (this.meterEl) this.meterEl.querySelector('b').style.left = (m * 100).toFixed(1) + '%';
@@ -546,7 +546,7 @@
       if (this.cullList) for (const m of this.cullList) { const S0 = m.geometry.boundingSphere; m.visible = S0.center.distanceTo(w.camera.position) - S0.radius < 900; }
       // the board sinks toward its dug shape
       const B = this.board, P = B.g.attributes.position.array, C = B.g.attributes.color.array; let moved = false;
-      for (let i = 0; i < B.depth.length; i++) { const d = B.depth[i], wt = B.want[i]; if (Math.abs(d - wt) > 0.005) { const nd = U.damp(d, wt, 3.5, dt); B.depth[i] = nd; P[i * 3 + 1] = B.base[i] - nd; const k = 1 - U.smooth(0, 2.4, nd) * 0.45; C[i * 3] = B.col0[i * 3] * k; C[i * 3 + 1] = B.col0[i * 3 + 1] * k * 0.97; C[i * 3 + 2] = B.col0[i * 3 + 2] * k * 0.94; moved = true; } }
+      for (let i = 0; i < B.depth.length; i++) { const d = B.depth[i], wt = B.want[i]; if (Math.abs(d - wt) > 0.005) { const nd = U.damp(d, wt, 3.5, dt); B.depth[i] = nd; P[i * 3 + 1] = B.base[i] - nd; const k = 1 - U.smooth(0, 2.4, nd) * 0.62; C[i * 3] = B.col0[i * 3] * k * 1.05; C[i * 3 + 1] = B.col0[i * 3 + 1] * k * 0.9; C[i * 3 + 2] = B.col0[i * 3 + 2] * k * 0.78; moved = true; } }
       if (moved) { B.g.attributes.position.needsUpdate = B.g.attributes.color.needsUpdate = true; this.normT = (this.normT || 0) + dt; if (this.normT > 0.12) { this.normT = 0; B.g.computeVertexNormals(); } }
       // torches
       const ts = this.torchSp, tc = this.torchCore;
@@ -555,7 +555,7 @@
         if (!o) { ts.A[i] = 0; tc.A[i] = 0; continue; }
         const fl = 0.8 + 0.2 * U.noise1(t * 9 + i * 3), bob = Math.abs(Math.sin(t * 5 + o.ph)) * 0.2, y = H(o.x, o.z) + 2.7 + bob;
         const hes = o.state === 'halt' ? 0.6 + 0.4 * Math.sin(t * 12) : 1;
-        ts.P.set([o.x, y, o.z], i * 3); ts.S[i] = 3.2; ts.A[i] = o.a * fl * hes * 0.9; tc.P.set([o.x, y, o.z], i * 3); tc.S[i] = 0.8; tc.A[i] = o.a * fl;
+        ts.P.set([o.x, y, o.z], i * 3); ts.S[i] = 5.5; ts.A[i] = o.a * fl * hes * 0.9; tc.P.set([o.x, y, o.z], i * 3); tc.S[i] = 1.4; tc.A[i] = o.a * fl;
         if (Math.random() < dt * 6 && o.a > 0.2) this.dust.emit(o.x, H(o.x, o.z) + 0.3, o.z, (Math.random() - 0.5), 0.4, (Math.random() - 0.5) - 0.3, 1.2, 1.6, 0.25);
       }
       ts.upd(); tc.upd();
@@ -565,7 +565,7 @@
         const p = this.posts[i], L = this.postLights[i];
         if (!p) { L.intensity = 0; pg.A[i] = 0; pr.A[i] = 0; continue; }
         const fl = 0.85 + 0.15 * U.noise1(t * 6 + i);
-        L.position.set(p.x + 0.45, p.y + 3.4, p.z); L.intensity = 1.6 * fl;
+        L.position.set(p.x + 0.45, p.y + 3.4, p.z); L.intensity = 0.8 * fl;
         pg.P.set([p.x + 0.45, p.y + 3.4, p.z], i * 3); pg.S[i] = 2.4; pg.A[i] = 0.9 * fl;
         pr.P.set([p.x, p.y + 0.4, p.z], i * 3); pr.S[i] = CELL * 4.2; pr.A[i] = (G.stage === 'build' || G.stage === 'wave') ? 0.08 : 0;
       }
@@ -575,7 +575,7 @@
       // the confederate fires spread across the plain
       const fi = this.fires; for (let i = 0; i < fi.n; i++) fi.A[i] = U.smooth(i / fi.n * 0.9, i / fi.n * 0.9 + 0.1, this.firesK) * (0.55 + 0.25 * U.noise1(t * 3 + i)); fi.upd();
       // the strike's flash, thrown far
-      if (this.flareT > 0) { this.flareT = Math.max(0, this.flareT - dt * 0.5); this.flare.position.copy(w.camera.position).addScaledVector(this.flareDir, 900); this.flare.scale.setScalar(300 + (1 - this.flareT) * 300); this.flare.material.opacity = this.flareT * 0.8; if (this.post) this.post.set({ bloom: 0.75 + this.flareT * 0.8 }); }
+      if (this.flareT > 0) { this.flareT = Math.max(0, this.flareT - dt * 0.5); this.flare.position.copy(w.camera.position).addScaledVector(this.flareDir, 900); this.flare.scale.setScalar(120 + (1 - this.flareT) * 160); this.flare.material.opacity = this.flareT * 0.45; if (this.post) this.post.set({ bloom: 0.75 + this.flareT * 0.8 }); }
       this.dust.step(dt, 1.2, 0.2); this.sparks.step(dt, 1.4, 6);
       // sound: wind of the plain, fire, a sung digging chant now and then
       this.clk.gust -= dt; if (this.clk.gust < 0) { this.clk.gust = 4 + Math.random() * 6; SND.swell(b, { f0: 300, f1: 1300, dur: 3.5, gain: 0.05, pan: U.rnd(-1, 1) }); }

@@ -187,7 +187,7 @@
       PHOTO.sky(w, 'qwantani_late_afternoon_puresky', this.skyOpts);
 
       /* ---------- terrain and the far mountains ---------- */
-      const ter = SCAPE.terrain(w, { size: 1500, seg: 300, height: H, rock: [0.8, 0.93], rockHeight: [9, 24], colors: { low: '#c9a87e', high: '#b8966e', rock: '#5a4840', dark: '#33281f' },
+      const ter = SCAPE.terrain(w, { size: 1500, seg: 260, height: H, rock: [0.8, 0.93], rockHeight: [9, 24], colors: { low: '#c9a87e', high: '#b8966e', rock: '#5a4840', dark: '#33281f' },
         tex: 'gravel', rockTex: 'granite', photo: { ground: 'gravelly_sand', rock: 'rock_face_03', normal: 1 }, rep: 0.2, rockRep: 0.05 });
       w.ground = ter.ground;
       SCAPE.horizon(w, { haze: '#dcc4a2', layers: [{ r: 950, h: 120, color: '#8c7464', seed: 3 }, { r: 1400, h: 170, color: '#a48e80', seed: 7 }, { r: 2000, h: 200, color: '#c0b0a4', seed: 11 }] });

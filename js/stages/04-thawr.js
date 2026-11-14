@@ -55,9 +55,9 @@
     // the summit plateau before the mouth, flattened, with the rocks of the summit rising behind
     const dp = Math.hypot(x * 0.9, z + 9);
     const plateau = -0.32 + 0.22 * SCAPE.fbm(x * 0.15, z * 0.15, 2) + U.smooth(10, 20, dp) * 0.5;
-    let kp = U.smooth(20, 38, dp); if (z > 4) kp = Math.max(kp, U.smooth(4, 16, z));
+    let kp = U.smooth(20, 52, dp); if (z > 4) kp = Math.max(kp, U.smooth(4, 16, z));
     y = U.lerp(plateau, y, kp);
-    y = Math.max(y, plateau + (U.smooth(6, 18, z) * 16 + U.smooth(12, 30, Math.abs(x)) * 6) * U.smooth(2, 7, z));
+    if (z > 2) y = Math.max(y, plateau + (U.smooth(6, 18, z) * 16 + U.smooth(12, 30, Math.abs(x)) * 6) * U.smooth(2, 7, z));
     return y;
   }
   function H(x, z) {

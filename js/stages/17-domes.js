@@ -240,7 +240,10 @@
       const city = SCAPE.scatter(w, { kind: 'house', n: 70, area: { x: 0, z: 0, r: 520 }, scale: [24, 46], seed: 7, avoid: (x, z) => Math.hypot(x, z) < 210 });
       city.meshes.forEach(m => { m.material = new T.MeshStandardMaterial({ map: cityT, roughness: 0.8 }); });
       // the plaza: umbrellas, furled at this hour
-      const umbG = (() => { const p = []; const pole = new T.CylinderGeometry(0.35, 0.45, 14, 10); pole.translate(0, 7, 0); p.push(pole); const fur = new T.CylinderGeometry(0.2, 1.4, 7, 12); fur.translate(0, 17, 0); p.push(fur); const cap = new T.ConeGeometry(0.9, 1.2, 10); cap.translate(0, 21, 0); p.push(cap); return SCAPE.merge(p); })();
+      const umbG = (() => { const p = []; const pole = new T.CylinderGeometry(0.42, 0.5, 14, 10); pole.translate(0, 7, 0); p.push(pole); const base = new T.CylinderGeometry(1.1, 1.3, 1.4, 10); base.translate(0, 0.7, 0); p.push(base);
+        // a furled canopy hangs round the top of the column like a closed bud
+        const prof = [[0.45, 6], [0.9, 7.5], [1.25, 10.5], [1.15, 13.5], [0.7, 15.2], [0.25, 15.8]].map(([r, y]) => new T.Vector2(r, y)); const bud = new T.LatheGeometry(prof, 12); p.push(bud);
+        const cap = new T.CylinderGeometry(0.5, 0.7, 0.8, 10); cap.translate(0, 16.1, 0); p.push(cap); return SCAPE.merge(p); })();
       const umbs = []; for (let a = -9; a <= 9; a++) for (let b = -9; b <= 9; b++) { const x = a * 25, z = b * 25; if (Math.abs(x) < HALF + 14 && (Math.abs(z) < HALF + 14 || (z > 0 && z < HALF + 64))) continue; if (Math.hypot(x, z) > 210) continue; umbs.push([x, z]); }
       const umbM = new T.InstancedMesh(umbG, M.marble, umbs.length); umbs.forEach(([x, z], k) => { m4.makeTranslation(x, 0, z); umbM.setMatrixAt(k, m4); }); umbM.castShadow = true; S.add(umbM);
       SCAPE.birds(w, { n: 16, x: 0, z: 0, y: 30, r: 60, color: 0xf0ece4, speed: 0.1 });

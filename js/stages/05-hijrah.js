@@ -587,7 +587,7 @@
     touchButtons() {
       const L = this.w.ui.layer, wrap = document.createElement('div');
       wrap.className = 'hijrah-pad';
-      wrap.style.cssText = 'position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);transform:translateX(-50%);display:flex;gap:12px;pointer-events:auto;z-index:5';
+      wrap.style.cssText = 'position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 96px);transform:translateX(-50%);display:flex;gap:12px;pointer-events:auto;z-index:5';
       [['left', '◀'], ['duck', '▼'], ['jump', '▲'], ['right', '▶']].forEach(([a, t]) => {
         const bt = document.createElement('button'); bt.type = 'button'; bt.className = 'hijrah-btn'; bt.textContent = t; bt.setAttribute('aria-label', a);
         bt.style.cssText = 'width:58px;height:58px;border-radius:50%;border:1px solid rgba(242,233,214,.4);background:rgba(6,9,20,.45);color:#f6dc9a;font-size:20px;touch-action:none';

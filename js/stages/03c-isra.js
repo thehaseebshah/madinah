@@ -194,6 +194,7 @@
         SCAPE.scatter(w, { kind: 'palm', n: 40, area: { x: 0, z: 0, r: 170 }, scale: [8, 12], seed: 62, avoid: (x, z) => Math.hypot(x, z) < 34 });
         const fires = []; const r3 = U.seeded(7);
         for (let i = 0; i < 260; i++) { const a = r3() * 6.283, dd = 36 + Math.pow(r3(), 0.9) * 160; const x = Math.cos(a) * dd, z = Math.sin(a) * dd; fires.push(x, ground(x, z) + 1.2 + r3() * 5, z); }
+        hs.list.forEach((h, i) => { if (i % 3) return; const d = Math.max(h.sx || h.s, h.sz || h.s) * 0.52; fires.push(h.x + Math.sin(h.ry) * d, (h.y || 0) + 1.4 + (i % 2) * 1.6, h.z + Math.cos(h.ry) * d); });
         const fg = new T.BufferGeometry(); fg.setAttribute('position', new T.BufferAttribute(new Float32Array(fires), 3));
         const fp = new T.Points(fg, new T.PointsMaterial({ map: KIT.glowTex(w), color: 0xffa858, size: 3.2, transparent: true, depthWrite: false, blending: T.AdditiveBlending, opacity: 0.85 }));
         fp.frustumCulled = false; S.add(fp);
@@ -259,7 +260,8 @@
       /* ---------- the rails ---------- */
       const at = (x, alt, z) => new T.Vector3(x, Math.max(ground(x, z), 0) + alt, z);
       const earthPts = [
-        new T.Vector3(COL.x, ground(COL.x, COL.z) + 2.2, COL.z + 4), new T.Vector3(COL.x, ground(COL.x, COL.z) + 14, COL.z - 2), new T.Vector3(COL.x + 4, 45, COL.z - 40),
+        // a low arc round the side of the House, then up and away to the north
+        new T.Vector3(COL.x - 2, ground(COL.x, COL.z) + 2.4, COL.z + 6), new T.Vector3(COL.x + 13, ground(14, 8) + 5, 6), new T.Vector3(19, ground(19, -10) + 12, -12), new T.Vector3(14, 34, -48),
         new T.Vector3(10, 75, -150), new T.Vector3(-20, 105, -330), new T.Vector3(-40, 80, -500), at(-20, 30, -620),
       ];
       for (let z = -700; z >= -1100; z -= 50) earthPts.push(at(canyonX(z), 18, z));
@@ -389,9 +391,9 @@
       }
 
       /* ---------- the light you steer ---------- */
-      this.orb = KIT.glow(w, 0xfff0c8, 2.6, 1); this.orb.material.fog = false; S.add(this.orb);
-      this.orbCore = KIT.glow(w, 0xffffff, 0.9, 1); this.orbCore.material.fog = false; S.add(this.orbCore);
-      this.orbLight = new T.PointLight(0xffe6b0, 1.6, 26, 1.6); S.add(this.orbLight);
+      this.orb = KIT.glow(w, 0xfff0c8, 1.5, 0.75); this.orb.material.fog = false; S.add(this.orb);
+      this.orbCore = KIT.glow(w, 0xffffff, 0.45, 0.9); this.orbCore.material.fog = false; S.add(this.orbCore);
+      this.orbLight = new T.PointLight(0xffe6b0, 1.0, 20, 1.8); S.add(this.orbLight);
       const trailN = 70; this.trail = { n: trailN, P: new Float32Array(trailN * 3), i: 0 };
       const tg = new T.BufferGeometry(); tg.setAttribute('position', new T.BufferAttribute(this.trail.P, 3));
       this.trailPts = new T.Points(tg, new T.PointsMaterial({ map: KIT.glowTex(w), color: 0xffd890, size: 0.7, transparent: true, opacity: 0.55, depthWrite: false, blending: T.AdditiveBlending, fog: false }));
@@ -525,7 +527,7 @@
       return { orb, pos, look, F };
     },
     showHeaven(k, force) {
-      this.domes.forEach((d, i) => { const on = i === k; d.dome.visible = on; d.floor.visible = on || i === k + 1; d.orn.visible = on; d.motes.pts.visible = on; });
+      this.domes.forEach((d, i) => { const on = i === k; d.dome.visible = on; d.floor.visible = k >= 0 && (on || i === k + 1); d.orn.visible = on; d.motes.pts.visible = on; });
       const sky = k >= 0 || force;
       const skies = this.w.scene.children.filter(o => o.renderOrder === -10);
       skies.forEach(o => { o.visible = !sky && (o === this.w.skyMesh); });
@@ -591,7 +593,7 @@
       w.pos.set(c.position.x, 0, c.position.z); w.y = c.position.y - w.eye;
       // the light itself and its trail
       this.orb.position.copy(A.orb); this.orbCore.position.copy(A.orb); this.orbLight.position.copy(A.orb);
-      const pulse = 1 + 0.08 * Math.sin(w.time * 7); this.orb.scale.setScalar(2.6 * pulse * (1 + this.boost * 0.04)); this.orbCore.scale.setScalar(0.9 * pulse);
+      const pulse = 1 + 0.08 * Math.sin(w.time * 7); this.orb.scale.setScalar(1.5 * pulse * (1 + this.boost * 0.04)); this.orbCore.scale.setScalar(0.45 * pulse);
       const tr = this.trail; tr.i = (tr.i + 1) % tr.n; tr.P.set([A.orb.x + (Math.random() - 0.5) * 0.2, A.orb.y + (Math.random() - 0.5) * 0.2, A.orb.z + (Math.random() - 0.5) * 0.2], tr.i * 3); this.trailPts.geometry.attributes.position.needsUpdate = true;
       // bursts of light when a ring is gathered
       if (this.burstT > 0) {
@@ -603,7 +605,7 @@
       if (w._shadow) { const L = w._shadow.light; L.target.position.copy(A.F.P); L.position.copy(A.F.P).addScaledVector(this.moonDir, 200); }
       this.cres.position.copy(c.position).addScaledVector(this.moonDir, 1900);
       // heavens animate
-      if (this.heaven >= 0) { const D = this.domes[this.heaven]; D.dome.material.uniforms.uTime.value = w.time; D.upd(); D.floor.rotation.y += dt * 0.02; }
+      if (this.heaven >= 0 && this.heaven < 7) { const D = this.domes[this.heaven]; D.dome.material.uniforms.uTime.value = w.time; D.upd(); D.floor.rotation.y += dt * 0.02; }
       this.domes.forEach(D => { if (D.nameT >= 0) { D.nameT += dt; D.name.visible = true; D.name.material.opacity = U.smooth(0, 1.2, D.nameT) * (1 - U.smooth(7, 10, D.nameT)); if (D.nameT > 10) { D.nameT = -1; D.name.visible = false; } } });
       this.gates.forEach(G => { if (!G.disc.visible) return; G.disc.rotation.z = G.move ? w.time * 0.5 * (G.k % 2 ? 1 : -1) : G.disc.rotation.z + dt * 0.05; });
       // sound by speed

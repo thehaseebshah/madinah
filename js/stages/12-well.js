@@ -204,7 +204,7 @@
           for (let j = 0; j <= L.nz; j++) { g.beginPath(); g.moveTo(0, j * cw); g.lineTo(L.nx * cw, j * cw); g.stroke(); }
           g.setLineDash([]);
           const mark = (i, j, d, col) => { const cx = (i + 0.5) * cw, cy = (L.nz - 1 - j + 0.5) * cw, dd = DIRS.find(x => x[0] === d), ex = cx + dd[1] * cw * 0.5, ey = cy - dd[2] * cw * 0.5; g.strokeStyle = col; g.lineWidth = 10; g.lineCap = 'round'; g.beginPath(); g.moveTo(ex - dd[1] * 30, ey + dd[2] * 30); g.lineTo(ex, ey); g.stroke(); g.fillStyle = col; g.beginPath(); g.arc(ex, ey, 12, 0, 6.3); g.fill(); };
-          mark(L.src, 0, S, 'rgba(160,215,255,0.9)'); L.targets.forEach(t => mark(t.i, t.j, t.d, 'rgba(255,214,120,0.95)'));
+          mark(L.src, 0, 4, 'rgba(160,215,255,0.9)'); L.targets.forEach(t => mark(t.i, t.j, t.d, 'rgba(255,214,120,0.95)'));
           const tex = new T.CanvasTexture(cv); tex.encoding = T.sRGBEncoding; tex.anisotropy = 4;
           const pl = new T.Mesh(new T.PlaneGeometry(L.nx * CS, L.nz * CS).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, toneMapped: false }));
           const cc = toWorld(L, 0, -(D0 + L.nz * CS / 2)); pl.position.set(cc.x, gy + 0.035, cc.z); pl.rotation.y = L.ang; pl.renderOrder = 2; pl.userData.dynamic = true; S.add(pl); }

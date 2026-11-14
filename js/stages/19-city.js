@@ -63,7 +63,7 @@
 
     enter(env) {
       const self = this;
-      const w = this.w = WORLD.create(env, { start: { x: 0, z: 20, yaw: 0 }, exposure: 0.9, far: 2200, fov: 30, fog: { color: 0xdcd6cc, density: 0.0007 }, bounds: [PLAZA.x0, PLAZA.z0, PLAZA.x1, PLAZA.z1] });
+      const w = this.w = WORLD.create(env, { start: { x: 0, z: 20, yaw: 0 }, exposure: 0.78, far: 2200, fov: 30, fog: { color: 0xdcd6cc, density: 0.0007 }, bounds: [PLAZA.x0, PLAZA.z0, PLAZA.x1, PLAZA.z1] });
       const S = w.scene, R = U.seeded(2010);
       w.ground = () => 0;
       this.part = -1; this.hour = 6; this.queue = []; this.carry = 0; this.groups = []; this.zoom = 1; this.busy = 0; this.n = 0; this.flow = [];
@@ -73,13 +73,13 @@
       const sun = this.sun = new T.DirectionalLight(0xfff0dc, 1.8); sun.position.set(60, 40, 20); S.add(sun);
       this.hemi = new T.HemisphereLight(0xd8e4f0, 0x9a8a78, PHOTO.enabled ? 0.12 : 0.6); S.add(this.hemi);
       w.followShadow(sun, 70, 2048); sun.shadow.bias = -0.0005;
-      this.setSky = (id, h) => { const sd = sunAt(h); const rot = Math.atan2(sd.z, sd.x) - 0.629; return PHOTO.sky(w, id, { rotation: rot, intensity: 0.7, haze: '#dcd6cc', horizon: 0.4, ground: '#e8e2d8', bounce: 0.6 }); };
+      this.setSky = (id, h) => { const sd = sunAt(h); const rot = Math.atan2(sd.z, sd.x) - 0.629; return PHOTO.sky(w, id, { rotation: rot, intensity: this.envK || 0.5, haze: '#dcd6cc', horizon: 0.4, ground: '#e8e2d8', bounce: 0.6 }); };
       this.setSky('qwantani_dawn_puresky', 6.3);
       this.post = w.post({ bloom: 0.45, threshold: 0.8, rays: { strength: 0.25, dir: [0.7, 0.3, 0.2] }, vignette: 0.3, grain: 0.025, lift: [0.01, 0.01, 0.015], gain: [1.02, 1.0, 0.97] });
 
       /* ---------- the plaza, the city and the hills ---------- */
       SCAPE.terrain(w, { size: 2000, seg: 120, height: (x, z) => U.smooth(650, 950, Math.hypot(x, z)) * SCAPE.ridge(x * 0.0025 + 2, z * 0.0025, 4) * 160 - 0.03,
-        colors: { low: '#ece8e0', high: '#e2dcd2', rock: '#8a6c5a', dark: '#5a4a40' }, photo: { ground: 'marble_01', rock: 'rock_face_03', normal: 0.5 }, rep: 0.16, rockRep: 0.025 });
+        colors: { low: '#d8d2c8', high: '#cfc8bc', rock: '#6a5040', dark: '#4a3a30' }, photo: { ground: 'marble_01', rock: 'rock_face_03', normal: 0.5 }, rep: 0.16, rockRep: 0.025 });
       SCAPE.horizon(w, { haze: '#dcd6cc', layers: [{ r: 1200, h: 80, color: '#7a5c4c', seed: 21 }, { r: 1600, h: 140, color: '#9a8478', seed: 22 }] });
       const M = {
         marble: PHOTO.mat(w, 'marble_01', { triplanar: 0.25, color: 0xf2eee8, rough: 0.4, fallback: KIT.plaster(w, [4, 4], '#eee8e0') }),
@@ -88,7 +88,7 @@
         steel: new T.MeshStandardMaterial({ color: 0xe8e8ea, metalness: 0.6, roughness: 0.35 }),
       };
       // the plaza floor: pale marble with darker bands on a 25 m grid
-      const plazaT = w.tex(512, (g, s) => { g.fillStyle = '#f2eee8'; g.fillRect(0, 0, s, s); g.strokeStyle = '#b8b0a6'; g.lineWidth = 10; g.strokeRect(0, 0, s, s); g.strokeStyle = '#d0c8be'; g.lineWidth = 3; for (let k = 1; k < 8; k++) { g.beginPath(); g.moveTo(k * s / 8, 0); g.lineTo(k * s / 8, s); g.stroke(); g.beginPath(); g.moveTo(0, k * s / 8); g.lineTo(s, k * s / 8); g.stroke(); } g.save(); g.translate(s / 2, s / 2); g.strokeStyle = '#a89c8c'; g.lineWidth = 6; U.star8(g, 0, 0, 60, 0.7); g.stroke(); g.restore(); }, [6.4, 4.6]);
+      const plazaT = w.tex(512, (g, s) => { g.fillStyle = '#dcd6cc'; g.fillRect(0, 0, s, s); g.strokeStyle = '#b8b0a6'; g.lineWidth = 10; g.strokeRect(0, 0, s, s); g.strokeStyle = '#d0c8be'; g.lineWidth = 3; for (let k = 1; k < 8; k++) { g.beginPath(); g.moveTo(k * s / 8, 0); g.lineTo(k * s / 8, s); g.stroke(); g.beginPath(); g.moveTo(0, k * s / 8); g.lineTo(s, k * s / 8); g.stroke(); } g.save(); g.translate(s / 2, s / 2); g.strokeStyle = '#a89c8c'; g.lineWidth = 6; U.star8(g, 0, 0, 60, 0.7); g.stroke(); g.restore(); }, [6.4, 4.6]);
       const pl = new T.Mesh(new T.PlaneGeometry(160, 116).rotateX(-Math.PI / 2), new T.MeshStandardMaterial({ map: plazaT, roughness: 0.35, metalness: 0.05 })); pl.position.set(0, 0.02, 1); pl.receiveShadow = true; S.add(pl);
       // the mosque facade: arcades of cream stone, brass gates, ten minarets, the Green Dome beyond
       const m4 = new T.Matrix4();
@@ -127,7 +127,7 @@
       for (let i = 0; i < cp.count; i++) { const x = cp.getX(i), z = cp.getZ(i), r = Math.hypot(x, z), m = Math.max(Math.abs(x), Math.abs(z)) / HALFW; const seam = Math.pow(Math.abs(Math.abs(x) - Math.abs(z)) / HALFW, 0.6); cp.setY(i, 1.5 - Math.pow(m, 1.3) * 1.9 + seam * 0.35 * m - (m > 0.97 ? Math.sin(Math.atan2(z, x) * 16) * 0.0 : 0)); }
       cg.computeVertexNormals();
       const memT = w.tex(512, (g, s) => { g.fillStyle = '#f8f6f2'; g.fillRect(0, 0, s, s); g.strokeStyle = 'rgba(160,150,140,0.5)'; g.lineWidth = 3; g.beginPath(); g.moveTo(0, 0); g.lineTo(s, s); g.moveTo(s, 0); g.lineTo(0, s); g.moveTo(s / 2, 0); g.lineTo(s / 2, s); g.moveTo(0, s / 2); g.lineTo(s, s / 2); g.stroke(); g.strokeStyle = 'rgba(190,170,130,0.6)'; g.lineWidth = 6; g.strokeRect(3, 3, s - 6, s - 6); for (let k = 1; k < 4; k++) { g.strokeStyle = 'rgba(170,160,150,0.25)'; g.lineWidth = 2; g.strokeRect(k * s / 8, k * s / 8, s - k * s / 4, s - k * s / 4); } });
-      const memM = canopyPatch(new T.MeshStandardMaterial({ map: memT, roughness: 0.55, side: T.DoubleSide, emissive: 0xffe8c0, emissiveIntensity: 0 }));
+      const memM = canopyPatch(new T.MeshStandardMaterial({ map: memT, color: 0xe4e0da, roughness: 0.55, side: T.DoubleSide, emissive: 0xffe8c0, emissiveIntensity: 0 }));
       const aOpen = new T.InstancedBufferAttribute(new Float32Array(UMB.length), 1); cg.setAttribute('aOpen', aOpen);
       const can = this.canopy = new T.InstancedMesh(cg, memM, UMB.length);
       UMB.forEach((u, k) => { m4.makeTranslation(u.x, CANOPY_Y - 1.5, u.z); can.setMatrixAt(k, m4); });
@@ -165,7 +165,7 @@
       this.rugM = new T.MeshStandardMaterial({ map: rugT, roughness: 0.95 });
       this.rugG = new T.PlaneGeometry(1.1, 1.9).rotateX(-Math.PI / 2);
       this.spots = []; for (let a = -2; a <= 2; a++) for (let b = -1; b <= 2; b++) this.spots.push({ x: a * 25 + (b % 2 ? 6 : -6) + (R() - 0.5) * 6, z: -27 + b * 26 + (R() - 0.5) * 6 });
-      const lightG = new T.SphereGeometry(0.22, 8, 6);
+      const lightG = new T.SphereGeometry(0.3, 8, 6);
       this.lightM = new T.InstancedMesh(lightG, new T.MeshBasicMaterial({ color: 0xffffff, toneMapped: false }), 400); this.lightM.count = 0; this.lightM.frustumCulled = false; S.add(this.lightM);
       this.haloM = new T.InstancedMesh(new T.PlaneGeometry(1, 1), new T.MeshBasicMaterial({ map: KIT.glowTex(w), color: 0xffffff, transparent: true, depthWrite: false, blending: T.AdditiveBlending }), 400); this.haloM.count = 0; this.haloM.frustumCulled = false; S.add(this.haloM);
 
@@ -222,7 +222,7 @@
           lines: [[0.4, 'Each opens to some 25 metres square,', 'تنفتح كلٌّ منها نحو خمسةٍ وعشرين مترًا مربعًا'], [3.6, 'and together they shade some 143,000 square metres.', 'وتظلّل معًا نحو ١٤٣ ألف متر مربع']],
           start: () => { u.want = 1; SND.swell(env.bus, { f0: 120, f1: 300, dur: 4, gain: 0.04 }); }, during: (w, k, dt) => self.animUmb(dt), skip: () => { u.want = 0; u.open = 0; self.updCanopy(); } },
         { dur: 6.5, fade: 'dip', path: [[[60, 30, 50], [40, 18, FACADE_Z - 70]], [[30, 22, 30], [40, 18, FACADE_Z - 70]]],
-          line: 'Through the day they follow the sun; at night the courtyards are lit.', ar: 'تتبع الشمسَ طولَ النهار، وفي الليل تُضاء الساحات' },
+          line: 'They open and close with the weather; at night the courtyards are lit.', ar: 'تُفتح وتُغلق بحسب الطقس، وفي الليل تُضاء الساحات' },
         { dur: 6, fade: 'dip', path: [[[0, 120, 160], [0, 0, 0]], [[0, 80, 90], [0, 0, 10]]], line: 'One day in the courtyard, from dawn to the lamps of night.', ar: 'يومٌ في الساحة، من الفجر إلى قناديل الليل',
           start: () => { u.want = 0; u.open = 0; self.updCanopy(); } },
       ];
@@ -368,12 +368,16 @@
       if (w._shadow) w._shadow.off.copy(sd).multiplyScalar(150);
       if (this.post && this.post.rays) this.post.rays.dir = sd.toArray();
       const dayK = U.smooth(-0.02, 0.25, el);
-      this.sun.intensity = 0.25 + 1.75 * dayK; this.sun.color.setHSL(0.09, 0.6 - 0.45 * dayK, 0.6 + 0.3 * dayK);
+      const nightK0 = this.done ? 1 : this.dusk ? U.smooth(18.1, 19.4, this.hour) : 0;
+      this.sun.intensity = (0.2 + 1.2 * dayK) * (1 - nightK0 * 0.85); this.sun.color.setHSL(nightK0 > 0.5 ? 0.6 : 0.09, 0.6 - 0.45 * dayK, 0.6 + 0.3 * dayK);
+      // the sky's light fades with the day (applied in steps: it walks every material)
+      const envK = U.lerp(0.5, 0.08, nightK0) * (0.45 + 0.55 * dayK + nightK0 * 0.55); if (Math.abs(envK - (this.envK || 0)) > 0.04) { this.envK = envK; PHOTO.envIntensity(w, envK); }
+      this.hemi.intensity = (PHOTO.enabled ? 0.12 : 0.6) * (1 - nightK0 * 0.7);
       const nightK = this.done ? 1 : this.dusk ? U.smooth(18.1, 19.4, this.hour) : 0;
       this.night.forEach(L => { L.intensity = nightK * 1.6; });
       this.cityMat.emissiveIntensity = nightK * 0.9; this.memM.emissiveIntensity = nightK * 0.0;
       this.umbLamps.visible = nightK > 0.3;
-      w.renderer.toneMappingExposure = 0.9 + nightK * 0.25;
+      w.renderer.toneMappingExposure = 0.78 + nightK * 0.3;
       // umbrellas glow while they wait to be opened over someone in the sun
       // groups: arrive, warm in the sun, cool in the shade, drink, and at prayer go in through the gates
       const lm = this.lightM, hm = this.haloM, m4 = new T.Matrix4(), c = new T.Color(), q = new T.Quaternion();
@@ -405,7 +409,7 @@
           if (g.leave) { const kk = U.ease(Math.min(1, g.leave)); x = U.lerp(x, g.gx + (i - g.n / 2) * 0.5, kk); z = U.lerp(z, g.gz, kk); y += kk * 0.6; }
           const s = g.arrive * (g.leave > 0.95 ? Math.max(0, (1.05 - g.leave) * 10) : 1);
           m4.compose(new T.Vector3(x, y, z), q, new T.Vector3(s, s, s)); lm.setMatrixAt(li, m4); lm.setColorAt(li, tint);
-          m4.compose(new T.Vector3(x, y, z), w.camera.quaternion, new T.Vector3(1.5 * s, 1.5 * s, 1.5 * s)); hm.setMatrixAt(li, m4); hm.setColorAt(li, c.clone().multiplyScalar(0.45));
+          m4.compose(new T.Vector3(x, y, z), w.camera.quaternion, new T.Vector3(2.6 * s, 2.6 * s, 2.6 * s)); hm.setMatrixAt(li, m4); hm.setColorAt(li, c.clone().multiplyScalar(0.45));
           li++;
         }
         g.rug.forEach(r => { r.visible = !g.leave || g.leave < 0.4; });

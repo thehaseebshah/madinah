@@ -453,8 +453,8 @@
             d.hinge.rotation.y = -U.smooth(0.55, 0.9, k) * 1.4;
             if (k > 0.55 && !self._door) { self._door = true; SND.knock(env.bus, { f: 160, gain: 0.08, click: 700 }); SND.swell(env.bus, { f0: 300, f1: 120, dur: 1.4, gain: 0.04 }); }
           } },
-        { dur: 5, fade: 'cut', line: 'He takes provisions, and goes out for many nights.', ar: 'يتزوّدُ لذلك، ويخرج لياليَ ذواتِ العدد.', ease: 'glide', fov: [38, 32],
-          path: [[ln(d.u + 1.6, d.v + 2.6, 1.1), [P.x, P.y + 0.1, P.z]], [ln(d.u + 0.8, d.v + 1.7, 0.75), [P.x, P.y + 0.15, P.z]]],
+        { dur: 5, fade: 'cut', line: 'He takes provisions, and goes out for many nights.', ar: 'يتزوّدُ لذلك، ويخرج لياليَ ذواتِ العدد.', ease: 'glide', fov: [44, 38],
+          path: [[ln(d.u + 3.2, d.v + 4.2, 1.6), [P.x, P.y + 0.5, P.z]], [ln(d.u + 2.0, d.v + 2.9, 1.2), [P.x, P.y + 0.4, P.z]]],
           during: (w) => { self.laneLight.intensity = 1.4 * (0.9 + 0.1 * Math.sin(w.time * 13)); self.laneGlow.material.opacity = 0.9; d.hinge.rotation.y = -1.4; } },
         { dur: 6, fade: 'dip', line: 'To a cave near the top of Jabal an-Nur, north-east of the Ka‘bah.', ar: 'إلى غارٍ قرب قمة جبل النور، شمالَ شرقيّ الكعبة.', ease: 'glide', fov: [50, 42],
           path: [[at(40, 6, 300), [0, 30, 120]], [at(22, 4, 262), [0, 40, 60]], [at(9, 3.2, 236), [0, 45, -20]]],

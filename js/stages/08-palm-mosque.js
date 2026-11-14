@@ -68,7 +68,7 @@
   function frondPanelGeo() {
     // three layers of fronds laid across, each a little offset; base at y = 0
     const list = [];
-    for (let k = 0; k < 3; k++) { const pl = new T.PlaneGeometry(G + 0.5, G + 0.5, 3, 3); pl.rotateX(-Math.PI / 2); pl.rotateY(k * 0.5 - 0.5); pl.translate(0, 0.08 + k * 0.07, 0); const p = pl.attributes.position; for (let i = 0; i < p.count; i++) p.setY(i, p.getY(i) - 0.04 * Math.cos(p.getX(i)) * Math.cos(p.getZ(i))); list.push(pl); }
+    for (let k = 0; k < 5; k++) { const pl = new T.PlaneGeometry(G + 0.5, G + 0.5, 3, 3); pl.rotateX(-Math.PI / 2); pl.rotateY(k * 0.37 - 0.74); pl.translate((k % 2 - 0.5) * 0.3, 0.06 + k * 0.05, (k % 3 - 1) * 0.25); const p = pl.attributes.position; for (let i = 0; i < p.count; i++) p.setY(i, p.getY(i) - 0.04 * Math.cos(p.getX(i)) * Math.cos(p.getZ(i))); list.push(pl); }
     return SCAPE.merge(list);
   }
   function beamGeo() { const g = new T.CylinderGeometry(0.11, 0.13, G + 0.4, 7); g.rotateZ(Math.PI / 2); g.translate(0, 0, 0); return g; }
@@ -124,7 +124,7 @@
       PHOTO.sky(w, 'qwantani_morning_puresky', skyO).then(o => { if (this.w === w && o && !o.sunDir) PHOTO.sky(w, 'qwantani_sunrise_puresky', Object.assign({}, skyO, { background: false })); });
 
       /* ---------- terrain, harrah and Uhud ---------- */
-      SCAPE.terrain(w, { size: 1700, seg: 320, height: H, rock: [0.82, 0.94], rockHeight: [7, 20], colors: { low: '#c8ac86', high: '#b49470', rock: '#5a4a44', dark: '#2e2624' },
+      SCAPE.terrain(w, { size: 1700, seg: 260, height: H, rock: [0.82, 0.94], rockHeight: [7, 20], colors: { low: '#c8ac86', high: '#b49470', rock: '#5a4a44', dark: '#2e2624' },
         tex: 'gravel', rockTex: 'lava', photo: { ground: 'dry_ground_rocks', rock: 'dark_rock', normal: 1 }, rep: 0.22, rockRep: 0.05 });
       SCAPE.horizon(w, { haze: '#d8c8b0', layers: [{ r: 1000, h: 90, color: '#7a6458', seed: 5 }, { r: 1500, h: 130, color: '#9a8a80', seed: 9 }, { r: 2100, h: 160, color: '#b8aca4', seed: 13 }] });
       // the yard: packed earth, swept
@@ -209,7 +209,7 @@
 
       // palms: the gardens of Banu al-Najjar
       const palmArea = (x, z) => !inPlot(x, z, 4) && !LANE(x, z) && !houses.some(h => Math.abs(h.x - x) < h.sx / 2 + 2 && Math.abs(h.z - z) < h.sz / 2 + 2) && Math.hypot(x - 30, z + 8) > 8;
-      const palms = SCAPE.scatter(w, { kind: 'palm', n: 340, area: [-220, -220, 220, 220], scale: [7, 13], density: (x, z) => (x < 20 ? 0.95 : 0.4) * U.smooth(-0.3, 0.2, SCAPE.fbm(x * 0.012 + 3, z * 0.012, 2)) * (1 - U.smooth(200, 230, Math.abs(x))), avoid: (x, z) => !palmArea(x, z), seed: 41, collide: 0.03 });
+      const palms = SCAPE.scatter(w, { kind: 'palm', n: 250, area: [-220, -220, 220, 220], scale: [7, 13], density: (x, z) => (x < 20 ? 0.95 : 0.4) * U.smooth(-0.3, 0.2, SCAPE.fbm(x * 0.012 + 3, z * 0.012, 2)) * (1 - U.smooth(200, 230, Math.abs(x))), avoid: (x, z) => !palmArea(x, z), seed: 41, collide: 0.03 });
       if (palms.meshes[0]) palms.meshes[0].material = PHOTO.mat(w, 'palm_tree_bark', { triplanar: 1.6, color: 0xa89480, fallback: KIT.bark(w) });
       SCAPE.scatter(w, { kind: 'palm', n: 200, area: [-700, -700, 700, 700], scale: [8, 13], density: (x, z) => U.smooth(220, 260, Math.hypot(x, z)) * (1 - U.smooth(420, 500, Math.hypot(x, z))) * U.smooth(-0.2, 0.2, SCAPE.fbm(x * 0.01, z * 0.01, 2)), seed: 42, castShadow: false });
       // stumps where the yard's palms were cut

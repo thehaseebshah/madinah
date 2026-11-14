@@ -1,10 +1,58 @@
 [
-  {"claim": "Before Quraysh rebuilt it, the Ka'bah was a structure of loose stones a little above a man's height, without a roof; Quraysh wished to raise and roof it but feared to demolish it.", "grade": "sirah", "ref": "Ibn Ishaq, in Ibn Hisham, al-Sirah al-Nabawiyyah, ch. 6 §1 (the reason for Quraysh's building of the Ka'bah)", "url": "https://hadithunlocked.com/ibnhisham/6/1", "note": "Same section dates it to when the Prophet was thirty-five."},
-  {"claim": "The sea cast the ship of a Byzantine (Rumi) merchant ashore at Jeddah and it broke apart; Quraysh took its timber for the roof, and a Coptic carpenter living in Makkah helped prepare it.", "grade": "sirah", "ref": "Ibn Ishaq, in Ibn Hisham, ch. 6 §1", "url": "https://hadithunlocked.com/ibnhisham/6/1", "note": "Some versions place the wreck at al-Shu'aybah, Makkah's older port; Ibn Hisham's text says Jeddah."},
-  {"claim": "Al-Walid ibn al-Mughirah began the demolition; the people waited a night to see whether harm would befall him, then demolished down to the foundation of Ibrahim, where they found green stones like camel humps, locked together, and stopped there.", "grade": "sirah", "ref": "Ibn Ishaq, in Ibn Hisham, ch. 6 §4", "url": "https://hadithunlocked.com/ibnhisham/6/4", "note": ""},
-  {"claim": "Each clan of Quraysh gathered stones separately and built its own part until the walls reached the place of the Black Stone; the clans then disputed for four or five nights over who would lift it into place; they agreed that the first man to enter through the gate of the mosque would judge; it was the Prophet, whom they accepted as al-Amin; he placed the stone in a garment, had each clan hold a side and lift it together, and set it in place himself, then built over it.", "grade": "sirah", "ref": "Ibn Ishaq, in Ibn Hisham, ch. 6 §5; cf. Musnad Ahmad 15504", "url": "https://hadithunlocked.com/ibnhisham/6/5", "note": "Supplements the existing verified claim (Musnad Ahmad 15504). The text says 'the gate of this mosque'; other wordings name Banu Shaybah's gate or 'the pass'. The game says only 'the first man to come in'."},
-  {"claim": "Abu Wahb ibn 'Amr urged Quraysh to put into the building of the Ka'bah only lawful earnings: no fee of a prostitute, no usury, nothing taken unjustly.", "grade": "sirah", "ref": "Ibn Ishaq, in Ibn Hisham, ch. 6 §2", "url": "https://hadithunlocked.com/ibnhisham/6/2", "note": ""},
-  {"claim": "The Prophet told 'A'ishah that the rounded wall (the Hijr) is part of the House, that her people left it out because they ran short of money, and that they raised its door so as to admit whom they wished and keep out whom they wished.", "grade": "sahih", "ref": "Sahih al-Bukhari 1584; Sahih Muslim 1333", "url": "https://hadithunlocked.com/bukhari:1584", "note": "Extends the existing verified claim on the Hijr to the raised door."},
-  {"claim": "Quraysh built the walls in alternating courses, one course of teak wood and one of stone, and raised the Ka'bah to eighteen cubits, nine cubits above its former height.", "grade": "sirah", "ref": "'Ali ibn Burhan al-Din al-Halabi, al-Sirah al-Halabiyyah, chapter on Quraysh's building of the Ka'bah", "url": "https://ar.wikisource.org/wiki/%D8%A7%D9%84%D8%B3%D9%8A%D8%B1%D8%A9_%D8%A7%D9%84%D8%AD%D9%84%D8%A8%D9%8A%D8%A9/%D8%A8%D8%A7%D8%A8_%D8%A8%D9%86%D9%8A%D8%A7%D9%86_%D9%82%D8%B1%D9%8A%D8%B4_%D8%A7%D9%84%D9%83%D8%B9%D8%A8%D8%A9_%D8%B4%D8%B1%D9%81%D9%87%D8%A7_%D8%A7%D9%84%D9%84%D9%87_%D8%AA%D8%B9%D8%A7%D9%84%D9%89", "note": "Arabic: 'جعلوها مدماكا من خشب الساج ومدماكا من الحجارة' and 'فكان ارتفاعها ثمانية عشر ذراعا'. A late (17th-c.) compilation of earlier reports; presented in the game as what 'later sirah writers describe'."},
-  {"claim": "The Prophet began to receive revelation at the age of forty.", "grade": "sahih", "ref": "Sahih al-Bukhari 3902", "url": "https://hadithunlocked.com/bukhari:3902", "note": "With the age of 35 at the rebuilding (existing claim), this gives 'five years before the first revelation'."}
+ {
+  "claim": "Before Quraysh rebuilt it, the Ka'bah was a structure of loose stones a little above a man's height, without a roof; Quraysh wished to raise and roof it but feared to demolish it.",
+  "grade": "sirah",
+  "ref": "Ibn Ishaq, in Ibn Hisham, al-Sirah al-Nabawiyyah, ch. 6 §1 (the reason for Quraysh's building of the Ka'bah)",
+  "url": "https://hadithunlocked.com/ibnhisham/6/1",
+  "note": "Same section dates it to when the Prophet was thirty-five."
+ },
+ {
+  "claim": "The sea cast the ship of a Byzantine (Rumi) merchant ashore at Jeddah and it broke apart; Quraysh took its timber for the roof, and a Coptic carpenter living in Makkah helped prepare it.",
+  "grade": "sirah",
+  "ref": "Ibn Ishaq, in Ibn Hisham, ch. 6 §1",
+  "url": "https://hadithunlocked.com/ibnhisham/6/1",
+  "note": "Some versions place the wreck at al-Shu'aybah, Makkah's older port; Ibn Hisham's text says Jeddah."
+ },
+ {
+  "claim": "Al-Walid ibn al-Mughirah began the demolition; the people waited a night to see whether harm would befall him, then demolished down to the foundation of Ibrahim, where they found green stones like camel humps, locked together, and stopped there.",
+  "grade": "sirah",
+  "ref": "Ibn Ishaq, in Ibn Hisham, ch. 6 §4",
+  "url": "https://hadithunlocked.com/ibnhisham/6/4",
+  "note": ""
+ },
+ {
+  "claim": "Each clan of Quraysh gathered stones separately and built its own part until the walls reached the place of the Black Stone; the clans then disputed for four or five nights over who would lift it into place, and Banu 'Abd al-Dar and Banu 'Adi swore over a bowl of blood to fight to the death; they agreed that the first man to enter through the gate of the mosque would judge; it was the Prophet, whom they accepted as al-Amin; he placed the stone in a garment, had each clan hold a side and lift it together, and set it in place himself, then built over it.",
+  "grade": "sirah",
+  "ref": "Ibn Ishaq, in Ibn Hisham, ch. 6 §5; cf. Musnad Ahmad 15504",
+  "url": "https://hadithunlocked.com/ibnhisham/6/5",
+  "note": "Supplements the existing verified claim (Musnad Ahmad 15504). The text says 'the gate of this mosque'; other wordings name Banu Shaybah's gate or 'the pass'. The game says only 'the first man to come in'."
+ },
+ {
+  "claim": "Abu Wahb ibn 'Amr urged Quraysh to put into the building of the Ka'bah only lawful earnings: no fee of a prostitute, no usury, nothing taken unjustly.",
+  "grade": "sirah",
+  "ref": "Ibn Ishaq, in Ibn Hisham, ch. 6 §2",
+  "url": "https://hadithunlocked.com/ibnhisham/6/2",
+  "note": ""
+ },
+ {
+  "claim": "The Prophet told 'A'ishah that the rounded wall (the Hijr) is part of the House, that her people left it out because they ran short of money, and that they raised its door so as to admit whom they wished and keep out whom they wished.",
+  "grade": "sahih",
+  "ref": "Sahih al-Bukhari 1584; Sahih Muslim 1333",
+  "url": "https://hadithunlocked.com/bukhari:1584",
+  "note": "Extends the existing verified claim on the Hijr to the raised door."
+ },
+ {
+  "claim": "Quraysh built the walls in alternating courses, one course of teak wood and one of stone, and raised the Ka'bah to eighteen cubits, nine cubits above its former height.",
+  "grade": "sirah",
+  "ref": "'Ali ibn Burhan al-Din al-Halabi, al-Sirah al-Halabiyyah, chapter on Quraysh's building of the Ka'bah",
+  "url": "https://ar.wikisource.org/wiki/%D8%A7%D9%84%D8%B3%D9%8A%D8%B1%D8%A9_%D8%A7%D9%84%D8%AD%D9%84%D8%A8%D9%8A%D8%A9/%D8%A8%D8%A7%D8%A8_%D8%A8%D9%86%D9%8A%D8%A7%D9%86_%D9%82%D8%B1%D9%8A%D8%B4_%D8%A7%D9%84%D9%83%D8%B9%D8%A8%D8%A9_%D8%B4%D8%B1%D9%81%D9%87%D8%A7_%D8%A7%D9%84%D9%84%D9%87_%D8%AA%D8%B9%D8%A7%D9%84%D9%89",
+  "note": "Arabic: 'جعلوها مدماكا من خشب الساج ومدماكا من الحجارة' and 'فكان ارتفاعها ثمانية عشر ذراعا'. A late (17th-c.) compilation of earlier reports; presented in the game as what 'later sirah writers describe'."
+ },
+ {
+  "claim": "The Prophet began to receive revelation at the age of forty.",
+  "grade": "sahih",
+  "ref": "Sahih al-Bukhari 3902",
+  "url": "https://hadithunlocked.com/bukhari:3902",
+  "note": "With the age of 35 at the rebuilding (existing claim), this gives 'five years before the first revelation'."
+ }
 ]

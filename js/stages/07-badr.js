@@ -184,7 +184,7 @@
             <p>The song of welcome, <i>Tala‘a al-Badru</i>, is loved and still sung, though its report is weak and some scholars place it at the return from Tabuk; the melody sung here is newly made. Yathrib became known as al-Madinah, the City, and the Prophet ﷺ said that God named it <i>Tabah</i> (Sahih Muslim 1385).</p>`,
 
     enter(env) {
-      const w = this.w = WORLD.create(env, { start: { x: KEYS[0][0], z: KEYS[0][1], yaw: 0 }, exposure: 0.9, far: 3600, near: 0.15, fov: 62,
+      const w = this.w = WORLD.create(env, { start: { x: KEYS[0][0], z: KEYS[0][1], yaw: 0 }, exposure: 0.74, far: 3600, near: 0.15, fov: 62,
         fog: { color: 0x182038, density: 0.0016 } });
       const S = w.scene, Q = w.quality, rnd = U.seeded(622);
       w.renderer.setClearColor(0x0c1226);
@@ -194,7 +194,7 @@
 
       /* ---------- terrain, sky, moon ---------- */
       const ter = SCAPE.terrain(w, { size: 2600, seg: Q < 1 ? 300 : 380, cz: -40, height: H, rock: [0.78, 0.92],
-        colors: { low: '#8a7a68', high: '#9a8872', rock: '#4a4442', dark: '#2a2624' }, tex: 'gravel', rockTex: 'lava',
+        colors: { low: '#6a5e52', high: '#74685a', rock: '#3e3a38', dark: '#24201e' }, tex: 'gravel', rockTex: 'lava',
         photo: { ground: 'dry_ground_rocks', rock: 'dark_rock', normal: 1 }, rep: 0.22, rockRep: 0.06 });
       // the lava field reads black, the gardens and city earth brown
       { const p = ter.mesh.geometry.attributes.position, c = ter.mesh.geometry.attributes.color;
@@ -206,7 +206,7 @@
       // the moon ahead, a little east of the road's end
       const end = at(LEN), mdir = new T.Vector3(end.x - KEYS[0][0] + 260, 0, end.z - KEYS[0][1]).normalize(); this.mdir = mdir;
       if (PHOTO.enabled) {
-        PHOTO.sky(w, 'qwantani_moonrise_puresky', { rotation: 0, intensity: 0.42, haze: '#1a2440', horizon: 0.5, ground: '#2a2a34', bounce: 0.25 }).then(o => {
+        PHOTO.sky(w, 'qwantani_moonrise_puresky', { rotation: 0, intensity: 0.28, gain: 0.42, haze: '#141c34', horizon: 0.5, ground: '#2a2a34', bounce: 0.2 }).then(o => {
           if (!o || !o.sunDir || this.w !== w) return;
           // turn the photographed sky so that its moon rises over the end of the road
           const want = Math.atan2(mdir.z, mdir.x), have = Math.atan2(o.sunDir.z, o.sunDir.x);
@@ -215,7 +215,7 @@
           this.skyRotated = want - have;
         });
       } else w.sky({ top: '#0a1230', mid: '#2a3a68', bot: '#141a30', sunDir: [mdir.x, 0.25, mdir.z], sun: '#fff4d8', sunSize: 0.0016, stars: 0.6, haze: 0.3 });
-      this.moon = KIT.glow(w, 0xfff2d0, 120, 0.0); this.moon.material.fog = false; S.add(this.moon);
+      this.moon = KIT.glow(w, 0xfff2d0, 60, 0.0); this.moon.material.fog = false; S.add(this.moon);
       SCAPE.horizon(w, { cz: -40, haze: '#1a2440', layers: [{ r: 1500, h: 70, color: '#20283c', seed: 5, fade: 0.88 }, { r: 2000, h: 110, color: '#1c2436', seed: 11, fade: 0.88 }, { r: 2700, h: 150, color: '#1a2032', seed: 17, fade: 0.9 }] });
 
       /* ---------- materials ---------- */
@@ -236,11 +236,11 @@
       const house = houseBuilder(w, M, rnd, town);
       const slots = this.slots = [];
       const p = {};
-      for (let s = S_CITY + 6; s < S_PLACE - 20; ) {
-        const wd = 7 + rnd() * 3;
+      for (let s = S_CITY + 6; s < S_PLACE + 170; ) {
+        const wd = 7 + rnd() * 3, sq = s > S_PLACE - 10 && s < S_PLACE + 50;
         [-1, 1].forEach(side => {
           if (rnd() < 0.12) return;
-          at(s + wd / 2, p); const dp = 7 + rnd() * 3, off = 6 + dp / 2;
+          at(s + wd / 2, p); const dp = 7 + rnd() * 3, off = (sq ? 22 : 6) + dp / 2;
           const x = p.x + p.rx * off * side, z = p.z + p.rz * off * side, ry = Math.atan2(-p.rx * side, -p.rz * side);
           house(x, z, ry, wd - 0.3, dp, 4.8 + rnd() * 2.4, (rnd() * 4) | 0, slots);
         });
@@ -248,7 +248,7 @@
       }
       // houses further back, two or three rows deep
       for (let i = 0; i < 90; i++) {
-        const s = U.lerp(S_CITY - 40, S_PLACE + 60, rnd()), side = rnd() < 0.5 ? -1 : 1, off = 22 + rnd() * 70; at(s, p);
+        const s = U.lerp(S_CITY - 40, S_PLACE + 200, rnd()), side = rnd() < 0.5 ? -1 : 1, off = 22 + rnd() * 70; at(s, p);
         const x = p.x + p.rx * off * side, z = p.z + p.rz * off * side; house(x, z, Math.atan2(-p.rx * side, -p.rz * side) + (rnd() - 0.5) * 0.3, 7 + rnd() * 4, 7 + rnd() * 4, 4.5 + rnd() * 3, (rnd() * 4) | 0, null);
       }
       // garden walls of mud along the road through the palms
@@ -304,7 +304,7 @@
         });
         const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(P, 3)); g.setIndex(I); return g;
       };
-      const lm = new T.MeshBasicMaterial({ color: 0xffd08a, transparent: true, opacity: 0.22, blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide });
+      const lm = new T.MeshBasicMaterial({ color: 0xffd08a, transparent: true, opacity: 0.12, blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide });
       [[[1, 2], 0, S_PALMS - 10], [[0, 1, 2, 3], S_PALMS - 10, S_PLACE + 10]].forEach(([l, a, b]) => { const m = new T.Mesh(laneGeo(l, a, b), lm); m.userData.dynamic = true; S.add(m); });
       const barG = new T.PlaneGeometry(6.6, 0.22); barG.rotateX(-Math.PI / 2);
       this.bar = new T.Mesh(barG, new T.MeshBasicMaterial({ color: 0xffe0a0, transparent: true, opacity: 0.6, blending: T.AdditiveBlending, depthWrite: false })); this.bar.userData.dynamic = true; S.add(this.bar);
@@ -417,7 +417,7 @@
     },
     touchPads() {
       const wrap = document.createElement('div');
-      wrap.style.cssText = 'position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);display:flex;justify-content:center;gap:10px;pointer-events:auto;z-index:5';
+      wrap.style.cssText = 'position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 96px);display:flex;justify-content:center;gap:10px;pointer-events:auto;z-index:5';
       ['D', 'F', 'J', 'K'].forEach((t, l) => {
         const bt = document.createElement('button'); bt.type = 'button'; bt.className = 'badr-pad'; bt.textContent = '◆'; bt.setAttribute('aria-label', 'lane ' + (l + 1));
         bt.style.cssText = 'width:20vw;max-width:96px;height:64px;border-radius:14px;border:1px solid rgba(246,220,154,.5);background:rgba(6,9,20,.4);color:#f6dc9a;font-size:18px;touch-action:none';
@@ -490,7 +490,7 @@
       if (G.t > CHART.end + 0.5 && !G.done) { G.done = 1; G.doneT = 0; this.finale(); }
       if (G.done) {
         G.doneT += dt; const k = U.smooth(0, 9, G.doneT), md = this.mdir;
-        cam.position.set(c.p.x - md.x * 6 * k, c.p.y + 22 * k, c.p.z - md.z * 6 * k); cam.lookAt(c.p.x + md.x * 120, c.p.y + 6 + 30 * k, c.p.z + md.z * 120);
+        cam.position.set(c.p.x - md.x * 14 * k, c.p.y + 26 * k, c.p.z - md.z * 14 * k); cam.lookAt(c.p.x + md.x * 120, c.p.y + 6 - 10 * k, c.p.z + md.z * 120);
       }
     },
     // testing aid: jump the song to time t, as if every lamp before it had been struck
@@ -546,7 +546,7 @@
       // the moon: a soft glow over the photographed one, rising a little as the song goes on
       const md = this.moonDir || new T.Vector3(this.mdir.x, 0.22, this.mdir.z).normalize(), rise = G.on ? U.smooth(0, CHART.end, G.t) * 0.12 : 0;
       const dir = new T.Vector3(md.x, md.y + rise, md.z).normalize();
-      this.moon.position.copy(cam.position).addScaledVector(dir, 1500); this.moon.material.opacity = 0.35 + rise * 2;
+      this.moon.position.copy(cam.position).addScaledVector(dir, 1500); this.moon.material.opacity = 0.18 + rise * 1.2;
       this.moonL.position.copy(dir).multiplyScalar(100); if (w._shadow) w._shadow.off.copy(dir).multiplyScalar(125);
       if (this.post && this.post.rays) this.post.rays.dir = [dir.x, dir.y, dir.z];
       this.fortLamp.material.opacity = 0.75 + 0.2 * U.noise1(t * 6);

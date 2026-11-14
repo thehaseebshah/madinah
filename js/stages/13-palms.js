@@ -23,7 +23,7 @@
   const CAM = { H: 21, D: 16 };
   const SCALE = [392, 440, 493.88, 523.25, 587.33, 659.25, 739.99, 783.99];
   const SKIES = { p1: 'qwantani_morning_puresky', p2: 'qwantani_noon_puresky', p3: 'kloofendal_43d_clear_puresky', p4: 'qwantani_late_afternoon_puresky', final: 'qwantani_sunrise_puresky' };
-  const SEASONS = { p1: 'Spring', p2: 'Summer', p3: 'High summer', p4: 'Autumn', final: 'Autumn' };
+  const SEASONS = { p1: 'Spring', p2: 'Summer', p3: 'High summer', p4: 'Autumn', final: 'Dawn', done: 'Dawn' };
 
   const H = (x, z) => {
     const d = Math.hypot(x, z);
@@ -45,8 +45,8 @@
   const WATER_FRAG = `uniform float uTime; uniform vec3 uSun; uniform vec3 uFog; uniform float uFogD; uniform vec3 uSky; uniform vec3 uHor; uniform vec3 uDeep;
   varying vec3 vW; varying float vD;
   void main(){ vec2 p = vW.xz; vec2 g = vec2(0.);
-    g += vec2(0.2,1.)*cos(dot(p,vec2(0.2,1.))*7. - uTime*3.)*0.05; g += vec2(1.,0.3)*cos(dot(p,vec2(1.,0.3))*11. - uTime*4.1)*0.035;
-    g += vec2(-0.7,0.7)*cos(dot(p,vec2(-0.7,0.7))*17. + uTime*5.3)*0.02;
+    g += vec2(0.2,1.)*cos(dot(p,vec2(0.2,1.))*3.1 - uTime*1.6)*0.018; g += vec2(1.,0.3)*cos(dot(p,vec2(1.,0.3))*4.3 - uTime*2.1)*0.012;
+    g += vec2(-0.7,0.7)*cos(dot(p,vec2(-0.7,0.7))*6.1 + uTime*2.7)*0.008;
     vec3 n = normalize(vec3(-g.x,1.,-g.y)); vec3 v = normalize(cameraPosition - vW); vec3 rf = reflect(-v,n);
     float fres = 0.05 + 0.95*pow(1. - max(dot(n,v),0.), 5.);
     vec3 sky = mix(uHor, uSky, clamp(rf.y*1.5,0.,1.)); float s = max(dot(rf,uSun),0.);
@@ -139,7 +139,7 @@
       this.clock = 6.5; this.day = 1; this.done = 0; this.lastStep = new T.Vector3(START.x, 0, START.z); this.stepSide = 1; this.camInit = false;
 
       /* ---------- terrain, sky and light ---------- */
-      const ter = SCAPE.terrain(w, { size: 1500, seg: 300, height: H, rock: [0.8, 0.93], rockHeight: [2.5, 7],
+      const ter = SCAPE.terrain(w, { size: 1500, seg: 240, height: H, rock: [0.8, 0.93], rockHeight: [2.5, 7],
         colors: { low: '#8a6c50', high: '#a48a6c', rock: '#45403c', dark: '#2c2826' }, tex: 'gravel', rockTex: 'lava',
         photo: { ground: 'dirt', rock: 'dark_rock', normal: 1 }, rep: 0.32, rockRep: 0.08 });
       w.ground = ter.ground; w.y = w.ground(START.x, START.z);
@@ -157,7 +157,7 @@
       const inPlot = (x, z, m) => x > -50 - (m || 0) && x < 26 + (m || 0) && z > -26 - (m || 0) && z < 26 + (m || 0);
       const grove = [];
       for (let gx = -130; gx <= 130; gx += 26) for (let gz = -130; gz <= 130; gz += 26) {
-        if (R() < 0.12) continue; // a fallow plot or a house yard
+        if (R() < 0.2) continue; // a fallow plot or a house yard
         const ox = gx + (R() - 0.5) * 4, oz = gz + (R() - 0.5) * 4, rot = (R() - 0.5) * 0.3, sp = 6.2 + R() * 1.2;
         for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) {
           const lx = i * sp, lz = j * sp, x = ox + lx * Math.cos(rot) - lz * Math.sin(rot) + (R() - 0.5), z = oz + lx * Math.sin(rot) + lz * Math.cos(rot) + (R() - 0.5);
@@ -166,11 +166,13 @@
           grove.push([x, z, 7 + R() * 8]);
         }
       }
-      const palmsNear = SCAPE.scatter(w, { kind: 'palm', points: grove, seed: 31, color: '#c8c8a4' });
-      const palmsFar = SCAPE.scatter(w, { kind: 'palm', n: 520, area: { x: 0, z: 0, r: 520 }, scale: [8, 15], seed: 32, castShadow: false, color: '#c0c09c',
+      // only the palms near the garden cast shadows; the rest of the grove is lit flat to save the shadow pass
+      const palmsNear = SCAPE.scatter(w, { kind: 'palm', points: grove.filter(g => Math.hypot(g[0] + 8, g[1]) < 75), seed: 31, color: '#c8c8a4' });
+      const palmsMid = SCAPE.scatter(w, { kind: 'palm', points: grove.filter(g => Math.hypot(g[0] + 8, g[1]) >= 75), seed: 33, color: '#c8c8a4', castShadow: false });
+      const palmsFar = SCAPE.scatter(w, { kind: 'palm', n: 360, area: { x: 0, z: 0, r: 520 }, scale: [8, 15], seed: 32, castShadow: false, color: '#c0c09c',
         avoid: (x, z) => Math.hypot(x, z) < 150 || H(x, z) > 4 || Math.abs(x) > 200 && Math.hypot(x, z) < 400 });
-      const barkMat = PHOTO.mat(w, 'palm_tree_bark', { triplanar: 1.4, color: 0xd8c8b4, fallback: KIT.bark(w) });
-      [palmsNear, palmsFar].forEach(r => { if (r.meshes[0]) r.meshes[0].material = barkMat; if (r.meshes[1]) cutout(r.meshes[1].material); });
+      const barkMat = PHOTO.mat(w, 'palm_tree_bark', { triplanar: 1.4, color: 0x8a7462, fallback: KIT.bark(w) });
+      [palmsNear, palmsMid, palmsFar].forEach(r => { if (r.meshes[0]) r.meshes[0].material = barkMat; if (r.meshes[1]) cutout(r.meshes[1].material); });
       this.grovePalms = grove;
 
       /* ---------- photo materials for what is built ---------- */
@@ -235,8 +237,8 @@
         const dryT = w.tex(256, (g, sz) => { g.clearRect(0, 0, sz, sz); const mid = sz / 2; g.strokeStyle = '#8a6a3c'; g.lineWidth = 3; g.beginPath(); g.moveTo(0, mid); g.lineTo(sz, mid); g.stroke();
           for (let i = 4; i < 60; i++) { const x = i / 60 * sz, L = (Math.sin(i / 60 * Math.PI) * 0.85 + 0.15) * mid * 0.9, c = 150 + Math.random() * 60; g.strokeStyle = `rgb(${c | 0},${c * 0.78 | 0},${c * 0.5 | 0})`; g.lineWidth = 2.4; g.beginPath(); g.moveTo(x, mid); g.lineTo(x + L * 0.45, mid - L); g.stroke(); g.beginPath(); g.moveTo(x, mid); g.lineTo(x + L * 0.45, mid + L); g.stroke(); } });
         const fg = new T.PlaneGeometry(3, 1.1).rotateX(-Math.PI / 2), fm = new T.MeshStandardMaterial({ map: dryT, alphaTest: 0.45, side: T.DoubleSide, roughness: 1 });
-        const N = 260, fr = new T.InstancedMesh(fg, fm, N), mm = new T.Matrix4(), rr = U.seeded(77);
-        for (let i = 0; i < N; i++) { const x = (rr() - 0.5) * 230, z = (rr() - 0.5) * 230, inside = i < 60; const px = inside ? (rr() - 0.5) * 46 : x, pz = inside ? (rr() - 0.5) * 25 : z;
+        fm.color.set(0x8a7a64); const N = 170, fr = new T.InstancedMesh(fg, fm, N), mm = new T.Matrix4(), rr = U.seeded(77);
+        for (let i = 0; i < N; i++) { const x = (rr() - 0.5) * 230, z = (rr() - 0.5) * 230, inside = i < 22; const px = inside ? (rr() - 0.5) * 46 : x, pz = inside ? (rr() - 0.5) * 25 : z;
           mm.compose(new T.Vector3(px, w.ground(px, pz) + 0.04 + i * 0.0002, pz), new T.Quaternion().setFromEuler(new T.Euler(0, rr() * 6.3, 0)), new T.Vector3(1, 1, 1).multiplyScalar(0.7 + rr() * 0.5)); fr.setMatrixAt(i, mm); }
         fr.receiveShadow = true; fr.userData.dynamic = true; S.add(fr);
       }
@@ -347,7 +349,7 @@
       this.feedW = []; this.gates = [];
       const gateGeo = new T.BoxGeometry(0.9, 0.35, 0.4);
       const gates = this.gateMesh = new T.InstancedMesh(gateGeo, M.mud, 8); gates.userData.dynamic = true; gates.castShadow = true; gates.receiveShadow = true; S.add(gates);
-      const basinSoil = this.basinSoil = new T.InstancedMesh(new T.CircleGeometry(1.55, 24).rotateX(-Math.PI / 2), new T.MeshStandardMaterial({ color: 0xffffff, roughness: 1 }), 8);
+      const basinSoil = this.basinSoil = new T.InstancedMesh(new T.CircleGeometry(1.55, 24).rotateX(-Math.PI / 2), PHOTO.mat(w, 'mud_cracked_dry_03', { rep: [1.5, 1.5], color: 0xffffff, fallback: SCAPE.tex.mud(w) }), 8);
       basinSoil.userData.dynamic = true; basinSoil.receiveShadow = true; S.add(basinSoil);
       const basinW = this.basinW = new T.InstancedMesh(new T.CircleGeometry(1.4, 24).rotateX(-Math.PI / 2), waterMat, 8); basinW.userData.dynamic = true; basinW.frustumCulled = false; S.add(basinW);
       const bankGeo = new T.TorusGeometry(1.6, 0.2, 5, 24); bankGeo.rotateX(Math.PI / 2); bankGeo.scale(1, 0.5, 1);
@@ -363,14 +365,28 @@
           m4.compose(v4, q4, s4); gates.setMatrixAt(i, m4);
           const wl = U.clamp(p.water); v4.set(p.x, U.lerp(-0.12, 0.05, Math.min(1, p.water)), p.z); s4.setScalar(0.4 + 0.6 * wl); m4.compose(v4, q4, s4); basinW.setMatrixAt(i, m4);
           v4.set(p.x, 0.015, p.z); s4.setScalar(1); m4.compose(v4, q4, s4); basinSoil.setMatrixAt(i, m4);
-          basinSoil.setColorAt(i, c4.set(0xc9ae8a).lerp(new T.Color(0x5a4232), U.clamp(p.water * 1.2)));
+          basinSoil.setColorAt(i, c4.set(0xb09878).lerp(new T.Color(0x3e2c20), U.clamp(p.water * 1.2)));
         });
         gates.instanceMatrix.needsUpdate = basinW.instanceMatrix.needsUpdate = basinSoil.instanceMatrix.needsUpdate = true; basinSoil.instanceColor.needsUpdate = true;
       };
 
       /* ---------- the garden's own palms: young enough to reach the bunches ---------- */
       const parts = KIT.palmParts(w);
-      const frondMat = cutout(parts.frondMat.clone()); frondMat.color.set(0xd8d0a0);
+      // date-palm fronds: stiff, narrow, grey-green leaflets with light between them
+      const frondT = w.tex(512, (g, sz) => {
+        g.clearRect(0, 0, sz, sz); const mid = sz / 2;
+        for (let i = 4; i < 150; i++) {
+          const t = i / 150, x = t * sz, L = (Math.sin(Math.pow(t, 0.8) * Math.PI) * 0.8 + 0.2) * mid * 0.92;
+          for (const sgn of [-1, 1]) {
+            const c = 0.75 + Math.random() * 0.35, ang = 0.55 + Math.random() * 0.12;
+            g.strokeStyle = `rgb(${92 * c | 0},${108 * c | 0},${70 * c | 0})`; g.lineWidth = 1.6 + Math.random() * 0.8;
+            g.beginPath(); g.moveTo(x, mid); g.quadraticCurveTo(x + L * 0.3, mid + sgn * L * 0.5, x + L * Math.cos(ang) * 0.7, mid + sgn * L * Math.sin(ang) * 1.3); g.stroke();
+          }
+        }
+        g.strokeStyle = '#a89a5a'; g.lineWidth = 4; g.beginPath(); g.moveTo(0, mid); g.lineTo(sz, mid); g.stroke();
+      });
+      const frondMat = cutout(parts.frondMat.clone()); frondMat.map = frondT; frondMat.bumpMap = null; frondMat.color.set(0xd8d8c0); frondMat.alphaTest = 0.4;
+      [palmsNear, palmsMid, palmsFar].forEach(r => { if (r.meshes[1]) { r.meshes[1].material.map = frondT; r.meshes[1].material.bumpMap = null; r.meshes[1].material.needsUpdate = true; } });
       const pals = [...PALMS.map((p, i) => Object.assign(p, { i, h: 4.2 + R() * 1.3 })), Object.assign(MALE, { i: 8, h: 6.2 })];
       pals.forEach(p => {
         const g = KIT.palm(w, p.h, { lean: 0.06, fronds: 18, frondScale: 1.05 });
@@ -387,8 +403,8 @@
       const stalkCurve = new T.QuadraticBezierCurve3(new T.Vector3(0, 0, 0), new T.Vector3(0.5, 0.18, 0), new T.Vector3(0.85, -0.85, 0));
       const stalkGeo = new T.TubeGeometry(stalkCurve, 8, 0.045, 5, false);
       const stalks = this.stalks = new T.InstancedMesh(stalkGeo, new T.MeshStandardMaterial({ color: 0xd8902e, roughness: 0.7 }), NB); stalks.userData.dynamic = true; stalks.castShadow = true; S.add(stalks);
-      const spGeo = new T.SphereGeometry(0.16, 10, 6); spGeo.scale(1, 3.2, 1); spGeo.translate(0, 0.45, 0); spGeo.rotateZ(-0.55);
-      const spathes = this.spathes = new T.InstancedMesh(spGeo, new T.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6, emissive: 0x3a3018, emissiveIntensity: 0.6 }), NB); spathes.userData.dynamic = true; S.add(spathes);
+      const spGeo = new T.SphereGeometry(0.07, 10, 6); spGeo.scale(1, 3.4, 1); spGeo.translate(0, 0.22, 0); spGeo.rotateZ(-0.55);
+      const spathes = this.spathes = new T.InstancedMesh(spGeo, new T.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6, emissive: 0x3a3018, emissiveIntensity: 0.0 }), NB); spathes.userData.dynamic = true; S.add(spathes);
       const dateGeo = new T.SphereGeometry(0.055, 7, 5); dateGeo.scale(1, 1.5, 1);
       const dates = this.dates = new T.InstancedMesh(dateGeo, new T.MeshStandardMaterial({ color: 0xffffff, roughness: 0.38, metalness: 0.05 }), NB * ND); dates.userData.dynamic = true; dates.castShadow = true; S.add(dates);
       const netT = w.tex(128, (g, s) => { g.clearRect(0, 0, s, s); g.strokeStyle = 'rgba(200,170,120,1)'; g.lineWidth = 3; for (let i = -s; i < s * 2; i += 16) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i + s, s); g.stroke(); g.beginPath(); g.moveTo(i, s); g.lineTo(i + s, 0); g.stroke(); } }, [3, 2]);
@@ -410,7 +426,7 @@
           const p = b.p, ph = this.phase, grown = ph === 'p2' ? 0.55 : (ph === 'p3' || ph === 'p4' || ph === 'final' || ph === 'done') ? 1 : 0;
           const bounce = 1 + Math.sin(p.bounce * 18) * p.bounce * 0.25;
           // spathes in spring, golden once pollinated; gone once the bunches hang
-          if (grown === 0 && (ph === 'p1' || ph === 'film')) { sc.makeScale(bounce, bounce * (p.pollinated ? 1.15 : 1), bounce); mm.copy(b.M4).multiply(sc); spathes.setMatrixAt(bi, mm); spathes.setColorAt(bi, c4.set(p.pollinated ? 0xf0c060 : 0xf4ecd8)); }
+          if (grown === 0 && (ph === 'p1' || ph === 'film')) { sc.makeScale(bounce, bounce * (p.pollinated ? 1.15 : 1), bounce); mm.copy(b.M4).multiply(sc); spathes.setMatrixAt(bi, mm); spathes.setColorAt(bi, c4.set(p.pollinated ? 0xc08a3a : 0xa89a74)); }
           else spathes.setMatrixAt(bi, z0);
           const show = grown > 0 && !p.harvested;
           stalks.setMatrixAt(bi, show ? mm.copy(b.M4).multiply(sc.makeScale(grown, grown, grown)) : z0);
@@ -534,7 +550,7 @@
           start: () => { SND.glow(env.bus, 196, { gain: 0.05, dur: 7 }); } },
         { dur: 6.5, fade: 'dip', path: [[[132, g(132, 30) + 6, 34], [40, 6, -6]], [[120, g(120, 14) + 4.5, 16], [30, 8, -4]]], fov: [48, 40],
           lines: [[0.4, 'Between Madinah’s two lava tracts lie the palm gardens of al-‘Aliyah.', 'بين لابتَي المدينة بساتين نخيل العالية'], [3.4, '“In the ‘ajwa of al-‘Aliyah there is healing.” (Sahih Muslim 2048)', '«إنّ في عجوةِ العاليةِ شفاءً»']] },
-        { dur: 6.5, fade: 'cut', path: [[[top.x + 3.2, top.y + 0.6, top.z - 2.8], [top.x, top.y - 0.2, top.z]], [[top.x + 2.2, top.y + 1.1, top.z - 1.6], [top.x, top.y - 0.3, top.z]]], fov: [40, 34],
+        { dur: 6.5, fade: 'cut', path: [[[top.x + 6.5, top.y + 1.6, top.z - 5.5], [top.x, top.y - 0.6, top.z]], [[top.x + 4.6, top.y + 1.0, top.z - 3.8], [top.x, top.y - 0.5, top.z]]], fov: [44, 38],
           lines: [[0.4, 'The Prophet ﷺ passed people pollinating their palms.', 'مرّ النبيّ ﷺ بقومٍ يلقّحون النخل'], [3.4, 'He said: “If you did not do it, it would be fine.”', 'فقال: «لو لم تفعلوا لصلح»']],
           during: (w, k, dt) => { if (Math.random() < dt * 8) self.fx.emit(top.x + (Math.random() - 0.5), top.y - 0.2, top.z + (Math.random() - 0.5), { n: 2, color: 0xffe8a0, up: 0.4, g: -0.2, size: 0.25 }); } },
         { dur: 6.5, fade: 'dip', ease: 'linear', path: [[[WELL.x - 7, g(WELL.x, 0) + 3.2, 7], [WELL.x, 2, 0]], [[CIST.x - 1, 2.2, 3.5], [CIST.x + 6, 0.5, 0]], [[-20, 1.4, 1.6], [-8, 0.6, 0]]],
@@ -571,7 +587,7 @@
       const step = { p1: 'Cut male flowers at the tall palm, then pollinate each glowing palm', p2: 'Open each basin’s gate with the hoe; close it when full so the water reaches the rest', p3: 'Fetch bags from the store by the house and bag every palm’s bunches', p4: 'Harvest each bunch when it is dark and soft; spread it on the drying floor', final: 'Set seven ‘ajwa on the plate by the door' }[ph];
       w.activity(T1, N, step);
       if (ph === 'p1') { this.inv.pollen = 0; this.tool = 0; w.goal([MALE.x, MALE.top.y, MALE.z]); }
-      if (ph === 'p2') { this.tool = 1; w.goal(null); }
+      if (ph === 'p2') { this.tool = 1; this.inv.pollen = 0; w.goal(null); }
       if (ph === 'p3') { this.tool = 2; this.inv.bags = 0; w.goal([STORE.x, 1.2, STORE.z]); }
       if (ph === 'p4') { this.tool = 3; this.inv.basket = 0; w.goal(null); PALMS.forEach((p, i) => { p.ripe = 0.05 + (i % 3) * 0.12; }); }
       if (ph === 'final') { this.plate.visible = true; w.goal([PLATE.x, 1, PLATE.z]); }

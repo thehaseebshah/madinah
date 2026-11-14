@@ -189,9 +189,10 @@
       w.addBox(-14, -17.5, -12.4, -12.8);
       // the Prophet's prayer niche: a marble mihrab with gilded hood, between minbar and grille
       const mh = new T.Group(); mh.position.set(-4.6, 0, -19.4); S.add(mh);
-      mh.add(Object.assign(new T.Mesh(new T.BoxGeometry(2.6, 3.8, 0.6), M.marble), { position: new T.Vector3(0, 1.9, 0) }));
+      const mhAdd = (g, m, x, y, z) => { const o = new T.Mesh(g, m); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; mh.add(o); return o; };
+      mhAdd(new T.BoxGeometry(2.6, 3.8, 0.6), M.marble, 0, 1.9, 0);
       const niche = new T.Mesh(new T.CylinderGeometry(0.75, 0.75, 2.6, 16, 1, true, 0, Math.PI), new T.MeshStandardMaterial({ color: 0xd8c08a, metalness: 0.6, roughness: 0.3, side: T.DoubleSide })); niche.position.set(0, 1.5, 0.3); niche.rotation.y = Math.PI / 2; mh.add(niche);
-      mh.add(Object.assign(new T.Mesh(new T.BoxGeometry(2.8, 0.3, 0.7), M.brass), { position: new T.Vector3(0, 3.9, 0) }));
+      mhAdd(new T.BoxGeometry(2.8, 0.3, 0.7), M.brass, 0, 3.9, 0);
 
       // brass chandeliers between the domes, and wall lamps along the arcades
       const chG = (() => { const p = []; const ring = new T.TorusGeometry(0.8, 0.05, 6, 24); ring.rotateX(Math.PI / 2); p.push(ring); const ring2 = new T.TorusGeometry(0.5, 0.04, 6, 20); ring2.rotateX(Math.PI / 2); ring2.translate(0, 0.45, 0); p.push(ring2); const rod = new T.CylinderGeometry(0.025, 0.025, 2.6, 4); rod.translate(0, 1.6, 0); p.push(rod); const bowl = new T.SphereGeometry(0.3, 10, 6, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2); bowl.translate(0, -0.05, 0); p.push(bowl); return SCAPE.merge(p); })();
@@ -220,14 +221,13 @@
       /* ---------- the six columns: what the brush wakes in each ---------- */
       const flowerT = w.tex(128, (g, s) => { g.clearRect(0, 0, s, s); g.translate(s / 2, s / 2); for (let p = 0; p < 6; p++) { g.rotate(Math.PI / 3); const gr = g.createRadialGradient(0, 22, 0, 0, 22, 26); gr.addColorStop(0, 'rgba(255,248,220,1)'); gr.addColorStop(1, 'rgba(255,210,140,0)'); g.fillStyle = gr; g.beginPath(); g.ellipse(0, 22, 13, 26, 0, 0, 6.283); g.fill(); } g.fillStyle = '#ffe9a0'; g.beginPath(); g.arc(0, 0, 9, 0, 6.283); g.fill(); });
       flowerT.wrapS = flowerT.wrapT = T.ClampToEdgeWrapping;
-      const flowerM = new T.SpriteMaterial({ map: flowerT, color: 0xfff0c8, transparent: true, depthWrite: false, blending: T.AdditiveBlending });
       this.cols = COLS.map((c, k) => {
         const o = Object.assign({}, c, { k, doneN: 0, done: false, wake: 0 });
         o.glow = KIT.glow(w, 0xffe0a0, 3.2, 0); o.glow.position.set(c.x, 2.2, c.z); S.add(o.glow);
-        o.flowers = []; for (let f = 0; f < 18; f++) { const sp = new T.Sprite(flowerM.clone()); const a = f / 18 * Math.PI * 2, h = 0.8 + (f % 6) * 0.42; sp.position.set(c.x + Math.cos(a) * 0.55, h, c.z + Math.sin(a) * 0.55); sp.scale.setScalar(0.001); S.add(sp); o.flowers.push(sp); }
+        o.flowers = []; for (let f = 0; f < 18; f++) { const a = f / 18 * Math.PI * 2, h = 0.8 + (f % 6) * 0.42; o.flowers.push({ p: new T.Vector3(c.x + Math.cos(a) * 0.55, h, c.z + Math.sin(a) * 0.55), s: 0 }); }
         // a lamp row hung between this column and the next one along x
         const dir = c.x < 0 ? 1 : -1;
-        o.lamps = []; for (let l = 0; l < 5; l++) { const g = new T.Group(); g.position.set(c.x + dir * (0.9 + l * 0.85), SPRING - 0.6 - Math.sin(l / 4 * Math.PI) * 0.35, c.z); const lm = new T.Mesh(new T.CylinderGeometry(0.12, 0.09, 0.32, 8), new T.MeshStandardMaterial({ color: 0xfff0d0, emissive: 0xffc870, emissiveIntensity: 0.02, transparent: true, opacity: 0.9 })); g.add(lm); const cap = new T.Mesh(new T.ConeGeometry(0.15, 0.18, 8), M.brass); cap.position.y = 0.24; g.add(cap); const ch = new T.Mesh(new T.CylinderGeometry(0.01, 0.01, 0.6, 3), M.brass); ch.position.y = 0.6; g.add(ch); const gl = KIT.glow(w, 0xffd090, 1.0, 0); g.add(gl); S.add(g); o.lamps.push({ g, lm, gl, on: 0 }); }
+        o.lamps = []; for (let l = 0; l < 5; l++) { const pos = new T.Vector3(c.x + dir * (0.9 + l * 0.85), SPRING - 0.6 - Math.sin(l / 4 * Math.PI) * 0.35, c.z); o.lamps.push({ g: { position: pos }, on: 0, k: 0 }); }
         // the knot of light bound round the column (untied by a loop), or the door it opens
         o.knot = new T.Mesh(new T.TorusKnotGeometry(0.62, 0.04, 120, 8, 2, 5), new T.MeshBasicMaterial({ color: 0xffd890, transparent: true, opacity: 0, blending: T.AdditiveBlending, depthWrite: false })); o.knot.position.set(c.x, 1.6, c.z); o.knot.rotation.x = Math.PI / 2; S.add(o.knot);
         const plaque = new T.Mesh(new T.PlaneGeometry(0.62, 0.3), this.plaqueMat(w, c)); plaque.position.set(c.x, 2.75, c.z + 0.49); S.add(plaque);
@@ -239,7 +239,15 @@
       this.doorBox = { x0: 0.9, x1: 4.1, z0: 19.7, z1: 20.3 }; w.addBox(0.9, 19.7, 4.1, 20.3);
       // the north arcade wall with its doors (the hall opens to the courtyard through arches)
       for (let a = 0; a < NX; a++) { const x = X0 + (a + 0.5) * BAY; if (a === 6 || a === 0 || a === 11) continue; const scr = new T.Mesh(new T.PlaneGeometry(4.1, 3.8), new T.MeshStandardMaterial({ map: latT, alphaTest: 0.35, color: 0xc89a50, metalness: 0.7, roughness: 0.35, side: T.DoubleSide })); scr.position.set(x, 1.9, 20); S.add(scr); w.addBox(x - 2.5, 19.7, x + 2.5, 20.3); }
-      this.cols.forEach(o => { o.lamps.forEach(l => { l.g.userData.dynamic = true; }); });
+      // lamps and flowers are drawn instanced: bodies, brass caps and chains, and camera-facing glows
+      const allLamps = []; this.cols.forEach(o => o.lamps.forEach(l => allLamps.push(l)));
+      const lampCapG = (() => { const p = []; const cap = new T.ConeGeometry(0.15, 0.18, 8); cap.translate(0, 0.24, 0); p.push(cap); const ch = new T.CylinderGeometry(0.01, 0.01, 0.6, 3); ch.translate(0, 0.6, 0); p.push(ch); const bt = new T.CylinderGeometry(0.06, 0.04, 0.06, 8); bt.translate(0, -0.19, 0); p.push(bt); return SCAPE.merge(p); })();
+      this.lampBody = new T.InstancedMesh(new T.CylinderGeometry(0.12, 0.09, 0.32, 8), new T.MeshBasicMaterial({ color: 0xffffff }), allLamps.length);
+      const lampCap = new T.InstancedMesh(lampCapG, M.brass, allLamps.length);
+      allLamps.forEach((l, k) => { m4.makeTranslation(l.g.position.x, l.g.position.y, l.g.position.z); this.lampBody.setMatrixAt(k, m4); lampCap.setMatrixAt(k, m4); this.lampBody.setColorAt(k, new T.Color(0x6a5a40)); });
+      S.add(this.lampBody); S.add(lampCap); this.allLamps = allLamps;
+      const bill = (map, n) => { const im = new T.InstancedMesh(new T.PlaneGeometry(1, 1), new T.MeshBasicMaterial({ map, color: 0xffffff, transparent: true, depthWrite: false, blending: T.AdditiveBlending }), n); im.count = 0; S.add(im); return im; };
+      this.flowerIM = bill(flowerT, 18 * 6 + 260); this.haloIM = bill(KIT.glowTex(w), allLamps.length);
 
       /* ---------- the brush: a parchment overlay and an ink canvas ---------- */
       const cv = env.canvas2d({ alpha: true }); this.cv = cv.canvas; this.cx = cv.ctx; this.cv.style.pointerEvents = 'none'; this.cv.style.opacity = 0; this.cv.style.transition = 'opacity .35s';
@@ -351,7 +359,7 @@
       else { SND.swell(env.bus, { f0: 300, f1: 700, dur: 0.6, gain: 0.02 }); this.guideEl.style.opacity = 0; }
     },
     // what the stroke should touch, in screen pixels
-    screenOf(v) { const p = v.clone().project(this.w.camera); return [(p.x * 0.5 + 0.5) * this.env().w, (-p.y * 0.5 + 0.5) * this.env().h, p.z < 1]; },
+    screenOf(v) { this.w.camera.updateMatrixWorld(); const p = v.clone().project(this.w.camera); return [(p.x * 0.5 + 0.5) * this.env().w, (-p.y * 0.5 + 0.5) * this.env().h, p.z < 1]; },
     env() { return ENGINE.env; },
     redraw() {
       const g = this.cx, cv = this.cv, dpr = cv.width / ENGINE.env.w; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cv.width, cv.height);
@@ -414,8 +422,8 @@
       const w = this.w; this.done = true; this.gardenT = 0; w.goal(null);
       SND.glow(env.bus, 146.83, { gain: 0.08, dur: 12 }); SND.glow(env.bus, 220, { gain: 0.06, dur: 12, delay: 1 }); SND.glow(env.bus, 293.66, { gain: 0.05, dur: 12, delay: 2 });
       // a garden of light over the whole green carpet
-      const f = this.cols[0].flowers[0].material, n = 260, r = U.seeded(54);
-      this.garden = []; for (let i = 0; i < n; i++) { const sp = new T.Sprite(f.clone()); sp.position.set(U.lerp(RAW.x0 + 0.5, RAW.x1 - 0.5, r()), 0.12 + r() * 0.5, U.lerp(RAW.z0 + 0.5, RAW.z1 - 0.5, r())); sp.scale.setScalar(0.001); sp.userData.d = Math.hypot(sp.position.x, sp.position.z + 10) / 14; w.scene.add(sp); this.garden.push(sp); }
+      const n = 260, r = U.seeded(54);
+      this.garden = []; for (let i = 0; i < n; i++) { const pp = new T.Vector3(U.lerp(RAW.x0 + 0.5, RAW.x1 - 0.5, r()), 0.12 + r() * 0.5, U.lerp(RAW.z0 + 0.5, RAW.z1 - 0.5, r())); this.garden.push({ p: pp, d: Math.hypot(pp.x, pp.z + 10) / 14 }); }
       setTimeout(() => { if (!this.w) return; w.say('A garden of Paradise', '“Between my house and my minbar is a garden from the gardens of Paradise.” (Sahih al-Bukhari 1196)', { ar: 'ما بين بيتي ومنبري روضةٌ من رياض الجنة', ms: 16000 }); w.finish('The garden answers the brush'); }, 3500);
     },
     onKey(env, e) {
@@ -426,7 +434,7 @@
     onLeave() { try { host().removeEventListener('contextmenu', this._ctx); } catch (_) {} },
 
     update(env, dt) {
-      const w = this.w; if (!w) return;
+      const w = this.w; if (!w || !this.cols) return;
       if (!this.brush) w.update(dt);
       const t = w.time;
       // ink returns slowly
@@ -437,8 +445,8 @@
       this.cols.forEach(o => {
         const active = o.part === this.part && !o.done;
         o.glow.material.opacity = U.damp(o.glow.material.opacity, active ? 0.35 + 0.1 * Math.sin(t * 2 + o.k) : 0, 3, dt);
-        if (o.bloom) { o.bloomT = Math.min(1, (o.bloomT || 0) + dt / 1.6); o.flowers.forEach((f, i) => { const k = U.clamp(o.bloomT * 1.6 - i / 30); f.scale.setScalar(0.001 + k * (0.42 + 0.08 * Math.sin(t * 2 + i))); f.material.opacity = 0.85; f.material.rotation = t * 0.2 + i; }); }
-        o.lamps.forEach(l => { l.lm.material.emissiveIntensity = U.damp(l.lm.material.emissiveIntensity, l.on ? 2.6 : 0.02, 5, dt); l.gl.material.opacity = U.damp(l.gl.material.opacity, l.on ? 0.8 : 0, 5, dt); });
+        if (o.bloom) { o.bloomT = Math.min(1, (o.bloomT || 0) + dt / 1.6); o.flowers.forEach((f, i) => { const k = U.clamp(o.bloomT * 1.6 - i / 30); f.s = 0.001 + k * (0.42 + 0.08 * Math.sin(t * 2 + i)); }); }
+        o.lamps.forEach(l => { l.k = U.damp(l.k, l.on ? 1 : 0, 5, dt); });
         const need = o.need[o.doneN];
         const bound = o.need.includes('loop') && !o.untie;
         o.knot.material.opacity = U.damp(o.knot.material.opacity, bound ? (active ? 0.6 : 0.25) : 0, 3, dt);
@@ -451,7 +459,16 @@
       const woken = this.cols.filter(o => o.done).length;
       this.bandK = U.damp(this.bandK || 0, woken / 6 * 0.35 + (this.done ? 0.6 : 0), 2, dt);
       if (this.bandMat) this.bandMat.emissiveIntensity = this.bandK;
-      if (this.done && this.garden) { this.gardenT += dt; this.garden.forEach((sp, i) => { const k = U.clamp(this.gardenT * 0.5 - sp.userData.d); sp.scale.setScalar(0.001 + k * (0.5 + 0.12 * Math.sin(t * 2 + i))); sp.material.rotation = t * 0.15 + i; }); }
+      if (this.done && this.garden) { this.gardenT += dt; this.garden.forEach((sp, i) => { const k = U.clamp(this.gardenT * 0.5 - sp.d); sp.s = 0.001 + k * (0.5 + 0.12 * Math.sin(t * 2 + i)); }); }
+      // draw the billboards: flowers of the columns and of the garden, and the lamps' glow
+      { const q = w.camera.quaternion, m = new T.Matrix4(), sc = new T.Vector3(), rz = new T.Quaternion(), qq = new T.Quaternion(), zA = new T.Vector3(0, 0, 1); let n = 0;
+        const put = (pos, s, rot) => { rz.setFromAxisAngle(zA, rot); qq.copy(q).multiply(rz); m.compose(pos, qq, sc.set(s, s, s)); this.flowerIM.setMatrixAt(n++, m); };
+        this.cols.forEach(o => o.flowers.forEach((f, i) => { if (f.s > 0.002) put(f.p, f.s, t * 0.2 + i); }));
+        if (this.garden) this.garden.forEach((g, i) => { if (g.s > 0.002) put(g.p, g.s, t * 0.15 + i); });
+        this.flowerIM.count = n; this.flowerIM.instanceMatrix.needsUpdate = true;
+        let h = 0; const c = new T.Color(), dim = new T.Color(0x6a5a40), lit = new T.Color(0xffe6b0);
+        this.allLamps.forEach((l, k) => { this.lampBody.setColorAt(k, c.copy(dim).lerp(lit, l.k)); if (l.k > 0.02) { m.compose(l.g.position, q, sc.setScalar(1.1 * l.k)); this.haloIM.setMatrixAt(h++, m); } });
+        this.lampBody.instanceColor.needsUpdate = true; this.haloIM.count = h; this.haloIM.instanceMatrix.needsUpdate = true; }
       this.murT -= dt; if (this.murT < 0) { this.murT = U.rnd(5, 10); SND.sing(env.bus, U.pick([110, 123.47, 146.83]), { vowel: 'u', dur: 3.5, gain: 0.008, pan: U.rnd(-0.8, 0.8) }); }
       if (this.brush) this.guideEl.style.opacity = 1;
     },
