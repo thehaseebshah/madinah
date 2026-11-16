@@ -189,7 +189,7 @@
         }
         const l1 = new T.PointLight(0xffa860, 1.2, 30, 1.8); l1.position.set(-10, 4, 16); S.add(l1);
         const l2 = new T.PointLight(0xffa860, 1.0, 30, 1.8); l2.position.set(12, 4, -14); S.add(l2);
-        const hs = SCAPE.scatter(w, { kind: 'house', n: 700, area: { x: 0, z: 0, r: 200 }, scale: [8, 14], seed: 61, collide: false, avoid: (x, z) => Math.hypot(x, z) < 34, density: (x, z) => 1 - U.smooth(90, 190, Math.hypot(x, z)) * 0.8 });
+        const hs = SCAPE.scatter(w, { kind: 'house', lit: 0.3, n: 700, area: { x: 0, z: 0, r: 200 }, scale: [8, 14], seed: 61, collide: false, avoid: (x, z) => Math.hypot(x, z) < 34, density: (x, z) => 1 - U.smooth(90, 190, Math.hypot(x, z)) * 0.8 });
         hs.meshes.forEach(m => { m.material = plaster; });
         SCAPE.scatter(w, { kind: 'palm', n: 40, area: { x: 0, z: 0, r: 170 }, scale: [8, 12], seed: 62, avoid: (x, z) => Math.hypot(x, z) < 34 });
         const fires = []; const r3 = U.seeded(7);
@@ -245,7 +245,7 @@
         });
         const paveM = PHOTO.mat(w, 'marble_01', { rep: [24, 18], fallback: granite, color: 0xb8b0a4 });
         const pave = new T.Mesh(new T.PlaneGeometry(hw * 2, hd * 2), paveM); pave.rotation.x = -Math.PI / 2; pave.position.set(AQ.x, PY + 0.25, AQ.z); S.add(pave);
-        const hs2 = SCAPE.scatter(w, { kind: 'house', n: 380, area: { x: AQ.x, z: AQ.z + 60, r: 260 }, scale: [6, 10], seed: 91, avoid: (x, z) => Math.abs(x - AQ.x) < 80 && Math.abs(z - AQ.z) < 62 });
+        const hs2 = SCAPE.scatter(w, { kind: 'house', lit: 0.3, n: 380, area: { x: AQ.x, z: AQ.z + 60, r: 260 }, scale: [6, 10], seed: 91, avoid: (x, z) => Math.abs(x - AQ.x) < 80 && Math.abs(z - AQ.z) < 62 });
         hs2.meshes.forEach(m => { m.material = limestone; });
         SCAPE.scatter(w, { kind: 'acacia', n: 220, area: { x: AQ.x, z: AQ.z - 40, r: 420 }, scale: [0.7, 1.0], seed: 92, color: '#9aa878', avoid: (x, z) => Math.abs(x - AQ.x) < 80 && Math.abs(z - AQ.z) < 62 });
         const lamps = []; const r4 = U.seeded(93);

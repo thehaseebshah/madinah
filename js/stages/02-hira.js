@@ -270,7 +270,7 @@
       const planks = PHOTO.mat(w, 'old_planks_02', { rep: [1, 1], fallback: KIT.wood(w), color: 0xb89a7a });
       const beamM = PHOTO.mat(w, 'medieval_wood', { rep: [0.3, 1], fallback: KIT.wood(w), color: 0xa08868 });
       const stoneM = PHOTO.mat(w, 'old_stone_wall', { rep: [1, 1], fallback: granite, color: 0xc0b0a0 });
-      const hs = SCAPE.scatter(w, { kind: 'house', n: 760, area: { x: CITY.x, z: CITY.z, r: 240 }, scale: [8, 14], seed: 41, density: (x, z) => 1 - U.smooth(60, 240, Math.hypot(x - CITY.x, z - CITY.z)) * 0.7, avoid: (x, z) => Math.hypot(x - CITY.x, z - CITY.z) < 26 || Math.hypot(x - LANE.x, z - LANE.z) < 45 });
+      const hs = SCAPE.scatter(w, { kind: 'house', lit: 0.3, n: 760, area: { x: CITY.x, z: CITY.z, r: 240 }, scale: [8, 14], seed: 41, density: (x, z) => 1 - U.smooth(60, 240, Math.hypot(x - CITY.x, z - CITY.z)) * 0.7, avoid: (x, z) => Math.hypot(x - CITY.x, z - CITY.z) < 26 || Math.hypot(x - LANE.x, z - LANE.z) < 45 });
       hs.meshes.forEach(m => { m.material = plaster; });
       // a proper lane at the edge of the city, where the film begins
       const r2 = U.seeded(57);

@@ -111,7 +111,7 @@
 
       /* ---------- the floor, the plaza and the city around ---------- */
       const ter = SCAPE.terrain(w, { size: 1800, seg: 120, height: (x, z) => U.smooth(600, 850, Math.hypot(x, z)) * (SCAPE.ridge(x * 0.003, z * 0.003, 4) * 120) - 0.02,
-        colors: { low: '#ece6dc', high: '#e4ddd2', rock: '#8a7466', dark: '#6a5a50' }, tex: 'gravel', photo: { ground: 'marble_01', rock: 'rock_face_03', normal: 0.5 }, rep: 0.2, rockRep: 0.03 });
+        colors: { low: '#d9d2c6', high: '#d2cabd', rock: '#8a7466', dark: '#6a5a50' }, tex: 'gravel', photo: { ground: 'marble_01', rock: 'rock_face_03', normal: 0.5 }, rep: 0.2, rockRep: 0.03 });
       w.ground = () => 0;
       SCAPE.horizon(w, { haze: '#d8d0c4', layers: [{ r: 1100, h: 70, color: '#8a6c5a', seed: 4 }, { r: 1400, h: 120, color: '#a08a7c', seed: 9 }] });
       const fl = new T.Mesh(new T.PlaneGeometry(HALF * 2, HALF * 2).rotateX(-Math.PI / 2), M.floor); fl.position.y = 0.01; fl.receiveShadow = true; S.add(fl);
@@ -235,10 +235,7 @@
       const gd = KIT.greenDome(w, 0.8); gd.position.set(22, ROOF - 1.5, HALF + 40); S.add(gd);
       for (let k = 0; k < 14; k++) { const d = new T.Mesh(new T.SphereGeometry(2.6, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), M.marble); d.position.set(-45 + (k % 7) * 9, ROOF - 1.5, HALF + 22 + Math.floor(k / 7) * 12); S.add(d); }
       // the city: hotels and towers ring the mosque
-      const cityT = w.tex(256, (g, s) => { g.fillStyle = '#d8cfc0'; g.fillRect(0, 0, s, s); for (let y = 8; y < s; y += 16) for (let x = 6; x < s; x += 14) { g.fillStyle = Math.random() < 0.2 ? '#8a9aa8' : '#4a5864'; g.fillRect(x, y, 8, 10); } }, [3, 6]);
-      const cityG = new T.BoxGeometry(1, 1, 1); cityG.translate(0, 0.5, 0);
-      const city = SCAPE.scatter(w, { kind: 'house', n: 70, area: { x: 0, z: 0, r: 520 }, scale: [24, 46], seed: 7, avoid: (x, z) => Math.hypot(x, z) < 210 });
-      city.meshes.forEach(m => { m.material = new T.MeshStandardMaterial({ map: cityT, roughness: 0.8 }); });
+      SCAPE.modernCity(w, { inner: 212, outer: 580, seed: 7, street: '#6f6a62', color: '#d8cdbb' });
       // the plaza: umbrellas, furled at this hour
       const umbG = (() => { const p = []; const pole = new T.CylinderGeometry(0.42, 0.5, 14, 10); pole.translate(0, 7, 0); p.push(pole); const base = new T.CylinderGeometry(1.1, 1.3, 1.4, 10); base.translate(0, 0.7, 0); p.push(base);
         // a furled canopy hangs round the top of the column like a closed bud

@@ -255,7 +255,7 @@
         S.add(g); }
 
       /* ---------- Makkah far to the north: its houses and lamps ---------- */
-      const town = SCAPE.scatter(w, { kind: 'house', n: 260, area: { x: MAKKAH.x, z: MAKKAH.z, r: 200 }, scale: [7, 12], seed: 61 });
+      const town = SCAPE.scatter(w, { kind: 'house', lit: 0.3, n: 260, area: { x: MAKKAH.x, z: MAKKAH.z, r: 200 }, scale: [7, 12], seed: 61 });
       town.meshes.forEach(m => { m.material = PHOTO.mat(w, 'clay_plaster', { triplanar: 0.25, color: 0xa89884, fallback: m.material.map }); });
       { const lp = [], r = U.seeded(62); for (const it of town.list) if (r() < 0.45) lp.push(it.x + (r() - 0.5) * it.s, H(it.x, it.z) + it.s * 0.4, it.z + (r() - 0.5) * it.s);
         const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(lp, 3));

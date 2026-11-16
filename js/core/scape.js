@@ -226,6 +226,45 @@
     mat.needsUpdate = true;
     return mat;
   };
+  /* A facade drawn in world space: rows of windows (one bay about 3.4 m, one floor 3.3 m), floor bands and
+     a plain ground floor. o.lit (0..1) is the share of windows with a light on; o.glass is the glass colour. */
+  S.blockMat = o => {
+    o = o || {};
+    const mat = new T.MeshStandardMaterial({ color: 0xffffff, roughness: 0.82, metalness: 0 });
+    const U_ = { uBlkLit: { value: o.lit || 0 }, uBlkGlass: { value: new T.Color(o.glass || '#27323c') }, uBlkLamp: { value: new T.Color(o.litColor || '#ffd9a0') } };
+    mat.onBeforeCompile = sh => {
+      Object.assign(sh.uniforms, U_);
+      sh.vertexShader = sh.vertexShader
+        .replace('#include <common>', '#include <common>\nvarying vec3 vBlkP; varying vec3 vBlkN;')
+        .replace('#include <worldpos_vertex>', `#include <worldpos_vertex>
+          vec4 blkP = vec4(transformed, 1.0); vec3 blkN = objectNormal;
+          #ifdef USE_INSTANCING
+            blkP = instanceMatrix * blkP; blkN = mat3(instanceMatrix) * blkN;
+          #endif
+          vBlkP = (modelMatrix * blkP).xyz; vBlkN = normalize(mat3(modelMatrix) * blkN);`);
+      sh.fragmentShader = sh.fragmentShader
+        .replace('#include <common>', '#include <common>\nuniform float uBlkLit; uniform vec3 uBlkGlass; uniform vec3 uBlkLamp; varying vec3 vBlkP; varying vec3 vBlkN;')
+        .replace('#include <color_fragment>', `#include <color_fragment>
+          float blkGlow = 0.0;
+          { vec3 bn = abs(normalize(vBlkN));
+            if (bn.y < 0.5) {
+              vec2 uv = vec2((bn.x > bn.z ? vBlkP.z : vBlkP.x) / 3.4, vBlkP.y / 3.3);
+              vec2 g = fract(uv), id = floor(uv);
+              vec2 fw = fwidth(uv); float lod = clamp(1.6 - max(fw.x, fw.y) * 2.2, 0.0, 1.0);   // fade the grid far away
+              float win = smoothstep(0.16, 0.2, g.x) * smoothstep(0.84, 0.8, g.x) * smoothstep(0.26, 0.3, g.y) * smoothstep(0.8, 0.76, g.y);
+              float h = fract(sin(dot(id, vec2(12.9898, 78.233))) * 43758.5453);
+              win *= lod;
+              diffuseColor.rgb *= 1.0 - 0.07 * smoothstep(0.9, 0.94, g.y) * lod;
+              diffuseColor.rgb = mix(diffuseColor.rgb, uBlkGlass * (0.7 + 0.6 * h), win * 0.92);
+              blkGlow = win * step(1.0 - uBlkLit, h);
+            } }`)
+        .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n totalEmissiveRadiance += uBlkLamp * blkGlow * 1.4;');
+    };
+    mat.extensions = { derivatives: true };
+    mat.customProgramCacheKey = () => 'blk';
+    mat.userData.block = U_;
+    return mat;
+  };
   // Wind: the higher a vertex, the more it sways. Works on instanced meshes.
   S.sway = (mat, amp) => {
     const prev = mat.onBeforeCompile;
@@ -459,7 +498,8 @@
   /* ---------------- scatter ---------------- */
   /* o: { kind, n, area: [x0,z0,x1,z1] | { x, z, r }, ground, avoid(x,z), density(x,z) (0..1),
           scale: [a,b], color, vary, seed, slopeMax, sink, collide, castShadow, material, tex }
-     Returns { meshes, list: [{x,y,z,s,ry}] }. Kinds: rock, boulder, pebble, shrub, grass, thorn, acacia, palm, house. */
+     Returns { meshes, list: [{x,y,z,s,ry}] }. Kinds: rock, boulder, pebble, shrub, grass, thorn, acacia, palm, house (o.lit: share of lamplit
+     houses; details in result.details), block (modern buildings, see S.blockMat), model. */
   S.scatter = (w, o) => {
     const kind = o.kind || 'rock', r = U.seeded(o.seed || 7), q = o.exact ? 1 : (w.quality || 1);
     const n = Math.max(1, Math.round((o.n || 100) * (kind === 'grass' || kind === 'pebble' ? q : Math.max(q, 0.7))));
@@ -502,8 +542,82 @@
       }).catch(() => { fallback(); return result; });
       return result;
     }
+    if (kind === 'house') {
+      // three house shapes; doors, window slits and roof beams are a second mesh (result.details) so a
+      // station may swap the wall material without losing them. o.lit (0..1): share of houses with lamplight.
+      const wall = o.material || S.triplanar(new T.MeshStandardMaterial({ map: S.tex.mud(w), roughness: 0.95 }), 0.14);
+      const open = new T.MeshBasicMaterial({ color: 0xffffff, fog: true });
+      const dark = new T.Color(o.openColor || '#1c1510'), warm = new T.Color(o.litColor || '#ffb45a'), lit = o.lit || 0;
+      result.details = [];
+      for (let v = 0; v < 3; v++) {
+        const sub = list.filter((_, i) => i % 3 === v); if (!sub.length) continue;
+        const G = houseGeo(v);
+        const defs = [
+          { geo: G.walls, mat: wall, cast: true, color: o.color || '#f0e6d8', sx: rr => 0.8 + rr() * 0.6, sy: rr => 0.45 + rr() * 0.35, sz: rr => 0.8 + rr() * 0.6 },
+          { geo: G.open, mat: open, cast: false, colorFn: rr => (rr() < lit ? warm.clone().multiplyScalar(0.55 + rr() * 0.6) : dark) }];
+        const ms = instance(w, defs, sub, o, r, kind, ground);
+        result.meshes.push(ms[0]); result.details.push(ms[1]);
+      }
+      return result;
+    }
+    if (kind === 'block') list.forEach(it => { it.ry = o.angle || 0; });
     result.meshes = instance(w, buildKind(w, kind, o, r), list, o, r, kind, ground);
     return result;
+  };
+  // A mud-brick house inside the unit box (x, z in ±0.5, y in 0..1): parapet, upper room or courtyard,
+  // and, as a separate geometry, the door, window slits and the ends of the roof beams.
+  const houseCache = {};
+  function houseGeo(v) {
+    if (houseCache[v]) return houseCache[v];
+    const walls = [], open = [], r = U.seeded(900 + v * 17), e = 0.006;
+    const box = (list, sx, sy, sz, x, y, z) => { const g = new T.BoxGeometry(sx, sy, sz); g.translate(x, y, z); list.push(g); };
+    const parapet = (x0, z0, x1, z1, y) => { const t = 0.045, h = 0.085, cx = (x0 + x1) / 2, cz = (z0 + z1) / 2, sx = x1 - x0, sz = z1 - z0;
+      box(walls, sx, h, t, cx, y + h / 2, z0 + t / 2); box(walls, sx, h, t, cx, y + h / 2, z1 - t / 2); box(walls, t, h, sz - 2 * t, x0 + t / 2, y + h / 2, cz); box(walls, t, h, sz - 2 * t, x1 - t / 2, y + h / 2, cz); };
+    // openings on a wall: axis 'x' = a wall facing ±x at x = at, spanning z0..z1; 'z' likewise
+    const slits = (axis, at, dir, a0, a1, y0, y1, n) => { for (let i = 0; i < n; i++) { const u = U.lerp(a0 + 0.08, a1 - 0.08, (i + 0.3 + r() * 0.4) / n), y = U.lerp(y0, y1, 0.3 + r() * 0.4), ww = 0.05 + r() * 0.03, hh = 0.09 + r() * 0.04;
+      if (axis === 'z') box(open, ww, hh, e * 2, u, y, at + dir * e); else box(open, e * 2, hh, ww, at + dir * e, y, u); } };
+    const beams = (axis, at, dir, a0, a1, y) => { const n = Math.max(3, Math.round((a1 - a0) / 0.13)); for (let i = 0; i < n; i++) { const u = U.lerp(a0 + 0.06, a1 - 0.06, (i + 0.5) / n);
+      if (axis === 'z') box(open, 0.022, 0.022, 0.05, u, y, at + dir * 0.02); else box(open, 0.05, 0.022, 0.022, at + dir * 0.02, y, u); } };
+    const door = (axis, at, dir, u, h) => { if (axis === 'z') box(open, 0.12, h, e * 2, u, h / 2, at + dir * e); else box(open, e * 2, h, 0.12, at + dir * e, h / 2, u); };
+    if (v === 0) {           // one storey, flat roof
+      const H = 0.8; box(walls, 1, H, 1, 0, H / 2, 0); parapet(-0.5, -0.5, 0.5, 0.5, H);
+      door('z', 0.5, 1, -0.18, 0.34); slits('z', 0.5, 1, -0.05, 0.5, H * 0.5, H * 0.75, 2); slits('z', -0.5, -1, -0.5, 0.5, H * 0.5, H * 0.75, 3);
+      slits('x', 0.5, 1, -0.5, 0.5, H * 0.5, H * 0.75, 2); slits('x', -0.5, -1, -0.5, 0.5, H * 0.5, H * 0.75, 2);
+      beams('x', 0.5, 1, -0.5, 0.5, H - 0.07); beams('x', -0.5, -1, -0.5, 0.5, H - 0.07);
+    } else if (v === 1) {    // a room on the roof
+      const H = 0.6; box(walls, 1, H, 1, 0, H / 2, 0); parapet(-0.5, -0.5, 0.5, 0.5, H);
+      box(walls, 0.52, 0.4, 0.58, -0.24, H + 0.2, -0.21); parapet(-0.5, -0.5, 0.02, 0.08, 1.0 - 0.085);
+      door('z', 0.5, 1, 0.16, 0.3); door('z', 0.08, 1, -0.2, 0.24 + H); // the upper door opens onto the roof
+      slits('z', 0.5, 1, -0.5, 0.1, H * 0.5, H * 0.75, 2); slits('z', -0.5, -1, -0.5, 0.5, H * 0.45, H * 0.7, 3); slits('z', -0.5, -1, -0.5, 0.02, H + 0.14, H + 0.26, 2);
+      slits('x', 0.5, 1, -0.5, 0.5, H * 0.5, H * 0.75, 3); slits('x', -0.5, -1, -0.5, 0.5, H * 0.5, H * 0.75, 2); slits('x', -0.5, -1, -0.5, 0.08, H + 0.14, H + 0.26, 2);
+      beams('x', 0.5, 1, -0.5, 0.5, H - 0.07); beams('x', -0.5, -1, -0.5, 0.5, H - 0.07);
+    } else {                 // an L round a walled courtyard
+      const H = 0.72, h2 = 0.5, cw = 0.3;
+      box(walls, 1, H, 0.52, 0, H / 2, -0.24); parapet(-0.5, -0.5, 0.5, 0.02, H);
+      box(walls, 0.46, h2, 0.48, -0.27, h2 / 2, 0.26); parapet(-0.5, 0.02, -0.04, 0.5, h2);
+      box(walls, 0.54, cw, 0.045, 0.23, cw / 2, 0.4775); box(walls, 0.045, cw, 0.48, 0.4775, cw / 2, 0.26);
+      door('z', 0.5, 1, 0.2, 0.24); door('z', 0.02, 1, 0.22, 0.32); door('x', -0.04, 1, 0.3, 0.3);
+      slits('z', 0.02, 1, 0.0, 0.5, H * 0.55, H * 0.75, 2); slits('z', -0.5, -1, -0.5, 0.5, H * 0.5, H * 0.75, 4);
+      slits('x', 0.5, 1, -0.5, 0.02, H * 0.5, H * 0.75, 2); slits('x', -0.5, -1, -0.5, 0.5, h2 * 0.5, h2 * 0.8, 3);
+      beams('z', -0.5, -1, -0.5, 0.5, H - 0.07); beams('x', -0.5, -1, 0.02, 0.5, h2 - 0.06);
+    }
+    return (houseCache[v] = { walls: S.merge(walls), open: S.merge(open) });
+  }
+  /* The modern city round the Prophet's Mosque: hotels in street blocks on dark paving, from o.inner to
+     o.outer metres out. o.lit: share of windows alight (the returned mat.userData.block.uBlkLit can be animated). */
+  S.modernCity = (w, o) => {
+    o = o || {};
+    const inner = o.inner || 215, outer = o.outer || 600, step = o.step || 62, r = U.seeded(o.seed || 7), sq = o.squash || 1, pts = [];
+    for (let gx = -outer; gx <= outer; gx += step) for (let gz = -outer; gz <= outer; gz += step) {
+      const d = Math.hypot(gx, gz * sq); if (d < inner + step * 0.5 || d > outer) continue;
+      if (r() < 0.12) continue;                      // a gap: a small square or a car park
+      pts.push([gx + (r() - 0.5) * 6, gz + (r() - 0.5) * 6, 30 + r() * 10]);
+    }
+    const mat = S.blockMat({ lit: o.lit, glass: o.glass, litColor: o.litColor });
+    const res = S.scatter(w, { kind: 'block', points: pts, material: mat, color: o.color, seed: o.seed || 7, vary: 0.14, collide: false, ground: o.ground });
+    const ring = new T.Mesh(new T.RingGeometry(inner, outer + 90, 96, 1), new T.MeshStandardMaterial({ color: o.street || '#9a958c', roughness: 0.96 }));
+    ring.rotation.x = -Math.PI / 2; ring.scale.y = 1 / sq; ring.position.y = o.y == null ? 0.04 : o.y; ring.receiveShadow = true; w.scene.add(ring);
+    return { meshes: res.meshes, list: res.list, mat, ring };
   };
   function instance(w, defs, list, o, r, kind, ground) {
     const meshes = defs.map(d => {
@@ -513,6 +627,7 @@
       return im;
     });
     const m4 = new T.Matrix4(), qn = new T.Quaternion(), e = new T.Euler(), pos = new T.Vector3(), scl = new T.Vector3(), c = new T.Color();
+    const UP = new T.Vector3(0, 1, 0);
     const base = new T.Color(o.color || defs[0].color || '#ffffff');
     if (kind === 'model' && o.vary == null) o = Object.assign({}, o, { vary: 0.12 });
     list.forEach((it, i) => {
@@ -524,11 +639,16 @@
         if (k === 0) { it.sx = sx; it.sy = sy; it.sz = sz; }
         e.set(d.tilt ? (r() - 0.5) * d.tilt : 0, it.ry, d.tilt ? (r() - 0.5) * d.tilt : 0);
         qn.setFromEuler(e); pos.set(it.x, it.y, it.z);
+        if (o.align) {   // lean with the slope, so a wide piece lies on a cliff face instead of hanging off it
+          if (!it.qa) { const e2 = Math.max(0.8, it.s), nx = -(ground(it.x + e2, it.z) - ground(it.x - e2, it.z)) / (2 * e2), nz = -(ground(it.x, it.z + e2) - ground(it.x, it.z - e2)) / (2 * e2);
+            it.qa = new T.Quaternion().slerp(new T.Quaternion().setFromUnitVectors(UP, new T.Vector3(nx, 1, nz).normalize()), o.align === true ? 1 : o.align); }
+          qn.premultiply(it.qa);
+        }
         scl.set(k === 0 ? sx : it.sx, k === 0 ? sy : it.sy, k === 0 ? sz : it.sz);
         if (d.uniform) scl.setScalar(it.s);
         m4.compose(pos, qn, scl); meshes[k].setMatrixAt(i, m4);
         const v = o.vary == null ? 0.18 : o.vary;
-        c.copy(d.color ? new T.Color(d.color) : base).multiplyScalar(1 - v / 2 + r() * v);
+        if (d.colorFn) c.copy(d.colorFn(r)); else c.copy(d.color ? new T.Color(d.color) : base).multiplyScalar(1 - v / 2 + r() * v);
         if (d.hue) c.offsetHSL((r() - 0.5) * d.hue, 0, 0);
         meshes[k].setColorAt(i, c);
       });
@@ -571,11 +691,14 @@
         // trunk height 8–14 m: uniform scale via s, crown sits at the top
         return [{ geo: trunk, mat: tm, cast: true, color: '#d8c8b0', uniform: true, radius: 0.04 }, { geo: crown, mat: fm, cast: true, color: o.color || '#ffffff', uniform: true, hue: 0.04 }];
       }
-      case 'house': {
-        const geo = new T.BoxGeometry(1, 1, 1); geo.translate(0, 0.5, 0);
-        const mat = S.triplanar(new T.MeshStandardMaterial({ map: S.tex.mud(w), roughness: 0.95 }), 0.14);
-        return [{ geo, mat, cast: true, color: o.color || '#f0e6d8', vary: 0.2,
-          sx: rr => 0.8 + rr() * 0.6, sy: rr => 0.45 + rr() * 0.35, sz: rr => 0.8 + rr() * 0.6 }];
+      case 'block': {
+        // a modern building: a box with a roof parapet and plant rooms; the windows are drawn in the
+        // shader in world space, so every floor is the same height whatever the size of the block
+        const gs = [], box = (sx, sy, sz, x, y, z) => { const g = new T.BoxGeometry(sx, sy, sz); g.translate(x, y, z); gs.push(g); };
+        box(1, 0.94, 1, 0, 0.47, 0); box(1.02, 0.02, 1.02, 0, 0.95, 0); box(0.9, 0.04, 0.9, 0, 0.98, 0);
+        box(0.22, 0.07, 0.3, -0.2, 1.0, 0.1); box(0.3, 0.05, 0.16, 0.22, 0.99, -0.24);
+        return [{ geo: S.merge(gs), mat: o.material || S.blockMat(o), cast: true, color: o.color || '#e6ddcf',
+          sx: rr => 0.7 + rr() * 0.7, sy: rr => 0.5 + rr() * 0.6, sz: rr => 0.7 + rr() * 0.7 }];
       }
     }
     throw new Error('SCAPE.scatter: unknown kind ' + kind);
@@ -600,7 +723,7 @@
         b.a += b.sp * dt * (o.dir || 1);
         const x = (o.x || 0) + Math.cos(b.a) * b.rr, z = (o.z || 0) + Math.sin(b.a) * b.rr;
         const flap = Math.sin(w.time * 9 + b.ph) * 0.6 * (0.6 + 0.4 * Math.sin(w.time * 0.7 + b.ph));
-        p.set(x, b.y + Math.sin(w.time * 0.5 + b.ph) * 3, z); s.setScalar(b.s);
+        p.set(x, b.y + Math.sin(w.time * 0.5 + b.ph) * 3, z); s.setScalar(p.distanceTo(w.camera.position) < 22 ? 0 : b.s);   // never right in front of the lens
         e.set(0, -b.a + (o.dir === -1 ? Math.PI : 0), flap); q.setFromEuler(e); m4.compose(p, q, s); L.setMatrixAt(i, m4);
         e.set(0, -b.a + (o.dir === -1 ? Math.PI : 0), -flap); q.setFromEuler(e); m4.compose(p, q, s); m4.multiply(mir); R.setMatrixAt(i, m4);
       });

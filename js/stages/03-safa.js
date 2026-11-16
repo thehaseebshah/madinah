@@ -233,7 +233,7 @@
           x += wd + (hr() < 0.3 ? 2 + hr() * 3 : 0.3);
         }
       }
-      const far = SCAPE.scatter(w, { kind: 'house', n: 240, area: [-240, -260, 190, -36], scale: [6, 11], seed: 21, slopeMax: 0.55, avoid: (x, z) => Math.hypot(x - KX, z - KZ) < 26 });
+      const far = SCAPE.scatter(w, { kind: 'house', lit: 0.12, n: 240, area: [-240, -260, 190, -36], scale: [6, 11], seed: 21, slopeMax: 0.55, avoid: (x, z) => Math.hypot(x - KX, z - KZ) < 26 });
       far.meshes.forEach(m => { m.material = tri(w, 'clay_plaster', 0.25, m.material.map, '#d8c8b4'); });
       // the Ka'bah in its courtyard, draped
       const kg = new T.Group(); kg.position.set(KX, w.ground(KX, KZ), KZ); kg.rotation.y = 0.35; S.add(kg);

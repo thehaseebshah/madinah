@@ -116,10 +116,10 @@
 
       /* ---------- the land's texture: basalt boulders above, gardens in the middle, the plain below ---------- */
       const inBed = (x, z) => Math.abs(x - chan(z)) < 6;
-      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_02', fallback: 'boulder', n: 200, area: [-260, -160, 260, 380], scale: [1, 3.5], seed: 11, color: '#6a6260', density: (x, z) => U.smooth(30, 70, Math.abs(x - cx(z))) * U.smooth(-140, 60, z), collide: false });
+      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_02', fallback: 'boulder', slopeMax: 0.8, n: 200, area: [-260, -160, 260, 380], scale: [1, 3.5], seed: 11, color: '#6a6260', density: (x, z) => U.smooth(30, 70, Math.abs(x - cx(z))) * U.smooth(-140, 60, z), collide: false });
       SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_04', fallback: 'boulder', n: 120, area: [-200, 100, 200, 380], scale: [0.8, 2.2], seed: 12, color: '#6a6260', avoid: inBed });
-      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_cliff_01', fallback: 'boulder', fallbackScale: 4, n: 70, area: [-200, -150, 200, 380], scale: [2.2, 4], seed: 10, color: '#7a6c64', density: (x, z) => { const d = Math.abs(x - cx(z)); return d > 52 && d < 95 ? 1 : 0; } });
-      SCAPE.scatter(w, { kind: 'boulder', n: 300, area: [-600, -500, 600, 500], scale: [3, 10], seed: 13, tex: 'lava', density: (x, z) => U.smooth(60, 140, Math.abs(x - cx(z))) });
+      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_cliff_01', fallback: 'boulder', fallbackScale: 4, sink: 0.22, align: 0.9, n: 70, area: [-200, -150, 200, 380], scale: [2.2, 4], seed: 10, color: '#7a6c64', density: (x, z) => { const d = Math.abs(x - cx(z)); return d > 52 && d < 95 ? 1 : 0; } });
+      SCAPE.scatter(w, { kind: 'boulder', n: 300, area: [-600, -500, 600, 500], scale: [3, 10], seed: 13, tex: 'lava', align: 0.8, sink: 0.3, density: (x, z) => U.smooth(60, 140, Math.abs(x - cx(z))) });
       SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_rocks_01', n: 380, area: [-120, -380, 120, 380], scale: [0.8, 2], seed: 14, avoid: inBed, density: (x, z) => Math.abs(x - cx(z)) < 70 ? 1 : 0.2 });
       SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_stones_01', n: 520, area: [-80, -380, 80, 380], scale: [1, 2.2], seed: 15, density: (x, z) => Math.abs(x - chan(z)) < 14 ? 1 : 0.25 });
       SCAPE.scatter(w, { kind: 'pebble', n: 2600, area: [-90, -380, 90, 380], scale: [0.06, 0.22], seed: 16, density: (x, z) => Math.abs(x - cx(z)) < 60 ? 1 : 0.1 });

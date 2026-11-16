@@ -291,7 +291,7 @@
       sc({ kind: 'thorn', n: 240, scale: [0.7, 1.3], seed: 8, avoid: notRoad(5), density: zoneD([1, 0.4, 0.1]) });
       sc({ kind: 'acacia', n: 80, scale: [0.9, 1.4], seed: 9, avoid: notRoad(10), density: zoneD([0.8, 0.3, 0]) });
       sc({ kind: 'palm', n: 520, scale: [7, 13], seed: 10, avoid: (x, z) => { const R = roadInfo(x, z); return R.d < 9 || (R.s > S_CITY - 10 && R.d < 110); }, density: zoneD([0.08, 1, 0.5]) });
-      const far = SCAPE.scatter(w, { kind: 'house', n: 220, area: { x: at(S_PLACE).x, z: at(S_PLACE).z, r: 520 }, scale: [6, 10], seed: 11, avoid: (x, z) => { const R = roadInfo(x, z); return R.d < 100 || R.s < S_CITY - 60; } });
+      const far = SCAPE.scatter(w, { kind: 'house', lit: 0.35, n: 220, area: { x: at(S_PLACE).x, z: at(S_PLACE).z, r: 520 }, scale: [6, 10], seed: 11, avoid: (x, z) => { const R = roadInfo(x, z); return R.d < 100 || R.s < S_CITY - 60; } });
       far.meshes.forEach(m => { m.material = PHOTO.mat(w, 'clay_plaster', { triplanar: 0.22, fallback: m.material.map, color: '#cbbca4' }); });
       SCAPE.motes(w, { n: 70, area: [-140, 0.5, -500, 140, 8, 300], color: '#ffe0a0', size: 0.2, additive: true, blink: true, opacity: 0.6 });
       SCAPE.smoke(w, [0, 1, 2].reduce((o, k) => { at(S_CITY + 80 + k * 120, p); o.sources.push([p.x + p.rx * 30, H(p.x, p.z) + 7, p.z + p.rz * 30]); return o; }, { sources: [], n: 14, height: 14, size: 3, opacity: 0.08, color: '#8890a8' }));

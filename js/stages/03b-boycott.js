@@ -338,7 +338,7 @@
         }
       }
       // the valley of Makkah beyond: dozens of low houses towards the Ka'bah
-      const far = SCAPE.scatter(w, { kind: 'house', n: 230, area: [-170, 175, 170, 455], scale: [6, 11], seed: 619, collide: true,
+      const far = SCAPE.scatter(w, { kind: 'house', lit: 0.28, n: 230, area: [-170, 175, 170, 455], scale: [6, 11], seed: 619, collide: true,
         avoid: (x, z) => Math.abs(x - cx(z)) < 44 && z < 258 || Math.hypot(x - KAABA.x, z - KAABA.z) < 46 || (Math.abs(x - KAABA.x) < 7 && z < KAABA.z) });
       far.meshes.forEach(m => { m.material = PHOTO.mat(w, 'clay_plaster', { triplanar: 0.25, color: 0xb8a890, fallback: m.material.map }); });
       // windows lit here and there across the town: warm points

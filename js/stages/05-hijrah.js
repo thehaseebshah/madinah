@@ -311,7 +311,7 @@
       // the oasis of Quba: palms and the first houses, waiting at the end of the road
       const oz = zAt(2450), ox = RX(oz);
       sc({ kind: 'palm', n: 320, scale: [7, 14], seed: 28, area: [ox - 340, oz - 320, ox + 340, oz + 170], avoid: (x, z) => road(x, z, 9) || (z > zAt(2330) && Math.abs(x - RX(z)) < 60) });
-      const hs = sc({ kind: 'house', n: 46, scale: [6, 10], seed: 29, area: [ox - 260, oz - 330, ox + 260, oz - 60], avoid: (x, z) => road(x, z, 22) });
+      const hs = sc({ kind: 'house', lit: 0.25, n: 46, scale: [6, 10], seed: 29, area: [ox - 260, oz - 330, ox + 260, oz - 60], avoid: (x, z) => road(x, z, 22) });
       hs.meshes.forEach(m => { m.material = PHOTO.mat(w, 'clay_plaster', { triplanar: 0.25, fallback: m.material.map, color: '#d8c8b0' }); });
       // cairns of stones marking the guide's way
       const cairns = []; for (let s = 30; s < STOP; s += 46) { const p = tp(s), side = (s / 46 | 0) % 2 ? 1 : -1; cairns.push([p.x + p.rx * 8.6 * side, p.z + p.rz * 8.6 * side, 1.25]); }

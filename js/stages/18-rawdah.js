@@ -212,9 +212,7 @@
       const minM = PHOTO.mat(w, 'marble_01', { triplanar: 0.2, color: 0xf2ece2, fallback: KIT.plaster(w, [2, 8], '#eee6d8') });
       [[-36, -26], [36, -26], [-36, 50], [36, 50]].forEach(([x, z]) => { const m = KIT.minaret(w, 70, true); m.position.set(x, 0, z); S.add(m); });
       // the city's lights beyond
-      const cityT = w.tex(256, (g, s) => { g.fillStyle = '#1a1a22'; g.fillRect(0, 0, s, s); for (let y = 8; y < s; y += 16) for (let x = 6; x < s; x += 14) { g.fillStyle = Math.random() < 0.55 ? '#ffd8a0' : '#2a2a34'; g.fillRect(x, y, 8, 10); } }, [3, 6]);
-      const city = SCAPE.scatter(w, { kind: 'house', n: 80, area: { x: 0, z: 0, r: 520 }, scale: [24, 46], seed: 8, avoid: (x, z) => Math.hypot(x, z) < 180 });
-      city.meshes.forEach(m => { m.material = new T.MeshStandardMaterial({ map: cityT, emissive: 0xffffff, emissiveMap: cityT, emissiveIntensity: 0.5, roughness: 0.8 }); });
+      SCAPE.modernCity(w, { inner: 182, outer: 560, seed: 8, lit: 0.42, color: '#9a96a0', street: '#3a3c44' });
       SCAPE.motes(w, { n: 120, area: [-28, 0.4, -19, 28, 7, 20], color: '#fff0c8', size: 0.1, additive: true });
       SCAPE.birds(w, { n: 10, x: 0, z: 30, y: 26, r: 30, color: 0xe8e4dc, speed: 0.08 });
 

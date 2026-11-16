@@ -110,10 +110,7 @@
       const gd = KIT.greenDome(w, 0.9); gd.position.set(40, 14, FACADE_Z - 70); S.add(gd);
       for (let k = 0; k < 18; k++) { const d = new T.Mesh(new T.SphereGeometry(4.5, 18, 8, 0, Math.PI * 2, 0, Math.PI / 2), M.marble); d.scale.y = 0.6; d.position.set(-80 + (k % 6) * 32, 14, FACADE_Z - 18 - Math.floor(k / 6) * 22); S.add(d); }
       // hotels of the city, east, west and south
-      const cityT = w.tex(256, (g, s) => { g.fillStyle = '#d8d0c4'; g.fillRect(0, 0, s, s); for (let y = 8; y < s; y += 16) for (let x = 6; x < s; x += 14) { g.fillStyle = '#4a5864'; g.fillRect(x, y, 8, 10); } }, [3, 6]);
-      this.cityMat = new T.MeshStandardMaterial({ map: cityT, roughness: 0.8, emissive: 0xffd8a0, emissiveMap: w.tex(256, (g, s) => { g.fillStyle = '#000'; g.fillRect(0, 0, s, s); for (let y = 8; y < s; y += 16) for (let x = 6; x < s; x += 14) { g.fillStyle = Math.random() < 0.6 ? '#ffd8a0' : '#000'; g.fillRect(x, y, 8, 10); } }, [3, 6]), emissiveIntensity: 0 });
-      const city = SCAPE.scatter(w, { kind: 'house', n: 90, area: { x: 0, z: 0, r: 620 }, scale: [26, 52], seed: 9, avoid: (x, z) => Math.hypot(x, z * 1.2) < 190 });
-      city.meshes.forEach(m => { m.material = this.cityMat; });
+      this.cityMat = SCAPE.modernCity(w, { inner: 192, outer: 680, squash: 1.2, seed: 9, street: '#6f6a62', color: '#d8cdbb' }).mat;
       SCAPE.birds(w, { n: 24, x: 0, z: 0, y: 26, r: 50, color: 0xd8d4cc, speed: 0.12 });
 
       /* ---------- the umbrellas ---------- */
@@ -375,7 +372,7 @@
       this.hemi.intensity = (PHOTO.enabled ? 0.12 : 0.6) * (1 - nightK0 * 0.7);
       const nightK = this.done ? 1 : this.dusk ? U.smooth(18.1, 19.4, this.hour) : 0;
       this.night.forEach(L => { L.intensity = nightK * 1.6; });
-      this.cityMat.emissiveIntensity = nightK * 0.9; this.memM.emissiveIntensity = nightK * 0.0;
+      this.cityMat.userData.block.uBlkLit.value = nightK * 0.6; this.memM.emissiveIntensity = nightK * 0.0;
       this.umbLamps.visible = nightK > 0.3;
       w.renderer.toneMappingExposure = 0.78 + nightK * 0.3;
       // umbrellas glow while they wait to be opened over someone in the sun

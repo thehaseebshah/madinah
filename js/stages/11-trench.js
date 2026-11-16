@@ -157,7 +157,7 @@
       sc({ kind: 'acacia', n: 50, scale: [0.9, 1.3], seed: 9, avoid: offBoard(8) });
       // the palm gardens and houses of the city behind the camp, south and south-east
       SCAPE.scatter(w, { kind: 'palm', n: 260, area: [40, 120, 560, 520], scale: [7, 12], seed: 10 });
-      const hs = SCAPE.scatter(w, { kind: 'house', n: 70, area: [-40, 280, 420, 620], scale: [6, 10], seed: 11, avoid: (x, z) => Math.hypot(x + 70, z - 210) < 130 });
+      const hs = SCAPE.scatter(w, { kind: 'house', lit: 0.25, n: 70, area: [-40, 280, 420, 620], scale: [6, 10], seed: 11, avoid: (x, z) => Math.hypot(x + 70, z - 210) < 130 });
       hs.meshes.forEach(m => { m.material = PHOTO.mat(w, 'clay_plaster', { triplanar: 0.22, fallback: m.material.map, color: '#b8aa96' }); });
 
       /* ---------- the camp at the foot of Sal' (tents, fires, baskets, spades) ---------- */
