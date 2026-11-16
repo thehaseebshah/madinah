@@ -32,6 +32,70 @@ window.SOURCES && (SOURCES.data = {
    "ref": "Musnad Ahmad 15504; Ibn Ishaq (Ibn Hisham)",
    "url": "https://hadithunlocked.com/ahmad:15504",
    "note": "In the Black Stone report they say 'al-Amin has come'. Al-Arna'ut graded the chain sahih, and the title is also standard in the sirah."
+  },
+  {
+   "n": 137,
+   "claim": "Before Quraysh rebuilt it, the Ka'bah was a structure of loose stones a little above a man's height, without a roof; Quraysh wished to raise and roof it but feared to demolish it.",
+   "grade": "sirah",
+   "ref": "Ibn Ishaq, in Ibn Hisham, al-Sirah al-Nabawiyyah, ch. 6 §1 (the reason for Quraysh's building of the Ka'bah)",
+   "url": "https://hadithunlocked.com/ibnhisham/6/1",
+   "note": "Same section dates it to when the Prophet was thirty-five."
+  },
+  {
+   "n": 138,
+   "claim": "The sea cast the ship of a Byzantine (Rumi) merchant ashore at Jeddah and it broke apart; Quraysh took its timber for the roof, and a Coptic carpenter living in Makkah helped prepare it.",
+   "grade": "sirah",
+   "ref": "Ibn Ishaq, in Ibn Hisham, ch. 6 §1",
+   "url": "https://hadithunlocked.com/ibnhisham/6/1",
+   "note": "Some versions place the wreck at al-Shu'aybah, Makkah's older port; Ibn Hisham's text says Jeddah."
+  },
+  {
+   "n": 139,
+   "claim": "Al-Walid ibn al-Mughirah began the demolition; the people waited a night to see whether harm would befall him, then demolished down to the foundation of Ibrahim, where they found green stones like camel humps, locked together, and stopped there.",
+   "grade": "sirah",
+   "ref": "Ibn Ishaq, in Ibn Hisham, ch. 6 §4",
+   "url": "https://hadithunlocked.com/ibnhisham/6/4",
+   "note": ""
+  },
+  {
+   "n": 140,
+   "claim": "Each clan of Quraysh gathered stones separately and built its own part until the walls reached the place of the Black Stone; the clans then disputed for four or five nights over who would lift it into place, and Banu 'Abd al-Dar and Banu 'Adi swore over a bowl of blood to fight to the death; they agreed that the first man to enter through the gate of the mosque would judge; it was the Prophet, whom they accepted as al-Amin; he placed the stone in a garment, had each clan hold a side and lift it together, and set it in place himself, then built over it.",
+   "grade": "sirah",
+   "ref": "Ibn Ishaq, in Ibn Hisham, ch. 6 §5; cf. Musnad Ahmad 15504",
+   "url": "https://hadithunlocked.com/ibnhisham/6/5",
+   "note": "Supplements the existing verified claim (Musnad Ahmad 15504). The text says 'the gate of this mosque'; other wordings name Banu Shaybah's gate or 'the pass'. The game says only 'the first man to come in'."
+  },
+  {
+   "n": 141,
+   "claim": "Abu Wahb ibn 'Amr urged Quraysh to put into the building of the Ka'bah only lawful earnings: no fee of a prostitute, no usury, nothing taken unjustly.",
+   "grade": "sirah",
+   "ref": "Ibn Ishaq, in Ibn Hisham, ch. 6 §2",
+   "url": "https://hadithunlocked.com/ibnhisham/6/2",
+   "note": ""
+  },
+  {
+   "n": 142,
+   "claim": "The Prophet told 'A'ishah that the rounded wall (the Hijr) is part of the House, that her people left it out because they ran short of money, and that they raised its door so as to admit whom they wished and keep out whom they wished.",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 1584; Sahih Muslim 1333",
+   "url": "https://hadithunlocked.com/bukhari:1584",
+   "note": "Extends the existing verified claim on the Hijr to the raised door."
+  },
+  {
+   "n": 143,
+   "claim": "Quraysh built the walls in alternating courses, one course of teak wood and one of stone, and raised the Ka'bah to eighteen cubits, nine cubits above its former height.",
+   "grade": "sirah",
+   "ref": "'Ali ibn Burhan al-Din al-Halabi, al-Sirah al-Halabiyyah, chapter on Quraysh's building of the Ka'bah",
+   "url": "https://ar.wikisource.org/wiki/%D8%A7%D9%84%D8%B3%D9%8A%D8%B1%D8%A9_%D8%A7%D9%84%D8%AD%D9%84%D8%A8%D9%8A%D8%A9/%D8%A8%D8%A7%D8%A8_%D8%A8%D9%86%D9%8A%D8%A7%D9%86_%D9%82%D8%B1%D9%8A%D8%B4_%D8%A7%D9%84%D9%83%D8%B9%D8%A8%D8%A9_%D8%B4%D8%B1%D9%81%D9%87%D8%A7_%D8%A7%D9%84%D9%84%D9%87_%D8%AA%D8%B9%D8%A7%D9%84%D9%89",
+   "note": "Arabic: 'جعلوها مدماكا من خشب الساج ومدماكا من الحجارة' and 'فكان ارتفاعها ثمانية عشر ذراعا'. A late (17th-c.) compilation of earlier reports; presented in the game as what 'later sirah writers describe'."
+  },
+  {
+   "n": 144,
+   "claim": "The Prophet began to receive revelation at the age of forty.",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 3902",
+   "url": "https://hadithunlocked.com/bukhari:3902",
+   "note": "With the age of 35 at the rebuilding (existing claim), this gives 'five years before the first revelation'."
   }
  ],
  "hira": [
@@ -74,6 +138,38 @@ window.SOURCES && (SOURCES.data = {
    "ref": "Wikipedia, 'Jabal al-Nour' (642 m; coordinates 21.458 N, 39.861 E)",
    "url": "https://en.wikipedia.org/wiki/Jabal_al-Nour",
    "note": "From the coordinates, the straight-line distance to the Ka'bah is about 5 km, bearing north-east. Sources give 3 to 6 km depending on how it is measured, so 'about 4-5 km' is safest."
+  },
+  {
+   "n": 129,
+   "claim": "Revelation began with true dreams that came like the light of dawn (falaq al-subh); then seclusion was made dear to him, and he would retreat to the Cave of Hira to worship for many nights, taking provisions with him and returning to Khadijah for more.",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 3 (from 'A'ishah); also Sahih al-Bukhari 6982; Sahih Muslim 160",
+   "url": "https://sunnah.com/bukhari:3",
+   "note": "Wording of translations varies ('bright daylight' / 'the break of dawn'); 'provisions' renders zad / tazawwud."
+  },
+  {
+   "n": 130,
+   "claim": "Revelation came to him when he was forty years old; he then stayed in Makkah thirteen years before migrating.",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 3851, 3902 (Ibn 'Abbas)",
+   "url": "https://sunnah.com/bukhari:3851",
+   "note": "Arabic: wa-huwa ibnu arba'in. Used only for 'about forty'."
+  },
+  {
+   "n": 131,
+   "claim": "The Qur'an was first sent down in the month of Ramadan.",
+   "grade": "quran",
+   "ref": "Qur'an 2:185",
+   "url": "https://quran.com/2/185",
+   "note": "'The month of Ramadan in which the Qur'an was sent down, a guidance for people.'"
+  },
+  {
+   "n": 132,
+   "claim": "The Qur'an was sent down in the Night of Decree (Laylat al-Qadr), which is better than a thousand months.",
+   "grade": "quran",
+   "ref": "Qur'an 97:1-3",
+   "url": "https://quran.com/97",
+   "note": "Quoted directly; no date for the night is asserted."
   }
  ],
  "safa": [
@@ -84,6 +180,54 @@ window.SOURCES && (SOURCES.data = {
    "ref": "Sahih al-Bukhari 4971, 4770; Sahih Muslim 208; Qur'an 26:214, 111",
    "url": "https://sunnah.com/bukhari:4971",
    "note": "'Ya Sabahah' and 'we never knew you to lie' are in Bukhari 4971. Bukhari 4770 instead has him calling the clans by name and 'we found you only truthful'."
+  },
+  {
+   "n": 180,
+   "claim": "About three years passed between the beginning of the mission, when the Prophet kept his affair concealed, and the command to proclaim it openly; Ibn Ishaq links the command to Qur'an 15:94, 'So proclaim what you are commanded'.",
+   "grade": "sirah",
+   "ref": "Ibn Ishaq, in Ibn Hisham, al-Sirah al-Nabawiyyah, ch. 14; Qur'an 15:94",
+   "url": "https://hadithunlocked.com/ibnhisham/14",
+   "note": "Ibn Hisham's text qualifies the three years with 'as far as has reached me'. Used for 'for three years the message has been shared quietly' and the open call thereafter."
+  },
+  {
+   "n": 181,
+   "claim": "Indeed, as-Safa and al-Marwah are among the symbols of God.",
+   "grade": "quran",
+   "ref": "Qur'an 2:158",
+   "url": "https://quran.com/2/158",
+   "note": ""
+  },
+  {
+   "n": 182,
+   "claim": "Hajar, left with her infant son Isma'il in the valley of Makkah, ran between as-Safa and al-Marwah seven times looking for help and water; this is the origin of the sa'i.",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 3364",
+   "url": "https://sunnah.com/bukhari:3364",
+   "note": "Ibn 'Abbas's long narration; the Prophet said 'that is the sa'y of the people between them'."
+  },
+  {
+   "n": 183,
+   "claim": "The house of al-Arqam ibn Abi al-Arqam, at the foot of as-Safa, was where the early Muslims met in the first years of the call.",
+   "grade": "sirah",
+   "ref": "Ibn Sa'd, al-Tabaqat al-Kubra (biography of al-Arqam); Ibn Ishaq",
+   "url": "https://en.wikipedia.org/wiki/Al-Arqam_ibn_Abi_al-Arqam",
+   "note": "Location 'at as-Safa' is standard in the sirah literature; the site was later absorbed into the Masjid al-Haram."
+  },
+  {
+   "n": 184,
+   "claim": "In one narration the Prophet called the clans by name, 'O Banu Fihr! O Banu 'Adi!', and whoever could not come himself sent a messenger to see what it was.",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 4770",
+   "url": "https://sunnah.com/bukhari:4770",
+   "note": "Same event as Bukhari 4971 (existing verified claim)."
+  },
+  {
+   "n": 185,
+   "claim": "As-Safa is a small hill beside the Ka'bah, at the foot of Mount Abu Qubays, and is now enclosed within the Masjid al-Haram at one end of the mas'a.",
+   "grade": "history",
+   "ref": "Encyclopaedia of Islam, 'al-Safa'; Wikipedia 'Al-Safa and Al-Marwah'",
+   "url": "https://en.wikipedia.org/wiki/Al-Safa_and_Al-Marwah",
+   "note": "Geography used in the film line 'Beside the House, at the foot of Abu Qubays, rises a low rock: as-Safa.'"
   }
  ],
  "thawr": [
@@ -134,6 +278,22 @@ window.SOURCES && (SOURCES.data = {
    "ref": "Ibn Ishaq (Ibn Hisham); Sahih al-Bukhari 3905 ('below Makkah', coastal road)",
    "url": "https://sunnah.com/bukhari:3905",
    "note": "Mount Thawr lies south of Makkah. Taking the opposite direction to throw off pursuers is how the sirah explains it."
+  },
+  {
+   "n": 186,
+   "claim": "The Prophet and Abu Bakr gave their two camels to the guide they had hired and agreed that he would bring them to the cave of Thawr after three nights; Abdullah ibn Abi Bakr spent the nights with them and left before dawn, bringing news from Makkah; Amir ibn Fuhayrah brought the flock to them after nightfall so they had milk.",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 3905 (also 2263)",
+   "url": "https://sunnah.com/bukhari/63/130",
+   "note": "Extends claim 13 of sources.verified.json (thawr) with the guide's return with the camels after three nights. The route 'by the coast' is in the same hadith ('he took them along the way of the coast')."
+  },
+  {
+   "n": 187,
+   "claim": "The cave of Thawr lies near the summit of Jabal Thawr, a mountain south of Makkah.",
+   "grade": "history",
+   "ref": "Geography of Jabal Thawr (Wikipedia 'Jabal Thawr'); cf. claim 16 (thawr)",
+   "url": "https://en.wikipedia.org/wiki/Jabal_Thawr",
+   "note": "Used for the film line 'Near its summit they hid in a cave, three nights.'"
   }
  ],
  "hijrah": [
@@ -192,6 +352,38 @@ window.SOURCES && (SOURCES.data = {
    "ref": "Sahih al-Bukhari 3906",
    "url": "https://sunnah.com/bukhari:3906",
    "note": "The number is confirmed: the wording 'that was on Monday, in the month of Rabi' al-Awwal' is in 3906 (Urwah's report). This duplicates entry 21."
+  },
+  {
+   "n": 125,
+   "claim": "The Prophet and Abu Bakr stayed three nights in a cave on the mountain of Thawr; 'Amir ibn Fuhayrah, Abu Bakr's freed slave, brought milch sheep to them a little after nightfall.",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 3905 (Aisha)",
+   "url": "https://quranx.com/Hadith/Bukhari/USC-MSA/Volume-5/Book-58/Hadith-245",
+   "note": "USC-MSA vol. 5, book 58, no. 245 = sunnah.com Bukhari 3905. Wording: 'reached a cave on the mountain of Thaur and stayed there for three nights'; 'Amir bin Fuhaira ... used to bring the milch sheep'."
+  },
+  {
+   "n": 126,
+   "claim": "They had hired an expert guide of Banu ad-Dil who still followed the religion of Quraysh; they gave him their two she-camels to bring to the cave of Thawr after three nights; he and 'Amir ibn Fuhayrah went with them and he led them along the sea-shore.",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 3905; also 2263, 2264 (Book of Hiring)",
+   "url": "https://quranx.com/Hadith/Bukhari/USC-MSA/Volume-5/Book-58/Hadith-245",
+   "note": "Confirms and extends entry 81. 'The guide led them along the sea-shore.'"
+  },
+  {
+   "n": 127,
+   "claim": "Messengers of Quraysh went among the tribes declaring a reward equal to the blood-money of each of the two (the Prophet and Abu Bakr) for whoever killed or captured them.",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 3906 (Suraqah ibn Ju'shum, via his nephew)",
+   "url": "https://quranx.com/Hadith/Bukhari/USC-MSA/Volume-5/Book-58/Hadith-245",
+   "note": "USC-MSA wording: 'The messengers of the heathens of Quraish came to us declaring that they had assigned for the persons who would kill or arrest Allah's Messenger and Abu Bakr, a reward equal to their bloodmoney.'"
+  },
+  {
+   "n": 128,
+   "claim": "When Suraqah's horse sank, its forelegs raised dust into the sky like smoke; he then asked for a written promise of security, which 'Amir ibn Fuhayrah wrote, and he went back.",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 3906",
+   "url": "https://quranx.com/Hadith/Bukhari/USC-MSA/Volume-5/Book-58/Hadith-245",
+   "note": "'the forelegs of my horse sank into the ground up to the knees' ... 'its fore-legs caused dust to rise up in the sky like smoke'; 'I requested him to write for me a statement of security'."
   }
  ],
  "quba": [
@@ -234,6 +426,38 @@ window.SOURCES && (SOURCES.data = {
    "ref": "Jami' al-Tirmidhi 324; Sunan Ibn Majah 1411 (Usayd ibn Zuhayr); Sunan Ibn Majah 1412 and Sunan al-Nasa'i 699 (Sahl ibn Hunayf)",
    "url": "https://sunnah.com/tirmidhi:324",
    "note": "Al-Tirmidhi: hasan gharib. Al-Albani: sahih. Zubair Ali Za'i: hasan. Al-Dhahabi called the Usayd route munkar because Abu al-Abrad is little known, but Sahl ibn Hunayf's report supports it: 'whoever purifies himself at home, then comes and prays in the Mosque of Quba, has the reward of an umrah'. The numbers are correct."
+  },
+  {
+   "n": 166,
+   "claim": "When the people of Madinah heard that the Prophet had left Makkah, they went out every morning to the harrah (lava field) to wait for him, until the heat of noon drove them back; he arrived on a Monday in Rabi' al-Awwal, turned with them to the right and stayed with Banu 'Amr ibn 'Awf.",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 3906",
+   "url": "https://sunnah.com/bukhari:3906",
+   "note": "Supplements existing claim 22 (ten-odd nights at Quba)."
+  },
+  {
+   "n": 167,
+   "claim": "The Prophet's ring, worn after him by Abu Bakr, 'Umar and 'Uthman, fell from 'Uthman into the well of Aris; they searched for it but it was never found.",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 5866, 5873, 5879",
+   "url": "https://sunnah.com/bukhari:5866",
+   "note": "The well of Aris lies close to the Mosque of Quba (geography)."
+  },
+  {
+   "n": 168,
+   "claim": "For sixteen or seventeen months after the Hijrah the Muslims prayed facing Bayt al-Maqdis (Jerusalem), until the qibla was turned to the Ka'bah.",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 40, 399",
+   "url": "https://sunnah.com/bukhari:40",
+   "note": "From Madinah, Jerusalem lies to the north; the game places the first qibla wall on the north side."
+  },
+  {
+   "n": 169,
+   "claim": "Quba lies on the southern edge of the oasis of Madinah (Yathrib), a few kilometres south of the Prophet's Mosque.",
+   "grade": "history",
+   "ref": "Wikipedia, 'Quba Mosque'",
+   "url": "https://en.wikipedia.org/wiki/Quba_Mosque",
+   "note": "About 3.25 km south-west of al-Masjid an-Nabawi."
   }
  ],
  "badr": [
@@ -268,6 +492,30 @@ window.SOURCES && (SOURCES.data = {
    "ref": "Sahih al-Bukhari 3925",
    "url": "https://sunnah.com/bukhari:3925",
    "note": ""
+  },
+  {
+   "n": 105,
+   "claim": "A man on the roof of one of the forts of Madinah saw the Prophet and his companions coming, dressed in white, and called out; the Muslims went out with their arms and received him on the harrah.",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 3906 (Urwah ibn az-Zubayr)",
+   "url": "https://quranx.com/Hadith/Bukhari/USC-MSA/Volume-5/Book-58/Hadith-245",
+   "note": "USC-MSA 5/58/245: 'a Jew climbed up the roof of one of the forts ... saw Allah's Messenger and his companions dressed in white clothes'; 'received Allah's Messenger on the summit of Harra'."
+  },
+  {
+   "n": 106,
+   "claim": "He stayed some ten nights (bid' 'ashrah laylah) with Banu 'Amr ibn 'Awf at Quba and founded the mosque there.",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 3906",
+   "url": "https://quranx.com/Hadith/Bukhari/USC-MSA/Volume-5/Book-58/Hadith-245",
+   "note": "The English reads 'ten nights'; the Arabic بضع عشرة ليلة means 'ten-odd nights'. The card says 'some ten nights'."
+  },
+  {
+   "n": 107,
+   "claim": "He then rode his she-camel, the people walking with him, until it knelt at the place of the Mosque of the Messenger in Madinah.",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 3906",
+   "url": "https://quranx.com/Hadith/Bukhari/USC-MSA/Volume-5/Book-58/Hadith-245",
+   "note": "'mounted his she-camel and proceeded on, accompanied by the people till his she-camel knelt down at (the place of) the Mosque'."
   }
  ],
  "palm-mosque": [
@@ -318,6 +566,38 @@ window.SOURCES && (SOURCES.data = {
    "ref": "Sahih al-Bukhari 2027, 813; Sahih Muslim 1167",
    "url": "https://sunnah.com/bukhari:2027",
    "note": "Abu Sa'id al-Khudri, on the night of the 21st of Ramadan."
+  },
+  {
+   "n": 151,
+   "claim": "To build the mosque he had the date palms on the site cut down; the trunks were set in a row to form the wall facing the qibla, and its two door-posts were made of stone.",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 428, 3932 (Anas ibn Malik)",
+   "url": "https://sunnah.com/bukhari:428",
+   "note": "Arabic: fa-amara bi'l-nakhl fa-quti'a ... fa-saffu al-nakhl qiblata al-masjid wa ja'alu 'idadatayhi al-hijarah. In the same report the graves of the polytheists were dug up and the ruins levelled."
+  },
+  {
+   "n": 152,
+   "claim": "While building, the Companions carried the stones and chanted verses of rajaz, and the Prophet was with them, saying: 'O God, there is no good but the good of the Hereafter; so forgive the Ansar and the Emigrants.'",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 428, 3932 (Anas ibn Malik)",
+   "url": "https://sunnah.com/bukhari:428",
+   "note": "Arabic: wa ja'alu yanquluna al-sakhr wa hum yartajizun wa'l-nabi ma'ahum wa huwa yaqul: allahumma la khayra illa khayr al-akhirah, fa'ghfir li'l-ansar wa'l-muhajirah."
+  },
+  {
+   "n": 153,
+   "claim": "The Prophet himself carried bricks with them for the building, saying: 'This load is not the load of Khaybar; this is more dutiful, our Lord, and purer.'",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 3906 ('Urwah, from 'A'ishah's account of the Hijrah)",
+   "url": "https://sunnah.com/bukhari:3906",
+   "note": "Arabic: wa tafiqa rasul allah yanqulu ma'ahum al-laban fi bunyanihi wa yaqul: hadha al-himalu la himala Khaybar, hadha abarru rabbana wa athar. 'Load of Khaybar' means the dates and raisins carried from Khaybar."
+  },
+  {
+   "n": 154,
+   "claim": "The date-drying yard where his camel knelt belonged to two orphan boys, Suhayl and Sahl, under the guardianship of As'ad ibn Zurarah; they offered it as a gift, but he bought it from them to make it a mosque.",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 3906",
+   "url": "https://sunnah.com/bukhari:3906",
+   "note": "Extends verified claim 28 with the guardian's name. Checked on hadithunlocked.com/bukhari:3906."
   }
  ],
  "qiblatayn": [
@@ -352,6 +632,30 @@ window.SOURCES && (SOURCES.data = {
    "ref": "Sahih al-Bukhari 40 (al-Bara'), 403 (Ibn 'Umar)",
    "url": "https://sunnah.com/bukhari:40",
    "note": "Bukhari 40: the first prayer he prayed toward the Ka'bah was 'Asr. A man who had prayed with him passed a mosque (unnamed) whose people were bowing, and they turned while still in ruku'. Ibn Hajar and al-Ayni identify it as Banu Salimah (Masjid al-Qiblatayn); other reports say Banu Harithah. Bukhari 403: the people of Quba turned during Fajr the next morning. Neither has the Prophet himself turning during a prayer."
+  },
+  {
+   "n": 163,
+   "claim": "He prayed toward Jerusalem for sixteen or seventeen months, and he loved to face the Ka'bah; then God revealed: 'We have certainly seen the turning of your face toward the heaven.'",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 399 (al-Bara' ibn 'Azib); Qur'an 2:144",
+   "url": "https://sunnah.com/bukhari:399",
+   "note": "Arabic: wa kana yuhibbu an yuwajjaha ila al-Ka'bah, fa-anzala Allah: qad nara taqalluba wajhika fi al-sama'. Extends verified claim 34."
+  },
+  {
+   "n": 164,
+   "claim": "Qur'an 2:142: 'The foolish among the people will say: What has turned them away from the qiblah they used to face? Say: To God belong the east and the west; He guides whom He wills to a straight path.'",
+   "grade": "quran",
+   "ref": "Qur'an 2:142",
+   "url": "https://quran.com/2/142",
+   "note": "Sahih International wording, lightly shortened."
+  },
+  {
+   "n": 165,
+   "claim": "Qur'an 2:115: 'To God belong the east and the west: wherever you turn, there is the Face of God.'",
+   "grade": "quran",
+   "ref": "Qur'an 2:115",
+   "url": "https://quran.com/2/115",
+   "note": "Sahih International wording."
   }
  ],
  "uhud": [
@@ -386,6 +690,30 @@ window.SOURCES && (SOURCES.data = {
    "ref": "Sahih al-Bukhari 4422 (Abu Humayd, returning from Tabuk), 2889 (Anas); Sahih Muslim 1393 (Anas), 1392 (Abu Humayd)",
    "url": "https://sunnah.com/bukhari:4422",
    "note": "Both numbers are confirmed (online editions list Muslim 1393a and 1393b). In 4422 he also says 'This is Tabah', meaning Madinah."
+  },
+  {
+   "n": 189,
+   "claim": "Uhud is a mountain north of Madinah, about 7.5 km long and 1,077 m high, mostly of red granite, about 5 km north of the Prophet's Mosque.",
+   "grade": "history",
+   "ref": "Saudipedia 'Mount Uhud'; Wikipedia 'Mount Uhud'",
+   "url": "https://saudipedia.com/en/mount-uhud",
+   "note": "Wikipedia gives 1,077 m and 7.5 km; Saudipedia describes rocky granite, predominantly red, and a distance of about 5 km from the Prophet's Mosque. The station says 'some seven kilometres long' and 'red granite'. Some geologists describe much of the red rock as rhyolite."
+  },
+  {
+   "n": 190,
+   "claim": "The martyrs of Uhud were buried at Uhud in their blood, unwashed, two men sometimes put in one grave, and the Prophet did not offer the funeral prayer over them then.",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 1343 (Jabir ibn Abdullah)",
+   "url": "https://sunnah.com/bukhari:1343",
+   "note": "Supports the film line 'About seventy were killed, and buried here' together with claim 37 (Bukhari 3039 for the number)."
+  },
+  {
+   "n": 191,
+   "claim": "Returning from Tabuk, when Madinah came into view the Prophet said 'This is Tabah', and on seeing Uhud, 'This is a mountain that loves us and we love it.'",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 4422 (Abu Humayd)",
+   "url": "https://sunnah.com/bukhari:4422",
+   "note": "Same as claim 88 of sources.verified.json (uhud); listed for the 'Tabah' discovery."
   }
  ],
  "trench": [
@@ -428,6 +756,14 @@ window.SOURCES && (SOURCES.data = {
    "ref": "al-Tabarani, al-Mu'jam al-Kabir 6040 (Amr ibn Awf al-Muzani); Majma' al-Zawa'id 10137",
    "url": "https://en.tohed.com/hadith/majma-al-zawaid/10137/",
    "note": "The chain includes Kathir ibn Abdullah al-Muzani, whom the majority judged weak, and it is graded weak."
+  },
+  {
+   "n": 188,
+   "claim": "While digging the trench they came upon a big hard rock; they had not eaten for three days and a stone was tied to the Prophet's belly; he took the spade and struck the rock, and it became like loose sand.",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 4101 (Jabir ibn Abdullah)",
+   "url": "https://quranx.com/Hadith/Bukhari/USC-MSA/Volume-5/Book-59/Hadith-427",
+   "note": "USC-MSA 5/59/427 = Dar-us-Salam 4101: 'we came across a big solid rock'; 'a stone was tied to his belly for we had not eaten anything for three days'; 'struck the big solid rock and it became like sand'. Extends entry 43."
   }
  ],
  "well": [
@@ -446,6 +782,30 @@ window.SOURCES && (SOURCES.data = {
    "ref": "Wikipedia 'Bir Rumah' (24.493 N, 39.585 E); Saudi Awqaf, Uthman well endowment",
    "url": "https://en.wikipedia.org/wiki/Bir_Rumah",
    "note": "The Saudi endowments site places it in the area of al-Aqiq al-Asghar."
+  },
+  {
+   "n": 192,
+   "claim": "When the Prophet came to Madinah there was no sweet water except the well of Rumah. He said: 'Who will buy the well of Rumah and place his bucket alongside the buckets of the Muslims, for something better than it in Paradise?' 'Uthman bought it from his own wealth.",
+   "grade": "hasan",
+   "ref": "Jami' al-Tirmidhi 3703; Sunan al-Nasa'i 3608",
+   "url": "https://sunnah.com/tirmidhi:3703",
+   "note": "Graded hasan by al-Tirmidhi and al-Albani (Ibn al-Mulaqqin: sahih). 'Uthman recalls it during the siege of his house. Extends verified claim 45 with the wording about the bucket and the sweet water."
+  },
+  {
+   "n": 193,
+   "claim": "During the siege of his house, 'Uthman reminded the people that he had bought the well of Rumah for the Muslims, while they now kept him from drinking its water.",
+   "grade": "hasan",
+   "ref": "Jami' al-Tirmidhi 3703",
+   "url": "https://sunnah.com/tirmidhi:3703",
+   "note": "Same report as above; presented as 'Uthman's own words in the narration."
+  },
+  {
+   "n": 194,
+   "claim": "In Wadi al-'Aqiq the Prophet said that one had come to him from his Lord and said: 'Pray in this blessed valley.'",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 1534 ('Umar)",
+   "url": "https://sunnah.com/bukhari:1534",
+   "note": "Al-Bukhari's chapter heading: 'al-'Aqiq is a blessed valley'. The well of Rumah lies in the al-'Aqiq area (verified claim 46)."
   }
  ],
  "palms": [
@@ -472,6 +832,70 @@ window.SOURCES && (SOURCES.data = {
    "ref": "Sahih Muslim 2363 ('A'ishah and Anas); cf. 2361 (Talhah), 2362 (Rafi' ibn Khadij)",
    "url": "https://sunnah.com/muslim:2363",
    "note": "The exact words 'antum a'lamu bi-amri dunyakum' are in 2363. The parallel reports (2361-2362) say 'if I command you something of your religion, take it; if it is my own opinion, I am only a human being'."
+  },
+  {
+   "n": 155,
+   "claim": "The Prophet passed people pollinating their palms and said, 'If you did not do it, it would be fine.' They left it and the dates came out poor (shis). When he passed again and asked, they told him; he said, 'You know better the affairs of your world.'",
+   "grade": "sahih",
+   "ref": "Sahih Muslim 2363 (Anas and 'A'ishah)",
+   "url": "https://sunnah.com/muslim:2363",
+   "note": "Arabic: law lam taf'alu la-salaha ... fa-kharaja shisan ... antum a'lamu bi-amri dunyakum. Checked via en.tohed.com/hadith/muslim/2363 (sunnah.com blocked to fetch)."
+  },
+  {
+   "n": 156,
+   "claim": "'Among the trees is a tree whose leaves do not fall, and it is like the Muslim' — it is the date palm.",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 61 (Ibn 'Umar); also Sahih Muslim 2811",
+   "url": "https://sunnah.com/bukhari:61",
+   "note": "Arabic key phrase: la yasqutu waraquha. Checked via en.tohed.com/hadith/bukhari/61."
+  },
+  {
+   "n": 157,
+   "claim": "'And towering palm trees, loaded with clustered fruit.'",
+   "grade": "quran",
+   "ref": "Qur'an 50:10 (tr. Mustafa Khattab, The Clear Quran)",
+   "url": "https://quran.com/50/10",
+   "note": "wa-n-nakhla basiqatin laha tal'un nadid"
+  },
+  {
+   "n": 158,
+   "claim": "'And from palm trees come clusters of dates hanging within reach.'",
+   "grade": "quran",
+   "ref": "Qur'an 6:99 (tr. Mustafa Khattab)",
+   "url": "https://quran.com/6/99",
+   "note": "wa mina n-nakhli min tal'iha qinwanun daniyah"
+  },
+  {
+   "n": 159,
+   "claim": "He said to 'A'ishah two or three times: 'A house without dates, its people are hungry.'",
+   "grade": "sahih",
+   "ref": "Sahih Muslim 2046b ('A'ishah); cf. 2046a",
+   "url": "https://sunnah.com/muslim:2046b",
+   "note": "Arabic: ya 'A'ishah, baytun la tamra fihi jiya'un ahluhu."
+  },
+  {
+   "n": 160,
+   "claim": "Salman al-Farisi contracted for his freedom by planting three hundred palm shoots; the Prophet placed them in the ground with his own hand and not one of them died.",
+   "grade": "hasan",
+   "ref": "Musnad Ahmad 23737 (Salman, via Ibn 'Abbas); Ibn Ishaq (Ibn Hisham)",
+   "url": "https://hadithunlocked.com/ahmad:23737",
+   "note": "Counts differ in other narrations (Ahmad 22997 via Buraydah; al-Hakim 2213 mentions 100 or 300); 23737 gives 300 and 'not a single one of those saplings died'."
+  },
+  {
+   "n": 161,
+   "claim": "'If the Hour is established while one of you has a palm shoot (fasilah) in his hand, and he is able to plant it before it is established, let him plant it.'",
+   "grade": "sahih",
+   "ref": "al-Adab al-Mufrad 479 (Anas); Musnad Ahmad 12902; graded sahih by al-Albani",
+   "url": "https://sunnah.com/adab:479",
+   "note": ""
+  },
+  {
+   "n": 162,
+   "claim": "Abu Talhah had more palm gardens than anyone among the Ansar in Madinah; the dearest to him was Bayruha, facing the Prophet's Mosque. The Prophet used to go into it and drink its good water. When Qur'an 3:92 was revealed he gave it in charity, and on the Prophet's advice divided it among his relatives.",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 1461 (Anas)",
+   "url": "https://sunnah.com/bukhari:1461",
+   "note": "Checked via en.tohed.com/hadith/bukhari/1461."
   }
  ],
  "aqiq": [
@@ -482,6 +906,46 @@ window.SOURCES && (SOURCES.data = {
    "ref": "Sahih al-Bukhari 1534 (Umar)",
    "url": "https://sunnah.com/bukhari:1534",
    "note": "The Arabic is ati, 'one who came' or 'a messenger', and commentators identify him as Jibril. 'Visitor' is a loose paraphrase."
+  },
+  {
+   "n": 94,
+   "claim": "While he passed the night at his resting place at Dhul-Hulayfah in the bottom of the valley (al-'Aqiq), he saw a dream and it was said to him: 'You are in a blessed valley.'",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 2336, 1535 (Ibn 'Umar)",
+   "url": "https://sunnah.com/bukhari:2336",
+   "note": "The place is called al-Mu'arras in Bukhari 1535."
+  },
+  {
+   "n": 95,
+   "claim": "'Abd Allah ibn 'Umar used to make his camel kneel at that spot in the valley, seeking the place where the Prophet used to rest.",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 1535",
+   "url": "https://sunnah.com/bukhari:1535",
+   "note": "Narrated by Musa ibn 'Uqbah from Salim from his father."
+  },
+  {
+   "n": 96,
+   "claim": "The Prophet fixed Dhul-Hulayfah as the miqat (the place to enter ihram) for the people of Madinah.",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 1524, 1526 (Ibn 'Abbas); Sahih Muslim 1181",
+   "url": "https://sunnah.com/bukhari:1524",
+   "note": "Dhul-Hulayfah is today called Abyar 'Ali."
+  },
+  {
+   "n": 97,
+   "claim": "Wadi al-'Aqiq is a seasonal valley, dry most of the year, that runs northward along the western side of Madinah and can flood in winter; it meets the city's other great wadis, Buthan and Qanat, to the north-west.",
+   "grade": "history",
+   "ref": "Madain Project, 'al-Aqeeq Valley'; Saudipedia, 'Geography of Al-Madinah Al-Munawwarah'; Wikipedia, 'Wadi Qanat'",
+   "url": "https://madainproject.com/al_aqeeq_valley",
+   "note": "No length is asserted."
+  },
+  {
+   "n": 98,
+   "claim": "The Hejaz Railway crossed the 'Aqiq valley near Madinah on a bridge; the old bridge was demolished in 2005 after rain damage.",
+   "grade": "history",
+   "ref": "Wikipedia, 'Hejaz railway'",
+   "url": "https://en.wikipedia.org/wiki/Hejaz_railway",
+   "note": "Shared with the railway station."
   }
  ],
  "lanes": [
@@ -492,6 +956,54 @@ window.SOURCES && (SOURCES.data = {
    "ref": "Wikipedia 'Al-Masjid an-Nabawi' (Saudi-era expansions and demolitions); Arab News 2017 (al-Oyayna market demolished about 30 years earlier); AGSI interview with Moath Alofi (2018)",
    "url": "https://en.wikipedia.org/wiki/Al-Masjid_an-Nabawi",
    "note": "Clearance was gradual: the 1950s and 1970s expansions, then mainly the King Fahd expansion of 1985-1992, with more after 2012. Figures such as '95% destroyed' are advocacy estimates, and I found no single scholarly source that quantifies the loss of the rawashin."
+  },
+  {
+   "n": 145,
+   "claim": "The roshan (pl. rawashin) is the projecting wooden lattice window of Hijazi houses, found in Jeddah, Makkah and Madinah; its lattice lets air and light in while keeping the household private.",
+   "grade": "history",
+   "ref": "Saudipedia, 'Traditional Architecture in Makkah al-Mukarramah Province'; Omrania, '8 Features of the Vernacular Architecture of the Hejaz'; WIT Press, 'The Mechanism of the Rawashin: the case study of Makkah'",
+   "url": "https://saudipedia.com/en/traditional-architecture-in-makkah-al-mukarramah-province",
+   "note": "Most detailed studies concern Jeddah and Makkah; the form was shared by Madinah's old houses."
+  },
+  {
+   "n": 146,
+   "claim": "Of cats the Prophet said: 'They are not impure; they are among those who go round among you.'",
+   "grade": "sahih",
+   "ref": "Sunan Abi Dawud 75; Jami' al-Tirmidhi 92; Sunan al-Nasa'i 68",
+   "url": "https://sunnah.com/abudawud:75",
+   "note": "Al-Tirmidhi: hasan sahih."
+  },
+  {
+   "n": 147,
+   "claim": "Abu Hurayrah said he was called 'father of the kitten' because he kept a small cat, playing with it by day while tending his family's goats.",
+   "grade": "hasan",
+   "ref": "Jami' al-Tirmidhi 3840",
+   "url": "https://sunnah.com/tirmidhi:3840",
+   "note": "Al-Tirmidhi: hasan gharib."
+  },
+  {
+   "n": 148,
+   "claim": "Tradition says Tamim al-Dari was the first to light lamps in the mosques (the Prophet's Mosque).",
+   "grade": "weak",
+   "ref": "Sunan Ibn Majah 760",
+   "url": "https://sunnah.com/ibnmajah:760",
+   "note": "Graded very weak (da'if jiddan) by al-Albani and al-Arna'ut because of Khalid ibn Iyas. Presented in the game only as 'tradition says'."
+  },
+  {
+   "n": 149,
+   "claim": "The dome over the Prophet's grave was rebuilt under the Ottoman sultan Mahmud II and first painted green in 1837.",
+   "grade": "history",
+   "ref": "Wikipedia, 'Green Dome'",
+   "url": "https://en.wikipedia.org/wiki/Green_Dome",
+   "note": "Sources give 1817/1818 for Mahmud II's dome; all agree on 1837 for the green paint."
+  },
+  {
+   "n": 150,
+   "claim": "In 1908 the Hejaz Railway reached Madinah, and around then the Prophet's Mosque was lit by electricity, among the first places in Arabia to be.",
+   "grade": "history",
+   "ref": "The Spectator, 5 Sept 1908 (summarising The Times); Wikipedia, 'Al-Masjid an-Nabawi'; Madain Project expansion chronology (1908/1909)",
+   "url": "https://en.wikipedia.org/wiki/Al-Masjid_an-Nabawi",
+   "note": "Some sources give 1909 for the mosque's electric lighting; the game says 'around that time'."
   }
  ],
  "railway": [
@@ -502,6 +1014,46 @@ window.SOURCES && (SOURCES.data = {
    "ref": "Wikipedia 'Hejaz railway'; Encyclopaedia Britannica (1911 ed.: 1,320 km)",
    "url": "https://en.wikipedia.org/wiki/Hejaz_railway",
    "note": "Two corrections. Most donations came from within the Ottoman Empire (only about 1 in 10 from Muslims outside it). The train journey is usually given as 5 days, not 3-5. The Hejaz Railway Museum in Madinah station opened in 2006."
+  },
+  {
+   "n": 170,
+   "claim": "The Hejaz Railway was ordered by Sultan Abdul Hamid II in March 1900; its gauge is 1,050 mm.",
+   "grade": "history",
+   "ref": "Wikipedia, 'Hejaz railway'",
+   "url": "https://en.wikipedia.org/wiki/Hejaz_railway",
+   "note": "Construction began later in 1900."
+  },
+  {
+   "n": 171,
+   "claim": "Water, fuel and labour were hard to find in the remote reaches of the Hejaz; camels carried water, food and materials to the builders in uninhabited areas.",
+   "grade": "history",
+   "ref": "Wikipedia, 'Hejaz railway'",
+   "url": "https://en.wikipedia.org/wiki/Hejaz_railway",
+   "note": ""
+  },
+  {
+   "n": 172,
+   "claim": "The section of the line south of al-Ula was built and staffed only by Muslims.",
+   "grade": "history",
+   "ref": "Wikipedia, 'Hejaz railway'",
+   "url": "https://en.wikipedia.org/wiki/Hejaz_railway",
+   "note": "Christian engineers were not permitted beyond al-Ula."
+  },
+  {
+   "n": 173,
+   "claim": "The line reached Madinah on 1 September 1908, a date chosen as the anniversary of the Sultan's accession; to meet it, some track was laid on temporary embankments across wadis.",
+   "grade": "history",
+   "ref": "Wikipedia, 'Hejaz railway'",
+   "url": "https://en.wikipedia.org/wiki/Hejaz_railway",
+   "note": "Extends existing claim 51."
+  },
+  {
+   "n": 174,
+   "claim": "The Hejaz Railway Museum opened in the Madinah railway station in 2006; the old railway bridge over the 'Aqiq valley near Madinah was demolished in 2005 after rain damage.",
+   "grade": "history",
+   "ref": "Wikipedia, 'Hejaz railway'",
+   "url": "https://en.wikipedia.org/wiki/Hejaz_railway",
+   "note": ""
   }
  ],
  "domes": [
@@ -528,6 +1080,54 @@ window.SOURCES && (SOURCES.data = {
    "ref": "SL Rasch, 'Sliding Domes' project page; Saudipedia, 'The Second Saudi Expansion of the Prophet's Mosque'",
    "url": "https://www.sl-rasch.com/?p=548",
    "note": "Each dome is about 18 x 18 m and 6.3 m high, weighs about 80 tonnes, and rolls on rails along the roof in about a minute. They open after sunset to let heat out and close in the day. Saudipedia gives 1993 for completion of the expansion (SL Rasch: 1984-1994). It is safe to say 'the King Fahd expansion (completed early 1990s)'."
+  },
+  {
+   "n": 119,
+   "claim": "In the Prophet's lifetime the mosque was built of adobe (mud brick), its roof of palm leaves and its pillars of palm trunks. Abu Bakr did not change it; 'Umar enlarged it with the same materials, renewing the pillars in wood; 'Uthman rebuilt it much larger with walls of carved stone and lime, pillars of carved stone and a roof of teak.",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 446 (Ibn 'Umar)",
+   "url": "https://sunnah.com/bukhari:446",
+   "note": "Checked via en.tohed.com/hadith/bukhari/446."
+  },
+  {
+   "n": 120,
+   "claim": "'One prayer in this mosque of mine is better than a thousand prayers in any other mosque, except al-Masjid al-Haram.'",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 1190 (Abu Hurayrah); Sahih Muslim 1394",
+   "url": "https://sunnah.com/bukhari:1190",
+   "note": "Arabic: salatun fi masjidi hadha khayrun min alfi salatin fima siwahu illa l-masjida l-haram."
+  },
+  {
+   "n": 121,
+   "claim": "Holes pierced into the base of each sliding dome illuminate the interior when the domes are closed; the domes slide out on metal tracks.",
+   "grade": "history",
+   "ref": "Wikipedia, 'Al-Masjid an-Nabawi' (architecture section)",
+   "url": "https://en.wikipedia.org/wiki/Al-Masjid_an-Nabawi",
+   "note": ""
+  },
+  {
+   "n": 122,
+   "claim": "The mosque has ten minarets; the six added in the King Fahd expansion each rise about 104 m (103.89 m).",
+   "grade": "history",
+   "ref": "Wikipedia, 'Al-Masjid an-Nabawi'",
+   "url": "https://en.wikipedia.org/wiki/Al-Masjid_an-Nabawi",
+   "note": "Infobox gives 105 m; the minaret section 103.89 m for the six new ones."
+  },
+  {
+   "n": 123,
+   "claim": "King Fahd's expansion began in 1985 and was completed in the early 1990s; it added 27 inner courtyards of about 324 m2 each (roofed by the sliding domes), and the mosque grew to more than 160,000 m2.",
+   "grade": "history",
+   "ref": "Wikipedia, 'Al-Masjid an-Nabawi'; SL Rasch 'Sliding Domes'",
+   "url": "https://en.wikipedia.org/wiki/Al-Masjid_an-Nabawi",
+   "note": "Completion 1992 (Wikipedia) or 1993-1994 (Saudipedia/SL Rasch); 'early 1990s' covers both."
+  },
+  {
+   "n": 124,
+   "claim": "Sultan Abdulmejid I rebuilt the mosque over thirteen years beginning in 1849, mainly in red stone.",
+   "grade": "history",
+   "ref": "Wikipedia, 'Al-Masjid an-Nabawi' (Ottoman period)",
+   "url": "https://en.wikipedia.org/wiki/Al-Masjid_an-Nabawi",
+   "note": ""
   }
  ],
  "rawdah": [
@@ -554,6 +1154,46 @@ window.SOURCES && (SOURCES.data = {
    "ref": "Ibn Ishaq (Ibn Hisham), after Banu Qurayzah, via Yazid ibn Abdullah ibn Qusayt; tafsir of Qur'an 8:27 and 9:102 (al-Tabari, Ibn Kathir)",
    "url": "https://hadithunlocked.com/ibnhisham:1160",
    "note": "Ibn Ishaq: after signalling 'slaughter' to Banu Qurayzah he tied himself to a pillar ('trunk') of the mosque for six nights. His wife untied him at each prayer. At dawn the Prophet, in Umm Salamah's house, received the acceptance, and he untied him on the way to Fajr. Ibn Hisham links 8:27 to the betrayal and 9:102 ('others who have confessed their sins') to his repentance. Ibn Abbas's tafsir report puts the tying after he stayed behind from Tabuk, with 9:102. There is no sahih hadith for it, so it is sirah."
+  },
+  {
+   "n": 175,
+   "claim": "He used to stand by a palm trunk (or tree) on Fridays; when a minbar was made and he stood on it, the palm cried out like a child; he came down and held it to him, and it moaned like a child being quieted. It had been weeping for the remembrance it used to hear.",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 3584 (Jabir); cf. 918, 3583",
+   "url": "https://sunnah.com/bukhari:3584",
+   "note": "Arabic: fa-sahati n-nakhlatu siyaha s-sabiyy ... thumma nazala n-nabiyyu fa-dammahu ilayh. Checked via en.tohed.com/hadith/bukhari/3584."
+  },
+  {
+   "n": 176,
+   "claim": "'One prayer in this mosque of mine is better than a thousand prayers in any other mosque, except al-Masjid al-Haram.'",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 1190",
+   "url": "https://sunnah.com/bukhari:1190",
+   "note": ""
+  },
+  {
+   "n": 177,
+   "claim": "In the Prophet's lifetime the mosque was built of mud brick, roofed with palm leaves, on pillars of palm trunks.",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 446",
+   "url": "https://sunnah.com/bukhari:446",
+   "note": ""
+  },
+  {
+   "n": 178,
+   "claim": "The Rawdah is marked out by a green carpet and by a series of distinctively coloured/decorated columns.",
+   "grade": "history",
+   "ref": "Wikipedia, 'Al-Masjid an-Nabawi' (Rawdah section)",
+   "url": "https://en.wikipedia.org/wiki/Al-Masjid_an-Nabawi",
+   "note": "Wikipedia notes the green carpet once contrasted with red carpet elsewhere; the text avoids claiming the contrast today."
+  },
+  {
+   "n": 179,
+   "claim": "Sultan Abdulmejid I rebuilt the mosque over thirteen years from 1849; the small painted domes of the old (Ottoman) part belong to that rebuilding.",
+   "grade": "history",
+   "ref": "Wikipedia, 'Al-Masjid an-Nabawi' (Ottoman period)",
+   "url": "https://en.wikipedia.org/wiki/Al-Masjid_an-Nabawi",
+   "note": "The attribution of the present small domes to the Ottoman rebuilding is general; no single dome is dated."
   }
  ],
  "city": [
@@ -572,6 +1212,46 @@ window.SOURCES && (SOURCES.data = {
    "ref": "Wikipedia 'Green Dome' (citing Ariffin, Architectural Conservation in Islam, 2005; Petersen, Dictionary of Islamic Architecture)",
    "url": "https://en.wikipedia.org/wiki/Green_Dome",
    "note": "The original Mamluk dome was unpainted wood. It was rebuilt after the 1481 fire (Qaitbay) and again in 1818."
+  },
+  {
+   "n": 110,
+   "claim": "The umbrellas of the courtyards open and close automatically in response to the weather.",
+   "grade": "history",
+   "ref": "Wikipedia, 'Al-Masjid an-Nabawi' (umbrellas)",
+   "url": "https://en.wikipedia.org/wiki/Al-Masjid_an-Nabawi",
+   "note": "Installed 2010 (250 umbrellas, about 143,000 m2) — see sources.verified.json city #55."
+  },
+  {
+   "n": 111,
+   "claim": "The mosque has ten minarets; of the original minarets only two survive: the main (Ra'isiyyah) minaret and the minaret of Bab as-Salam.",
+   "grade": "history",
+   "ref": "Wikipedia, 'Al-Masjid an-Nabawi' (minarets)",
+   "url": "https://en.wikipedia.org/wiki/Al-Masjid_an-Nabawi",
+   "note": ""
+  },
+  {
+   "n": 112,
+   "claim": "'Do not set out on a journey except for three mosques: al-Masjid al-Haram, the mosque of the Messenger, and al-Masjid al-Aqsa.'",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 1189 (Abu Hurayrah); Sahih Muslim 1397",
+   "url": "https://sunnah.com/bukhari:1189",
+   "note": "Checked via en.tohed.com/hadith/bukhari/1189."
+  },
+  {
+   "n": 113,
+   "claim": "'One prayer in this mosque of mine is better than a thousand prayers in any other mosque, except al-Masjid al-Haram.'",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 1190",
+   "url": "https://sunnah.com/bukhari:1190",
+   "note": ""
+  },
+  {
+   "n": 114,
+   "claim": "King Fahd's expansion began in 1985 and was completed in the early 1990s; the mosque grew to more than 160,000 m2.",
+   "grade": "history",
+   "ref": "Wikipedia, 'Al-Masjid an-Nabawi'",
+   "url": "https://en.wikipedia.org/wiki/Al-Masjid_an-Nabawi",
+   "note": ""
   }
  ],
  "boycott": [
@@ -622,6 +1302,22 @@ window.SOURCES && (SOURCES.data = {
    "ref": "Sahih al-Bukhari 3896 (Khadijah died three years before he left for Madinah); Ibn Ishaq (both died in one year); the name: IslamQA 221486 (al-Albani and Dr. al-Awshan found no isnad)",
    "url": "https://islamqa.info/ar/answers/221486",
    "note": "The deaths are well attested. Bukhari 3896 is Urwah's report, technically mursal, though Ibn Hajar thought it was likely taken from Aisha. The name 'Am al-Huzn' has no isnad to the Prophet, nor to the Companions or early imams. It first appears in later works (lexicographers via Tha'lab from Ibn al-A'rabi, then al-Qastallani and al-Sakhawi). Do not write 'the Prophet called it the Year of Sorrow'. Say 'later called the Year of Sorrow'."
+  },
+  {
+   "n": 108,
+   "claim": "The boycott went on for two or three years until the two clans were exhausted, for nothing reached them except what was sent secretly by those of Quraysh who wished to keep ties with them.",
+   "grade": "sirah",
+   "ref": "Ibn Ishaq (Ibn Hisham), the account of the pact; Guillaume's translation, The Life of Muhammad",
+   "url": "https://en.wikipedia.org/wiki/Meccan_boycott_of_the_Hashemites",
+   "note": "Ibn Ishaq's wording as quoted in the article (Guillaume): 'This state of affairs continued for two or three years, until the two clans were exhausted, since nothing reached any of them except what was sent secretly by those of the Quraysh who wished to maintain relations with them.' Supports the line 'food reached them only in secret'. No isnad."
+  },
+  {
+   "n": 109,
+   "claim": "The boycott document was hung inside the Ka'bah, and the sirah names its writer as Mansur ibn Ikrimah.",
+   "grade": "sirah",
+   "ref": "Ibn Ishaq (Ibn Hisham), the account of the pact",
+   "url": "https://en.wikipedia.org/wiki/Meccan_boycott_of_the_Hashemites",
+   "note": "Already in the note of claim 60 of sources.verified.json (boycott); listed here because the film and a discovery use it directly. Some name the writer as al-Nadr ibn al-Harith."
   }
  ],
  "isra": [
@@ -664,6 +1360,38 @@ window.SOURCES && (SOURCES.data = {
    "ref": "Ibn Sa'd, al-Tabaqat; Ibn Hajar, Fath al-Bari (Kitab Manaqib al-Ansar, bab al-Mi'raj)",
    "url": "https://hadithunlocked.com/bukhari:3887",
    "note": "Ibn Hajar lists more than ten opinions, ranging from about five years after the first revelation to six months before the Hijrah. 'One year before' is attributed to Ibn Sa'd and others, and Ibn Hazm claimed consensus, which others reject. The popular date of 27 Rajab has no firm basis. Keep the wording 'scholars differ'."
+  },
+  {
+   "n": 133,
+   "claim": "When Quraysh did not believe him about the Night Journey, he stood in al-Hijr and Allah displayed Jerusalem before him, and he described it to them while looking at it.",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 3886 (Jabir ibn 'Abd Allah); also Sahih al-Bukhari 4710",
+   "url": "https://sunnah.com/bukhari:3886",
+   "note": "Used for a discovery near al-Aqsa."
+  },
+  {
+   "n": 134,
+   "claim": "At the Lote Tree of the Utmost Boundary its fruits were like the jars of Hajar and its leaves like the ears of elephants; four rivers flowed from its root, two hidden and two visible, and the visible two were the Nile and the Euphrates.",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 3207, 3887 (Anas from Malik ibn Sa'sa'ah)",
+   "url": "https://sunnah.com/bukhari:3207",
+   "note": "Translations vary: 'jars' / 'jugs' of Hajar."
+  },
+  {
+   "n": 135,
+   "claim": "'He certainly saw some of the greatest signs of his Lord.' And: 'The sight did not swerve, nor did it go beyond.'",
+   "grade": "quran",
+   "ref": "Qur'an 53:17-18",
+   "url": "https://quran.com/53/17-18",
+   "note": "Quoted directly; follows 53:14-16 on the Lote Tree."
+  },
+  {
+   "n": 136,
+   "claim": "Qur'an 17:1 continues: '...to al-Masjid al-Aqsa, whose surroundings We have blessed, to show him some of Our signs.'",
+   "grade": "quran",
+   "ref": "Qur'an 17:1",
+   "url": "https://quran.com/17/1",
+   "note": "Extends the existing claim 63."
   }
  ],
  "aqabah": [
@@ -698,6 +1426,22 @@ window.SOURCES && (SOURCES.data = {
    "ref": "Saudipedia 'Al-Bay'ah Mosque'; Wikipedia 'Bay'ah Mosque' (two inscriptions, on the qiblah and southern walls)",
    "url": "https://en.wikipedia.org/wiki/Bay%27ah_Mosque",
    "note": "The inscriptions also record a restoration by the Abbasid caliph al-Mustansir (reigned 623-640 AH; one source gives 625 AH). It lies in a pass of Thabir near the Jamrat al-Aqabah in Mina."
+  },
+  {
+   "n": 92,
+   "claim": "The Ansar came to Mina with the pilgrims of their people and arranged to meet the Prophet at al-Aqabah in the middle of the days of Tashriq; after a third of the night had passed they slipped out of their camps to the meeting.",
+   "grade": "hasan",
+   "ref": "Musnad Ahmad 15798 (Ka'b ibn Malik, via Ibn Ishaq); Ibn Ishaq (Ibn Hisham), the second Aqabah",
+   "url": "https://www.withprophet.com/en/The-second-pledge-of-'Aqabah-in-13-BH",
+   "note": "Same narration as claim 70 (aqabah), which al-Arna'ut graded hasan. Used for the film lines 'Mina, in the days of the pilgrimage, 622' and 'After a third of the night, they slipped out of their camps', and for the 'Days of Tashriq' discovery."
+  },
+  {
+   "n": 93,
+   "claim": "Ubadah ibn as-Samit, who fought at Badr, was one of the naqibs (leaders) on the night of al-Aqabah.",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 18",
+   "url": "https://sunnah.com/bukhari:18",
+   "note": "Stated in the isnad/introduction of Bukhari 18 (see the note of claim 68). Used for the 'Leaders of the Night' discovery."
   }
  ],
  "conquest": [
@@ -740,6 +1484,38 @@ window.SOURCES && (SOURCES.data = {
    "ref": "Ibn Ishaq (Ibn Hisham 2/412: 'some of the people of knowledge told me'); al-Tabari, Tarikh; al-Albani, al-Silsilah al-Da'ifah 1163",
    "url": "https://islamqa.info/ar/answers/290672",
    "note": "This exact sentence has weak chains: Ibn Ishaq's source is unnamed, and the other route is mursal or includes weak narrators. The general pardon of the Makkans is well established, and the term 'al-tulaqa'' for those freed at the conquest is in sahih hadith (e.g. Sahih al-Bukhari 4333, Anas on the day of Hunayn). If the scene quotes it, mark it as 'reported in the sirah'."
+  },
+  {
+   "n": 115,
+   "claim": "He refused to enter the Ka'bah while there were idols in it and ordered them taken out; then he entered and said 'Allahu akbar' in its corners.",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 4288 (Ibn Abbas)",
+   "url": "https://quranx.com/Hadith/Bukhari/USC-MSA/Volume-5/Book-59/Hadith-584",
+   "note": "USC-MSA 5/59/584. The images (of Abraham and Ishmael with divining arrows) are mentioned in the hadith; the station shows no image or figure."
+  },
+  {
+   "n": 116,
+   "claim": "On the day of the conquest 'Uthman ibn Talha, a keeper of the key of the Ka'bah, was told to bring the key; the door was opened and they went in and stayed a long time.",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 4289 (Ibn Umar)",
+   "url": "https://quranx.com/Hadith/Bukhari/USC-MSA/Volume-5/Book-59/Hadith-584",
+   "note": "Same USC page, second narration (Ibn 'Umar)."
+  },
+  {
+   "n": 117,
+   "claim": "In the year of the conquest he entered Makkah from its upper part, by Kada'.",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 4290, 4291 (Aisha; Urwah)",
+   "url": "https://quranx.com/Hadith/Bukhari/USC-MSA/Volume-5/Book-59/Hadith-586",
+   "note": "USC-MSA 5/59/586: 'the Prophet entered Mecca through its upper part through Kada.'"
+  },
+  {
+   "n": 118,
+   "claim": "He recited Qur'an 34:49 ('Truth has come, and falsehood neither begins nor returns') along with 17:81 while striking the idols.",
+   "grade": "sahih",
+   "ref": "Sahih al-Bukhari 4287, 4720",
+   "url": "https://sunnah.com/bukhari:4287",
+   "note": "Already noted under the verified claim for this station (entry 73); listed here because a discovery card quotes 34:49."
   }
  ],
  "arafat": [
@@ -774,6 +1550,54 @@ window.SOURCES && (SOURCES.data = {
    "ref": "IslamQA 34154 (Ibn Uthaymin: the name has no basis in the Sunnah); 'Atiq al-Biladi via IslamOnline (old name Ilal); Saudipedia 'Jabal al-Rahmah'",
    "url": "https://islamqa.info/ar/34154",
    "note": "Classical sources call it Ilal (also al-Qurayn); the hadith call it simply 'the mountain' or the rocks (al-sakharat) at 'Arafah. I did not find when 'Jabal ar-Rahmah' first came into use, so 'later name' is the safe wording."
+  },
+  {
+   "n": 99,
+   "claim": "A tent of hair was pitched for him at Namirah; when the sun had passed its height he had al-Qaswa' saddled, came to the bottom of the valley and addressed the people.",
+   "grade": "sahih",
+   "ref": "Sahih Muslim 1218a (Jabir)",
+   "url": "https://sunnah.com/muslim:1218a",
+   "note": "Arabic: wa amara bi-qubbatin min sha'arin tudrabu lahu bi-Namirah ... hatta idha zaghat al-shams amara bi'l-Qaswa' ... fa-ata batn al-wadi fa-khataba al-nas. Checked against the English of Abdul Hamid Siddiqui on hadithunlocked.com/muslim:1218a."
+  },
+  {
+   "n": 100,
+   "claim": "In the sermon he said: 'Everything pertaining to the Days of Ignorance is under my feet, completely abolished.'",
+   "grade": "sahih",
+   "ref": "Sahih Muslim 1218a (Jabir)",
+   "url": "https://sunnah.com/muslim:1218a",
+   "note": "Arabic: ala kullu shay'in min amr al-jahiliyyah tahta qadamayya mawdu'. Same sermon at 'Arafah as claim 77."
+  },
+  {
+   "n": 101,
+   "claim": "After the sermon he rode to the rocks at the foot of the hill and stood there until the sun set and the yellow light had somewhat gone.",
+   "grade": "sahih",
+   "ref": "Sahih Muslim 1218a (Jabir)",
+   "url": "https://sunnah.com/muslim:1218a",
+   "note": "Arabic: fa-ja'ala batn naqatihi al-Qaswa' ila al-sakharat ... fa-lam yazal waqifan hatta gharabat al-shams wa dhahabat al-sufrah qalilan."
+  },
+  {
+   "n": 102,
+   "claim": "He said: 'I stood here, and the whole of 'Arafah is a place of standing.'",
+   "grade": "sahih",
+   "ref": "Sahih Muslim 1218c (Jabir)",
+   "url": "https://sunnah.com/muslim:1218c",
+   "note": "Arabic: wa waqaftu hahuna wa 'Arafatu kulluha mawqif. In the same hadith: all of Mina is a place of sacrifice, all of Muzdalifah a place of standing."
+  },
+  {
+   "n": 103,
+   "claim": "At 'Arafat a man with a carrying voice, Rabi'ah ibn Umayyah ibn Khalaf, called out the Prophet's words to the people: the Prophet would say to him, 'Say: O people, the Messenger of God says...', and he would repeat it.",
+   "grade": "sirah",
+   "ref": "Ibn Ishaq (Ibn Hisham), al-Sirah al-Nabawiyyah, the Farewell Pilgrimage; cf. al-Tabarani, al-Mu'jam al-Kabir (Rabi'ah ibn Umayyah)",
+   "url": "https://hadithunlocked.com/ibnhisham:1572",
+   "note": "Ibn Ishaq from Yahya ibn 'Abbad ibn 'Abd Allah ibn al-Zubayr from his father 'Abbad. A sirah report, presented as 'Ibn Ishaq reports'."
+  },
+  {
+   "n": 104,
+   "claim": "People from Najd asked him at 'Arafat about the Hajj, and he had a caller proclaim: 'The Hajj is 'Arafah.'",
+   "grade": "sahih",
+   "ref": "Jami' al-Tirmidhi 889 ('Abd al-Rahman ibn Ya'mar); Sunan Ibn Majah 3015",
+   "url": "https://sunnah.com/tirmidhi:889",
+   "note": "Graded sahih by Ahmad Shakir and al-Albani. Wording: 'al-hajju 'Arafah'."
   }
  ]
 });

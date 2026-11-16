@@ -637,6 +637,7 @@ void main(){
     }
 
     w.dispose = () => {
+      w.dead = true;
       document.removeEventListener('pointerlockchange', onLock);
       try { if (document.pointerLockElement) document.exitPointerLock(); } catch (_) {}
       clearTimeout(cardTimer);

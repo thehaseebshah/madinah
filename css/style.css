@@ -286,7 +286,7 @@ button:focus-visible { outline: 1px solid var(--sand); outline-offset: 3px; }
 .caption {
   position: absolute; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 92px); transform: translate(-50%, 8px);
   margin: 0; width: max-content; max-width: min(46rem, calc(100vw - 32px)); text-align: center; text-wrap: balance;
-  padding: 9px 18px; border-radius: 10px; background: rgba(6,9,20,.62); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  padding: 9px 18px; border-radius: 10px; background: rgba(6,9,20,.88); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
   font-family: var(--f-body); font-size: 1.02rem; line-height: 1.5; color: var(--ivory); font-weight: 400;
   opacity: 0; transition: opacity .5s, transform .5s; pointer-events: none; z-index: 21;
 }
@@ -452,9 +452,10 @@ button:focus-visible { outline: 1px solid var(--sand); outline-offset: 3px; }
 .w-fade { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; z-index: 2; }
 .w-titlecard { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); text-align: center; opacity: 0; transition: opacity 1.6s ease, letter-spacing 6s ease; pointer-events: none; z-index: 4; letter-spacing: .04em; }
 .w-titlecard.show { opacity: 1; letter-spacing: .1em; }
-.w-titlecard .wt-ar { margin: 0 0 .2em; font-family: var(--f-naskh); font-size: clamp(1.6rem, 4vw, 2.8rem); color: #f6dc9a; text-shadow: 0 2px 30px rgba(0,0,0,.6); letter-spacing: 0; }
-.w-titlecard .wt-en { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: clamp(1.4rem, 3.6vw, 2.6rem); color: #f2e9d6; text-transform: uppercase; text-shadow: 0 2px 30px rgba(0,0,0,.65); }
-.w-titlecard .wt-era { margin: .6em 0 0; font-family: var(--f-display); font-size: .72rem; letter-spacing: .3em; text-transform: uppercase; color: rgba(242,233,214,.72); }
+.w-titlecard::before { content: ''; position: absolute; left: 50%; top: 50%; width: min(92vw, 1100px); height: 260%; transform: translate(-50%, -50%); background: radial-gradient(ellipse at center, rgba(8,7,5,.62) 0%, rgba(8,7,5,.36) 38%, rgba(8,7,5,0) 70%); z-index: -1; pointer-events: none; }
+.w-titlecard .wt-ar { margin: 0 0 .2em; font-family: var(--f-naskh); font-size: clamp(1.6rem, 4vw, 2.8rem); color: #f6dc9a; text-shadow: 0 1px 3px rgba(0,0,0,.75), 0 2px 30px rgba(0,0,0,.7); letter-spacing: 0; }
+.w-titlecard .wt-en { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: clamp(1.4rem, 3.6vw, 2.6rem); color: #f2e9d6; text-transform: uppercase; text-shadow: 0 1px 3px rgba(0,0,0,.8), 0 2px 30px rgba(0,0,0,.75); }
+.w-titlecard .wt-era { margin: .6em 0 0; font-family: var(--f-display); font-size: .72rem; letter-spacing: .3em; text-transform: uppercase; color: rgba(242,233,214,.86); text-shadow: 0 1px 3px rgba(0,0,0,.8); }
 .w-sub { position: absolute; left: 50%; bottom: calc(11vh + 18px); transform: translateX(-50%); width: min(760px, 86vw); margin: 0; text-align: center; opacity: 0; transition: opacity .7s ease; pointer-events: none; z-index: 4; }
 .w-sub.show { opacity: 1; }
 .w-sub .ws-en { display: block; font-family: var(--f-body, serif); font-size: clamp(.95rem, 1.8vw, 1.18rem); line-height: 1.5; color: #f6efe2; text-shadow: 0 1px 2px rgba(0,0,0,.9), 0 0 18px rgba(0,0,0,.6); font-style: italic; }

@@ -138,6 +138,7 @@
       const m = new T.Mesh(new T.SphereGeometry(r, 48, 24), mat); m.renderOrder = -10; m.frustumCulled = false; m.userData.dynamic = true; m.visible = false;
       w.scene.add(m); out.mesh = m; out.material = mat;
       image(`${P.base}sky/${id}.jpg`).then(im => {
+        if (w.dead) return;
         tex.image = im; tex.needsUpdate = true; m.visible = true;
         // the photo sky replaces the procedural one
         if (w.skyMesh && w.skyMesh !== m) w.skyMesh.visible = false;
@@ -145,6 +146,7 @@
       }).catch(() => {});
     }
     return hdr(id).then(({ tex, data }) => {
+      if (w.dead) return out; // the station was left while the sky was still loading
       const sun = sunOf(data);
       // rotate the sun direction with the sky
       const c = Math.cos(rot), s = Math.sin(rot), d = sun.dir;

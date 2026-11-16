@@ -1,8 +1,8 @@
 # Sirah in Light and Sound
 
-An interactive 3D Sirah: the life of the Prophet Muhammad ﷺ told through the places where it happened, in **two worlds**, **Makkah** and **Madinah**. Choose a city, explore its 3D relief map, and enter any station. All 24 stations are walkable 3D scenes (WASD and E), each with a cinematic entrance and its own game-like activity. A guide narrates every station in **English or Arabic**, and every story carries its **sources, graded for authenticity**.
+An interactive 3D Sirah: the life of the Prophet Muhammad ﷺ told through the places where it happened, in **two worlds**, **Makkah** and **Madinah**. Choose a city, explore its 3D relief map, and enter any station. All 24 stations are photoreal 3D worlds. Each opens with a short film and is a different kind of game: a platformer, a stealth game, a rail flyer, a rhythm game, a farming game, a train to drive. A guide narrates every station in **English or Arabic**, and every story carries its **sources, graded for authenticity**.
 
-Open `index.html` in a modern browser (double-clicking it works), choose **Makkah** or **Madinah**, and use headphones.
+Serve the folder (`python3 -m http.server`) and open it in a modern browser, choose **Makkah** or **Madinah**, and use headphones. Double-clicking `index.html` also works, with simpler procedural visuals.
 
 ## The two worlds
 
@@ -10,39 +10,45 @@ On the start screen, choose a city. Each opens a 3D relief model of the city wit
 
 ### Makkah al-Mukarramah · c. 605 – 632 CE
 
-| # | Station | You… | Entrance |
-|---|---------|------|----------|
-| I | **The Ka‘bah Rebuilt** · c. 605 | carry stones for the rising walls, then lift the Black Stone on a cloak with every clan | crane down over the valley |
-| II | **The Cave of Hira** · 610 | climb Jabal an-Nur with provisions; the first verses of Surat al-‘Alaq are written in light | rising up the night mountain face |
-| III | **The Call from as-Safa** · c. 613 | raise the morning call and watch the lights of Quraysh gather | dawn glide across the roofs |
-| IV | **The Boycott in the Ravine** · c. 616–619 | stealth: carry food by night past sweeping torchlight | down from the rim into the ravine |
-| V | **The Night Journey** · c. 620 | fly through seven turning rings of light (an abstract meditation) | from the turning stars down to the courtyard |
-| VI | **The Pledges of al-‘Aqabah** · 621–622 | escort a line of lanterns through shadow to the meeting place | over the sleeping camps of Mina |
-| VII | **The Cave of Thawr** · 622 | find the cave, then keep perfectly still while the search passes | pushing in through the cave mouth |
-| VIII | **The Night Road** · 622 | navigate north by the stars from cairn to cairn | from the Milky Way to the guide's footprints |
-| IX | **The Return to Makkah** · 630 | go round the Ka‘bah and topple the 36 stelae of the idols | from the northern heights, circling the House |
-| X | **The Farewell Sermon** · 632 | courier: carry each line of the sermon to those absent | across the golden plain of Arafat |
+| # | Station | Kind of game | You… |
+|---|---------|--------------|------|
+| I | **The Ka‘bah Rebuilt** · c. 605 | block stacking, then balance | lay the stone courses from the scaffold, then carry the Black Stone level on a cloak with every clan |
+| II | **The Cave of Hira** · 610 | first-person parkour | jump, sprint and climb up Jabal an-Nur, lighting lanterns, to the cave of the first revelation |
+| III | **The Call from as-Safa** · c. 613 | 2.5D side-scrolling platformer | run and jump across the rooftops at dawn to the rock of as-Safa |
+| IV | **The Boycott in the Ravine** · c. 616–619 | stealth | carry food by night through moon-shadow, past the torches, to the shelters |
+| V | **The Night Journey** · c. 620 | rail flyer | steer a light through rings toward al-Aqsa and up through the heavens (light alone, nothing depicted) |
+| VI | **The Pledges of al-‘Aqabah** · 621–622 | follower commands | whistle a line of lanterns together and lead them unseen to the meeting place |
+| VII | **The Cave of Thawr** · 622 | hide and hold your breath | stay deep in the cave and keep still while the search passes, three nights |
+| VIII | **The Night Road** · 622 | endless runner | change lanes, jump and duck along the wadi behind the guide's lamp |
+| IX | **The Return to Makkah** · 630 | first-person aiming | aim at the standing stones round the House and strike them down |
+| X | **The Farewell Sermon** · 632 | call and response | listen to each phrase on four lamps and sing it back to those further off |
 
 ### al-Madinah al-Munawwarah · 622 CE – today
 
-| # | Station | You… | Entrance |
-|---|---------|------|----------|
-| I | **Quba, the First Stones** | shape-matching: fit stones into the foundation | down through the palm crowns |
-| II | **The Full Moon Rises** | rhythm (2D overlay): the welcome, line by line | from the rising moon over the roofs |
-| III | **The Mosque of Palm Trunks** | explore the first mosque and find four places | down through the frond roof |
-| IV | **The Two Qiblas** | tune a dial by ear until two voices become one | top-down above the rows, then into the hall |
-| V | **The Mountain That Loves Us** | restraint: hold the archers' hill, then call to the mountain | along the red ridges of Uhud |
-| VI | **The Trench** | hold to dig, then strike the great rock | along the trench line at dusk |
-| VII | **The Well of Rumah** | haul the bucket hand over hand, then give water | up out of the well shaft |
-| VIII | **The Palm Groves** | shake laden palms and catch seven Ajwa dates | down through backlit fronds |
-| IX | **The Blessed Valley** | skip stones on Wadi al-‘Aqiq, then follow it to the lights | low over the moonlit water |
-| X | **The Lanes of Old Madinah** | light the lanterns of the lane | backward down the lane from the Green Dome |
-| XI | **The Hejaz Railway** · 1908 | ring the bell and meet the train from Damascus | along the rails |
-| XII | **The Sky Beneath the Domes** | light puzzle: roll the domes open to complete a golden star | from the roof through an opening dome |
-| XIII | **A Garden of Paradise** | trace the arabesque (2D drawing) at six named columns | down a gilded column to the green carpet |
-| XIV | **The City of Light** | open the umbrellas and live through a day in the courtyard | from above the minarets |
+| # | Station | Kind of game | You… |
+|---|---------|--------------|------|
+| I | **Quba, the First Stones** | push-block puzzles | push the foundation stones onto their chalk marks |
+| II | **The Full Moon Rises** | rhythm highway | strike the lamps in time as the city comes out to welcome him |
+| III | **The Mosque of Palm Trunks** | construction | set the trunks, pillars, bricks and frond roof on the plan |
+| IV | **The Two Qiblas** | perspective rotation | turn the world until broken paths join, as the qiblah turned |
+| V | **The Mountain That Loves Us** | viewpoint alignment | hold old sketches up against Uhud and find where each was drawn |
+| VI | **The Trench** | maze tower defence | dig the trench cell by cell and set lamp-watches before dark |
+| VII | **The Well of Rumah** | flow puzzle | lay channel pieces while the bucket rises, and bring water to every garden |
+| VIII | **The Palm Groves** | farming | pollinate, water, guard and harvest through the seasons of a palm garden |
+| IX | **The Blessed Valley** | be the wind | sweep low over Wadi al-‘Aqiq and open its flowers |
+| X | **The Lanes of Old Madinah** | maze with lamp oil | steer a lantern through the lanes and light every lamp before the oil runs low |
+| XI | **The Hejaz Railway** · 1908 | train driving | work the regulator, brake, fire and whistle and bring the train into Madinah |
+| XII | **The Sky Beneath the Domes** | light and mirrors | roll a dome open and turn mirrors to carry sunlight to the lamps |
+| XIII | **A Garden of Paradise** | brush drawing | draw the patterns of the Rawdah's columns with a brush of light |
+| XIV | **The City of Light** | time management | open umbrellas, fetch water and care for the courtyard through one day |
 
-Every station opens with its own cinematic shot (press any key or tap to skip) and has one activity: no score, no failure, and a quiet moment when it is complete. The art direction behind them is written up in [`docs/DESIGN.md`](docs/DESIGN.md).
+Every station opens with a **short film** of five to seven shots: a title card, sourced subtitles in English and Arabic, and a camera that passes through different parts of the world before it hands control to you (press any key or tap to skip). Each station is a **different kind of game**, with no score and no fail screen, and each world hides five to eight **discoveries**: optional places with a short sourced fact. The art direction is written up in [`docs/DESIGN.md`](docs/DESIGN.md).
+
+### Photoreal worlds
+
+Outdoor scenes are lit by photographed HDRI skies, and ground, rock, plaster, brick, marble, bark and timber are photo-scanned materials. Boulders, shrubs, grass and small objects are scanned models. All of these are CC0 assets from [Poly Haven](https://polyhaven.com), stored in `assets/` and prepared by `tools/assets/fetch-polyhaven.py`.
+
+These assets load only when the page is **served over http(s)** (for example `python3 -m http.server`, then open `http://localhost:8000`). Opened straight from disk, browsers block local images in WebGL, so the stations fall back to procedural materials and skies; everything still works. Add `?photo=0` to force the fallback, or `?q=low` for a lighter scene on slow devices.
 
 ## Sources and authenticity
 
@@ -108,7 +114,7 @@ No person is depicted. The Prophet ﷺ, his family and his companions are presen
 
 **Everywhere:** mouse, touch or pen. `[` / `]` change station within a world, `M` mutes, `N` changes narration, `F` toggles fullscreen. Deep links: `#makkah`, `#madinah`, `#<station-id>` (for example `#hira`).
 
-**Walkable 3D stations:** `W` `A` `S` `D` or arrow keys walk, `Shift` runs, the mouse looks (click to capture it, `Esc` to release, or drag), `E` interacts (some actions are held). On touch screens the left thumb walks, the right thumb looks, and an **E** button appears when something is in reach.
+**In a station:** each game shows its own controls in the hint at the bottom of the screen and in the activity card. Most use `W` `A` `S` `D` or the arrow keys, the mouse, `Space` and `E`; on touch screens, on-screen controls appear. Many stations also let you walk the land freely (`V` or `Q`, as the hint says).
 
 ## Project layout
 
@@ -121,15 +127,18 @@ js/data/sources.*        verified sources (JSON, generated embed, and the dialog
 js/vendor/three.min.js   Three.js r128 (MIT)
 js/core/atlas.js         3D relief maps of Makkah and Madinah
 js/core/engine.js        stations, worlds, frame loop, input, transitions
-js/core/world.js         first-person layer: movement, look, E interactions, shadows, baking
+js/core/world.js         first-person layer: movement, look, films, discoveries, shadows, baking
 js/core/kit3d.js         procedural materials and models (valley of Makkah, Ka‘bah, palms, Green Dome…)
+js/core/scape.js         landscapes: terrain, horizon, instanced scatter, birds, smoke, post-processing
+js/core/photo.js         Poly Haven skies, PBR materials and scanned models
+assets/                  CC0 textures, HDRI skies and models from Poly Haven
 js/core/narration.js     bilingual narration script, player and captions
 js/core/audio.js         Web Audio synthesiser and vocal synth
 js/stages/NN-*.js        one file per station
-tools/                   build-single.js, build-sources.js, tts/
+tools/                   build-single.js, build-sources.js, tts/, assets/fetch-polyhaven.py
 ```
 
-To produce a single shareable HTML file (narration audio stays in `audio/`):
+To produce a single shareable HTML file (narration audio stays in `audio/`, photo assets in `assets/`):
 
 ```bash
 node tools/build-single.js dist/sirah.html
