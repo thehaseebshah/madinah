@@ -169,7 +169,7 @@
       // only the palms near the garden cast shadows; the rest of the grove is lit flat to save the shadow pass
       const palmsNear = SCAPE.scatter(w, { kind: 'palm', points: grove.filter(g => Math.hypot(g[0] + 8, g[1]) < 75), seed: 31, color: '#c8c8a4' });
       const palmsMid = SCAPE.scatter(w, { kind: 'palm', points: grove.filter(g => Math.hypot(g[0] + 8, g[1]) >= 75), seed: 33, color: '#c8c8a4', castShadow: false });
-      const palmsFar = SCAPE.scatter(w, { kind: 'palm', n: 360, area: { x: 0, z: 0, r: 520 }, scale: [8, 15], seed: 32, castShadow: false, color: '#c0c09c',
+      const palmsFar = SCAPE.scatter(w, { kind: 'palm', n: 260, area: { x: 0, z: 0, r: 520 }, scale: [8, 15], seed: 32, castShadow: false, color: '#c0c09c',
         avoid: (x, z) => Math.hypot(x, z) < 150 || H(x, z) > 4 || Math.abs(x) > 200 && Math.hypot(x, z) < 400 });
       const barkMat = PHOTO.mat(w, 'palm_tree_bark', { triplanar: 1.4, color: 0x8a7462, fallback: KIT.bark(w) });
       [palmsNear, palmsMid, palmsFar].forEach(r => { if (r.meshes[0]) r.meshes[0].material = barkMat; if (r.meshes[1]) cutout(r.meshes[1].material); });

@@ -335,7 +335,7 @@
       if (w._shadow) { const L = w._shadow.light, px = Math.round(zx / 2) * 2, pz = Math.round(zz / 2) * 2; L.target.position.set(px, 0, pz); L.position.set(px + w._shadow.off.x, w._shadow.off.y, pz + w._shadow.off.z); }
       // HUD
       const hh = Math.floor(this.hour), mm = Math.floor((this.hour - hh) * 60 / 5) * 5;
-      this.clockEl.innerHTML = `${PARTS[Math.min(2, this.part)] ? PARTS[Math.min(2, this.part)].id.toUpperCase() : 'NIGHT'} · ${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}<br><span style="opacity:.75;font-size:12px">${this.prayer ? '◆ The call to prayer: open the gates' : this.dusk ? '◆ Sunset: fold, light, open' : 'The courtyard of the Prophet’s Mosque'}</span>`;
+      this.clockEl.innerHTML = `${this.done ? 'NIGHT' : PARTS[Math.min(2, this.part)] ? PARTS[Math.min(2, this.part)].id.toUpperCase() : 'NIGHT'} · ${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}<br><span style="opacity:.75;font-size:12px">${this.done ? 'The lamps are lit; the gates stand open' : this.prayer && !this.dusk ? '◆ The call to prayer: open the gates' : this.dusk ? '◆ Sunset: fold, light, open' : 'The courtyard of the Prophet’s Mosque'}</span>`;
       this.queueEl.innerHTML = this.queue.map((q, k) => `<span style="padding:4px 9px;border-radius:8px;background:rgba(6,9,20,${k ? 0.5 : 0.75});border:1px solid rgba(255,240,210,${k ? 0.2 : 0.6});color:#f4ead8;font:500 12px Marcellus,Georgia,serif">${k + 1} · ${q.label}</span>`).join('') || '<span style="padding:4px 9px;border-radius:8px;background:rgba(6,9,20,.4);color:#c8c0b4;font:500 12px Marcellus,Georgia,serif">Click a task</span>';
       this.carryEl.textContent = this.carry ? `Carrying ${this.carry} water` : 'Hands free';
     },

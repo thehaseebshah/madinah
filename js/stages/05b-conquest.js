@@ -358,7 +358,7 @@
       // gates: each stone of parts 1 and 2 holds the rail before it slips out of view
       ID.forEach(o => {
         if (o.phase === 0) { let da = o.a - A0; da = ((da % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2); o.gate = Math.min(this.railLen[0] - 0.5, (da + 0.6) * 16); }
-        if (o.phase === 1) { let best = 0, bd = 1e9; for (let k = 0; k <= 60; k++) { const p = this.rail[1].getPointAt(k / 60); const d = Math.hypot(p.x - o.x, p.z - o.z); if (d < bd) { bd = d; best = k / 60; } } o.gate = Math.min(this.railLen[1] - 0.5, (best + 0.08) * this.railLen[1]); }
+        if (o.phase === 1) { let best = 0, bd = 1e9; for (let k = 0; k <= 60; k++) { const p = this.rail[1].getPointAt(k / 60); const d = Math.hypot(p.x - o.x, p.z - o.z); if (d < bd) { bd = d; best = k / 60; } } o.gate = Math.min(this.railLen[1] - 0.5, Math.max(0.3, best + 0.08) * this.railLen[1]); }
       });
 
       /* ---------- discoveries: aim at the gold light and strike ---------- */
@@ -463,7 +463,8 @@
       ray.setFromCamera(ndc, cam);
       const o = ray.ray.origin, d = ray.ray.direction;
       // what stands in the way?
-      const hits = ray.intersectObjects(this.occluders, true); const block = hits.length ? hits[0].distance : 1e9;
+      const hits = ray.intersectObjects(this.occluders, true); let block = hits.length ? hits[0].distance : 1e9;
+      const wall = block; if (G.phase > 0) block = 1e9;   // roof and valley stones stand in the open: a parapet's corner never saves them
       // the nearest stone the line passes close to (a little help for far, small stones)
       let best = null, bt = 1e9;
       this.idols.forEach(I => {
@@ -477,7 +478,7 @@
       // a discovery light?
       let disc = null;
       this.disc.forEach(D => { if (D.it.done || D.phase > G.phase) return; const px = D.pos.x - o.x, py = D.pos.y - o.y, pz = D.pos.z - o.z, t = px * d.x + py * d.y + pz * d.z; if (t < 0) return; const dd = Math.hypot(px - d.x * t, py - d.y * t, pz - d.z * t); if (dd < 1.4 + t * 0.02 && (!best || t < bt)) { disc = D; bt = t; } });
-      const end = best || disc ? o.clone().addScaledVector(d, bt) : o.clone().addScaledVector(d, Math.min(block, 160));
+      const end = best || disc ? o.clone().addScaledVector(d, bt) : o.clone().addScaledVector(d, Math.min(wall, 160));
       // the staff answers at once: thrust, recoil, light
       G.swing = 1; G.recoil = 1; G.beamT = 1;
       const tipW = this.tip.getWorldPosition(new T.Vector3());

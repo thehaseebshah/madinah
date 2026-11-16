@@ -98,7 +98,7 @@
       };
       const w = this.w = WORLD.create(env, { start: { x: X(START[0]), z: Z(START[1]) + 9.5, yaw: 0, pitch: -1.38 }, exposure: 1.0, far: 2200, fov: 46, fog: { color: 0x10162a, density: 0.0021 } });
       const S = w.scene; w.eye = 50;   // the film hands over to the high lantern view
-      const ter = SCAPE.terrain(w, { size: 1900, seg: 280, height: H, rock: [0.82, 0.93], rockHeight: [30, 70], colors: { low: '#a89880', high: '#988870', rock: '#5a5048', dark: '#3a3430' },
+      const ter = SCAPE.terrain(w, { size: 1900, seg: 200, height: H, rock: [0.82, 0.93], rockHeight: [30, 70], colors: { low: '#a89880', high: '#988870', rock: '#5a5048', dark: '#3a3430' },
         tex: 'gravel', rockTex: 'lava', photo: { ground: 'dry_ground_rocks', rock: 'dark_rock', normal: 1 }, rep: 0.3, rockRep: 0.05 });
       w.ground = ter.ground;
       w.sky({ top: '#050814', mid: '#182240', bot: '#0a0c16', sunDir: [0.3, 0.8, -0.5], sun: '#9aa8d8', sunSize: 0.0008, stars: 1 });
@@ -178,7 +178,7 @@
         list.forEach(([x, z, h], k) => { m4.makeScale(1, h, 1).setPosition(x, 0, z); wallsIM.setMatrixAt(k, m4); m4.makeTranslation(x, h + 0.05, z); roofsIM.setMatrixAt(k, m4); });
         [wallsIM, roofsIM].forEach(m => { m.receiveShadow = true; S.add(m); });
       }
-      const palms = SCAPE.scatter(w, { kind: 'palm', n: 420, area: { x: 0, z: 0, r: 640 }, scale: [8, 13], seed: 10, density: (x, z) => { const d = Math.hypot(x, z); return d > 310 && d < 375 ? 1 : 0; } });
+      const palms = SCAPE.scatter(w, { kind: 'palm', n: 260, castShadow: false, area: { x: 0, z: 0, r: 640 }, scale: [8, 13], seed: 10, density: (x, z) => { const d = Math.hypot(x, z); return d > 310 && d < 375 ? 1 : 0; } });
       void palms;
       const wallR = 300, wallM = PHOTO.mat(w, 'old_stone_wall', { triplanar: 0.4, color: '#a8a096', fallback: KIT.mudBrick(w, [1, 1]) });
       for (let k = 0; k < 64; k++) {
@@ -222,7 +222,13 @@
 
       /* ---------------- lamps, doorways, gates ---------------- */
       // every lamp hangs on a bracket on a wall beside its lane cell; one points cloud shows them all
-      SCAPE.scatter(w, { kind: 'model', model: 'vintage_oil_lamp', points: this.lamps.map(l => [l.p.x, l.p.z, 1.6]), ground: () => 2.9, sink: 0, seed: 3, vary: 0.05, fallback: 'pebble', fallbackScale: 0.2 });
+      {
+        // the wall lamps: a small glass lantern with a brass cap and base, instanced
+        const lg0 = SCAPE.merge([new T.CylinderGeometry(0.13, 0.1, 0.34, 6).translate(0, 0, 0), new T.ConeGeometry(0.19, 0.16, 6).translate(0, 0.25, 0), new T.CylinderGeometry(0.12, 0.14, 0.06, 6).translate(0, -0.2, 0), new T.TorusGeometry(0.07, 0.012, 4, 8).translate(0, 0.4, 0)]);
+        const lm = new T.InstancedMesh(lg0, new T.MeshStandardMaterial({ color: 0x9a7a3a, roughness: 0.45, metalness: 0.7 }), this.lamps.length), m4 = new T.Matrix4();
+        this.lamps.forEach((l, k) => { m4.makeTranslation(l.p.x, l.p.y, l.p.z); lm.setMatrixAt(k, m4); });
+        lm.userData.dynamic = true; S.add(lm);
+      }
       const nl = this.lamps.length + this.doors.length, lp = new Float32Array(nl * 3), lc = new Float32Array(nl * 3);
       const lg = new T.BufferGeometry(); lg.setAttribute('position', new T.BufferAttribute(lp, 3)); lg.setAttribute('color', new T.BufferAttribute(lc, 3));
       this.glowPts = new T.Points(lg, new T.PointsMaterial({ map: KIT.glowTex(w), size: 5, vertexColors: true, transparent: true, depthWrite: false, blending: T.AdditiveBlending, sizeAttenuation: true }));

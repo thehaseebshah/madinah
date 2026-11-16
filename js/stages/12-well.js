@@ -274,7 +274,7 @@
       // the target sits just outside the grid, past the open side of its cell
       const dd = DIRS.find(d => d[0] === t.d), p = cellLocal(L, t.i + dd[1] * 1.45, t.j + dd[2] * 1.45), q = toWorld(L, p.x, p.z), y = lv.gy;
       t.pos = new T.Vector3(q.x, y, q.z);
-      const g = new T.Group(); g.position.copy(t.pos); g.rotation.y = L.ang; S.add(g); g.userData.dynamic = true; t.g = g;
+      const g = new T.Group(); g.position.copy(t.pos); g.rotation.y = L.ang; S.add(g); t.g = g;   // static parts are merged by w.bake()
       if (t.kind === 'garden') {
         const bed = new T.Mesh(new T.BoxGeometry(3.6, 0.1, 3.6), new T.MeshStandardMaterial({ color: 0x9a7a58, roughness: 1 })); bed.position.y = 0.02; bed.receiveShadow = true; g.add(bed); t.bed = bed;
         const rimG = SCAPE.merge([[0, 1.85, 3.9, 0.3], [0, -1.85, 3.9, 0.3], [1.85, 0, 0.3, 3.9], [-1.85, 0, 0.3, 3.9]].map(([x, z, a, c]) => new T.BoxGeometry(a, 0.3, c).translate(x, 0.12, z)));
@@ -284,24 +284,25 @@
       } else if (t.kind === 'trough') {
         const tr = new T.Mesh(SCAPE.merge([new T.BoxGeometry(3.2, 0.12, 1.1).translate(0, 0.06, 0), new T.BoxGeometry(3.2, 0.6, 0.15).translate(0, 0.3, 0.5), new T.BoxGeometry(3.2, 0.6, 0.15).translate(0, 0.3, -0.5), new T.BoxGeometry(0.15, 0.6, 1.1).translate(1.6, 0.3, 0), new T.BoxGeometry(0.15, 0.6, 1.1).translate(-1.6, 0.3, 0)]), this.stone);
         tr.castShadow = tr.receiveShadow = true; g.add(tr);
-        const wat = new T.Mesh(new T.BoxGeometry(3.0, 0.4, 0.9).translate(0, 0.2, 0), this.waterMat); wat.position.y = 0.1; wat.scale.y = 0.01; g.add(wat); t.wat = wat;
+        const wat = new T.Mesh(new T.BoxGeometry(3.0, 0.4, 0.9).translate(0, 0.2, 0), this.waterMat); wat.position.y = 0.1; wat.scale.y = 0.01; wat.userData.dynamic = true; g.add(wat); t.wat = wat;
         // goats wait by the trough
         t.goats = [];
         for (let k = 0; k < 4; k++) { const gt = this.goat(k); gt.position.set((k - 1.5) * 0.95, 0, 1.3 + (k % 2) * 0.4); gt.rotation.y = Math.PI + (k - 1.5) * 0.15; g.add(gt); t.goats.push(gt); }
       } else {
         const cis = new T.Mesh(new T.CylinderGeometry(1.4, 1.5, 0.8, 18, 1, true), this.stone); cis.position.y = 0.4; cis.castShadow = true; g.add(cis);
-        const wat = new T.Mesh(new T.CylinderGeometry(1.3, 1.3, 0.6, 18).translate(0, 0.3, 0), this.waterMat); wat.scale.y = 0.01; g.add(wat); t.wat = wat;
+        const wat = new T.Mesh(new T.CylinderGeometry(1.3, 1.3, 0.6, 18).translate(0, 0.3, 0), this.waterMat); wat.scale.y = 0.01; wat.userData.dynamic = true; g.add(wat); t.wat = wat;
         [['jug_01', 1.9, 0.5, 1.6], ['ceramic_vase_01', 2.2, -0.6, 1.8], ['jug_01', -2, 0.3, 1.5]].forEach(([id, x, z, s]) => { const a = toWorld(L, p.x + x, p.z + z); PHOTO.place(w, id, { pos: [a.x, y, a.z], s }); });
       }
       t.glow = KIT.glow(w, 0x9fd4ff, 2.2, 0.0); t.glow.position.copy(t.pos).add(new T.Vector3(0, 1.4, 0)); S.add(t.glow);
       w.addCircle(t.pos.x, t.pos.z, 1.8);
     },
     goat(k) {
-      const g = new T.Group(), m = new T.MeshStandardMaterial({ color: [0x3a302a, 0xd8ccb8, 0x6a5444, 0x2a2420][k % 4], roughness: 1 });
+      this._goatM = this._goatM || [0x3a302a, 0xd8ccb8, 0x6a5444, 0x2a2420].map(c => new T.MeshStandardMaterial({ color: c, roughness: 1 }));
+      const g = new T.Group(), m = this._goatM[k % 4];
       const body = new T.Mesh(new T.SphereGeometry(1, 10, 8).scale(0.42, 0.22, 0.2), m); body.position.y = 0.52; g.add(body);
-      const head = new T.Mesh(new T.SphereGeometry(1, 8, 6).scale(0.14, 0.1, 0.09), m); head.position.set(0.48, 0.66, 0); g.add(head); g.userData.head = head;
+      const head = new T.Mesh(new T.SphereGeometry(1, 8, 6).scale(0.14, 0.1, 0.09), m); head.position.set(0.48, 0.66, 0); head.userData.dynamic = true; g.add(head); g.userData.head = head;
       [[0.28, 0.12], [0.28, -0.12], [-0.28, 0.12], [-0.28, -0.12]].forEach(([x, z]) => { const l = new T.Mesh(new T.CylinderGeometry(0.03, 0.025, 0.42, 5), m); l.position.set(x, 0.21, z); g.add(l); });
-      [0.05, -0.05].forEach(z => { const h = new T.Mesh(new T.ConeGeometry(0.02, 0.14, 4), m); h.position.set(0.44, 0.78, z); h.rotation.z = 0.5; g.add(h); });
+      [0.05, -0.05].forEach(z => { const h = new T.Mesh(new T.ConeGeometry(0.02, 0.14, 4), m); h.position.set(-0.04, 0.12, z); h.rotation.z = 0.5; head.add(h); });
       g.rotation.y = 0; g.scale.setScalar(1.05);
       return g;
     },

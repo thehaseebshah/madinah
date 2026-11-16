@@ -234,12 +234,12 @@
       { const top = new T.Mesh(new T.CircleGeometry(0.16, 20), new T.MeshStandardMaterial({ color: 0xf2eee4, roughness: 0.4, emissive: 0x403c34 })); top.rotation.x = -Math.PI / 2; top.position.y = 0.1; this.milk.add(top); }
 
       /* ---------- the summit and the slopes: scanned boulders, shrubs, grass ---------- */
-      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_04', n: 70, area: { x: 0, z: -20, r: 120 }, density: (x, z) => (Math.hypot(x, z + 9) > 16 && pathDist(x, z) > 4 && !(Math.abs(x) < 12 && z > -6 && z < 16) ? 1 : 0), scale: [1, 2.8], seed: 41, collide: 1.0, fallback: 'boulder', fallbackScale: 1.2, color: '#b4aca6' });
-      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_02', n: 60, area: { x: 0, z: -10, r: 60 }, density: (x, z) => (Math.hypot(x, z + 9) > 9 && pathDist(x, z) > 3 && !(Math.abs(x) < 9 && z > -4 && z < 14) ? 1 : 0), scale: [1, 2.2], seed: 42, collide: 0.9, fallback: 'boulder', color: '#b4aca6' });
-      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_05', n: 120, area: { x: 0, z: -60, r: 160 }, density: (x, z) => (pathDist(x, z) > 2 && !inCave(x, z) && Math.hypot(x, z + 4) > 4 ? 1 : 0), scale: [0.7, 1.8], seed: 43, color: '#b0a8a2' });
-      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_rocks_01', n: 360, area: { x: 0, z: -40, r: 140 }, density: (x, z) => (!inCave(x, z) ? 1 : 0), scale: [2, 6], seed: 44, color: '#a8a4a0' });
-      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_stones_01', n: 500, area: { x: 0, z: -20, r: 70 }, density: (x, z) => (!inCave(x, z) ? 1 : 0), scale: [2, 5], seed: 45, color: '#a09c98' });
-      SCAPE.scatter(w, { kind: 'model', model: 'shrub_03', n: 160, area: { x: 0, z: -60, r: 160 }, density: (x, z) => (pathDist(x, z) > 2 && !inCave(x, z) && Math.hypot(x, z + 4) > 5 ? 1 : 0), scale: [2.5, 5], seed: 46 });
+      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_04', n: 48, area: { x: 0, z: -20, r: 120 }, density: (x, z) => (Math.hypot(x, z + 9) > 16 && pathDist(x, z) > 4 && !(Math.abs(x) < 12 && z > -6 && z < 16) ? 1 : 0), scale: [1, 2.8], seed: 41, collide: 1.0, fallback: 'boulder', fallbackScale: 1.2, color: '#b4aca6' });
+      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_02', n: 40, area: { x: 0, z: -10, r: 60 }, density: (x, z) => (Math.hypot(x, z + 9) > 9 && pathDist(x, z) > 3 && !(Math.abs(x) < 9 && z > -4 && z < 14) ? 1 : 0), scale: [1, 2.2], seed: 42, collide: 0.9, fallback: 'boulder', color: '#b4aca6' });
+      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_boulder_05', n: 50, area: { x: 0, z: -60, r: 160 }, density: (x, z) => (pathDist(x, z) > 2 && !inCave(x, z) && Math.hypot(x, z + 4) > 4 ? 1 : 0), scale: [0.7, 1.8], seed: 43, color: '#b0a8a2' });
+      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_rocks_01', n: 200, area: { x: 0, z: -40, r: 140 }, density: (x, z) => (!inCave(x, z) ? 1 : 0), scale: [2, 6], seed: 44, color: '#a8a4a0' });
+      SCAPE.scatter(w, { kind: 'model', model: 'namaqualand_stones_01', n: 240, area: { x: 0, z: -20, r: 70 }, density: (x, z) => (!inCave(x, z) ? 1 : 0), scale: [2, 5], seed: 45, color: '#a09c98' });
+      SCAPE.scatter(w, { kind: 'model', model: 'shrub_03', n: 100, area: { x: 0, z: -60, r: 160 }, density: (x, z) => (pathDist(x, z) > 2 && !inCave(x, z) && Math.hypot(x, z + 4) > 5 ? 1 : 0), scale: [2.5, 5], seed: 46 });
       SCAPE.scatter(w, { kind: 'model', model: 'grass_medium_01', n: 300, area: { x: 0, z: -30, r: 110 }, density: (x, z) => (pathDist(x, z) > 1.5 && !inCave(x, z) && Math.hypot(x, z + 2) > 3 ? 1 : 0), scale: [2, 4], seed: 47 });
       SCAPE.scatter(w, { kind: 'model', model: 'dry_branches_medium_01', n: 40, area: { x: 0, z: -20, r: 80 }, density: (x, z) => (!inCave(x, z) && Math.hypot(x, z) > 4 ? 1 : 0), scale: [1, 2], seed: 48 });
       SCAPE.scatter(w, { kind: 'boulder', n: 360, area: { x: 0, z: -300, r: 600 }, density: (x, z) => (Math.hypot(x, z + 9) > 60 && pathDist(x, z) > 5 ? 1 : 0), scale: [2, 7], seed: 49, color: '#9a9088' });
@@ -366,7 +366,7 @@
           path: [[[40, H(40, -110) + 30, -110], [0, 0, 2]], [[22, H(22, -50) + 12, -50], [0, 0.6, 2]], [[5, 2.2, -14], [0, 0.8, 3]]],
           start: () => SND.sing(env.bus, 110, { vowel: 'm', dur: 6, gain: 0.03, voices: 2, attack: 1.5 }) },
         { dur: 7, fade: 'cut', ease: 'inout', line: 'The pursuers came as far as the cave.', ar: 'وبلغ الطالبون الغار.', lineAt: 1.4, fov: [34, 30],
-          path: [[[-6, 9, -12], [18, H(18, -190), -190]], [[-3, 6, -20], [24, H(24, -205), -205]]],
+          path: [[[6, H(6, -44) + 6, -44], [pathAt(215)[0], H(pathAt(215)[0], pathAt(215)[1]) + 2, pathAt(215)[1]]], [[10, H(10, -52) + 5, -52], [pathAt(200)[0], H(pathAt(200)[0], pathAt(200)[1]) + 2, pathAt(200)[1]]]],
           start: () => { self.filmTorches = true; SND.thump(env.bus, { f: 46, gain: 0.08, dur: 0.5 }); },
           during: () => { self.filmTorches = true; } },
         { dur: 6, fade: 'dip', ease: 'glide',

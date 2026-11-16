@@ -95,7 +95,9 @@
         let y = Math.max(0, dc - 250); y = Math.pow(y, 1.15) * 0.42;
         y += SCAPE.ridge(x * 0.012, z * 0.012, 5) * 40 * U.smooth(230, 330, dc);
         y += 70 * Math.exp(-((x - 290) ** 2 + (z + 90) ** 2) / (2 * 90 * 90)) * (0.7 + 0.6 * SCAPE.ridge(x * 0.02, z * 0.02, 4));   // Abu Qubays
-        y += 12.5 * Math.exp(-((x - 212) ** 2) / (2 * 16 * 16) - (z * z) / (2 * 22 * 22)); // the rock of as-Safa
+        y *= Math.max(U.smooth(8, 45, Math.abs(z)), U.smooth(236, 266, x));               // the track's corridor stays clear of the mountains
+        // the rock of as-Safa: a slope that climbs under the stepping rocks to a level summit
+        y += U.clamp((x - 150) * 0.225, 0, 13.4) * (1 - U.smooth(228, 256, x)) * Math.exp(-(z * z) / (2 * 20 * 20));
         y += SCAPE.fbm(x * 0.05, z * 0.05, 3) * 0.6 * U.smooth(4, 14, Math.abs(z)) + SCAPE.fbm(x * 0.3, z * 0.3, 2) * 0.06;
         return y;
       };

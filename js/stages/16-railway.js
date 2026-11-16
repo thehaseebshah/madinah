@@ -82,17 +82,17 @@
 
       /* ---------- materials ---------- */
       const granite = SCAPE.tex.granite(w), basaltT = SCAPE.tex.lava(w);
-      const basalt = PHOTO.mat(w, 'dark_rock', { rep: [1, 1], fallback: basaltT, color: 0xb0aaa6 });
-      const pale = PHOTO.mat(w, 'marble_01', { rep: [1, 1], fallback: KIT.plaster(w, [1, 1]), color: 0xe8e0d0 });
-      const stoneM = PHOTO.mat(w, 'old_stone_wall', { rep: [1, 1], fallback: granite, color: 0xc8b8a4 });
-      const plaster = PHOTO.mat(w, 'clay_plaster', { triplanar: 0.25, fallback: SCAPE.tex.mud(w), color: 0xe8dcc8 });
+      const basalt = PHOTO.mat(w, 'dark_rock', { triplanar: 0.3, fallback: basaltT, color: 0xd8d2cc });
+      const pale = PHOTO.mat(w, 'plastered_stone_wall', { triplanar: 0.3, fallback: KIT.plaster(w, [1, 1]), color: 0xe8e0d0 });
+      const stoneM = PHOTO.mat(w, 'old_stone_wall', { triplanar: 0.3, fallback: granite, color: 0xb8aea2 });
+      const plaster = PHOTO.mat(w, 'plastered_stone_wall', { triplanar: 0.2, fallback: SCAPE.tex.mud(w), color: 0xe4dccc });
       const planks = PHOTO.mat(w, 'old_planks_02', { rep: [1, 1], fallback: KIT.wood(w), color: 0x9a7a5a });
       const beamM = PHOTO.mat(w, 'medieval_wood', { rep: [1, 1], fallback: KIT.wood(w), color: 0x8a7058 });
       const ballastM = PHOTO.mat(w, 'gravelly_sand', { rep: [1, 1], fallback: SCAPE.tex.gravel(w), color: 0x9a8e84 });
-      const steel = new T.MeshStandardMaterial({ color: 0x6a645e, metalness: 0.85, roughness: 0.35 });
-      const iron = new T.MeshStandardMaterial({ color: 0x18181a, metalness: 0.55, roughness: 0.5 });
-      const brass = new T.MeshStandardMaterial({ color: 0xc8a050, metalness: 0.9, roughness: 0.3 });
-      const red = new T.MeshStandardMaterial({ color: 0x6a1c14, metalness: 0.4, roughness: 0.55 });
+      const steel = new T.MeshStandardMaterial({ color: 0x4a4642, metalness: 0.35, roughness: 0.45 });
+      const iron = new T.MeshStandardMaterial({ color: 0x151517, metalness: 0.15, roughness: 0.62 });
+      const brass = new T.MeshStandardMaterial({ color: 0xa8843c, metalness: 0.5, roughness: 0.4 });
+      const red = new T.MeshStandardMaterial({ color: 0x5a1812, metalness: 0.1, roughness: 0.6 });
       this.mats = { iron, brass };
 
       /* ---------- the track: ballast, sleepers, rails, poles, km posts ---------- */
@@ -356,16 +356,18 @@
         const yaw = lc.rotation.y + Math.PI + this.lookYaw;
         c.rotation.set(this.lookPitch + Math.sin(w.time * 9) * 0.002 * U.clamp(this.v / 15), yaw - Math.PI, Math.sin(w.time * 1.7) * 0.004 * U.clamp(this.v / 15));
       } else {
-        const t = w.time * 0.05, f = this.frameAt(this.s - 20);
-        const want = new T.Vector3(f.x + Math.cos(t) * 26 - f.dz * 18, Math.max(this.ground(f.x - f.dz * 18, f.z + f.dx * 18) + 6, f.y + 7), f.z + Math.sin(t) * 10 + f.dx * 18);
+        const f = this.frameAt(this.s - 6), sw = Math.sin(w.time * 0.07) * 8;
+        const wx = f.x + f.dz * 15 + f.dx * (6 + sw), wz = f.z - f.dx * 15 + f.dz * (6 + sw);
+        const want = new T.Vector3(wx, Math.max(this.ground(wx, wz) + 2.2, f.y + 4.5), wz);
         if (snap === 1) c.position.copy(want); else c.position.lerp(want, 1 - Math.exp(-snap * 2));
+        c.up.set(0, 1, 0);
         c.lookAt(f.x, f.y + 2.5, f.z);
       }
       w.pos.set(c.position.x, 0, c.position.z); w.y = c.position.y - w.eye;
     },
     buildHUD(w) {
       const self = this, el = document.createElement('div'); el.className = 'railway-hud';
-      Object.assign(el.style, { position: 'absolute', left: '50%', bottom: 'calc(14px + env(safe-area-inset-bottom, 0px))', transform: 'translateX(-50%)', width: 'min(560px, 94vw)', pointerEvents: 'none', zIndex: 4 });
+      Object.assign(el.style, { position: 'absolute', left: '50%', bottom: 'calc(86px + env(safe-area-inset-bottom, 0px))', transform: 'translateX(-50%)', width: 'min(440px, 92vw)', pointerEvents: 'none', zIndex: 4 });
       const cv = document.createElement('canvas'); cv.width = 1120; cv.height = 240; Object.assign(cv.style, { width: '100%', display: 'block', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,.6))' });
       el.appendChild(cv); w.ui.layer.appendChild(el); this.hud = { el, cv, g: cv.getContext('2d') };
       if (matchMedia('(pointer: coarse)').matches) {
@@ -428,7 +430,7 @@
       const k = e.key.length === 1 ? e.key.toLowerCase() : e.key, s = ENGINE.cur; if (!s || !s.w || s.w.filmS) return;
       if (k === 'f') s.shovel(env);
       if (k === 'v') s.reverse(env);
-      if (k === 'c') s.view = s.view === 'cab' ? 'out' : 'cab';
+      if (k === 'c') { s.view = s.view === 'cab' ? 'out' : 'cab'; s.camCab(1); }
     },
 
     /* ---------------- driving ---------------- */
@@ -546,7 +548,7 @@
 
     /* ---------------- arrival ---------------- */
     arrive(env, d) {
-      const w = this.w; this.arrived = true; this.finT = 0; this.view = 'out';
+      const w = this.w; this.arrived = true; this.finT = 0; this.view = 'out'; this.camCab(1);
       w.progress(3, 'Madinah');
       SND.glow(env.bus, 146.83, { gain: 0.07, dur: 12, vowel: 'a' });
       [293.66, 369.99, 440, 587.33].forEach((fq, i) => SND.sing(env.bus, fq, { vowel: 'a', dur: 5, gain: 0.04, voices: 3, delay: 1 + i * 0.5 }));
@@ -569,7 +571,7 @@
       const on = (s, up) => { const f = F(s); return [f.x, f.y + (up || 1), f.z]; };
       const st = this.station, bm = this.bridge;
       return [
-        { dur: 7, fade: 'dip', title: true, ease: 'glide', fov: [44, 40], path: [[at(-200, 160, 140), on(500, 0)], [at(200, 120, 110), on(900, 0)]],
+        { dur: 7, fade: 'dip', title: true, ease: 'glide', fov: [44, 40], path: [[at(250, 90, 70), on(600, 0)], [at(450, 55, 40), on(900, 0)]],
           start: () => { SND.glow(env.bus, 110, { gain: 0.04, dur: 9 }); } },
         { dur: 6, fade: 'dip', line: '1908. A railway of some 1,300 km runs from Damascus to Madinah.', ar: '١٩٠٨. سكةٌ نحوَ ١٣٠٠ كم من دمشق إلى المدينة.', ease: 'linear', fov: [56, 56],
           path: [[on(900, 0.9), on(960, 0.6)], [on(1010, 0.9), on(1070, 0.6)]] },
