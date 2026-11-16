@@ -50,6 +50,8 @@ Outdoor scenes are lit by photographed HDRI skies, and ground, rock, plaster, br
 
 These assets load only when the page is **served over http(s)** (for example `python3 -m http.server`, then open `http://localhost:8000`). Opened straight from disk, browsers block local images in WebGL, so the stations fall back to procedural materials and skies; everything still works. Add `?photo=0` to force the fallback, or `?q=low` for a lighter scene on slow devices.
 
+Some hosts serve only common web file types and refuse `.hdr` and `.glb`. For those, `python3 tools/assets/encode-binary.py <out-dir>` writes base64 text copies (`<name>.hdr.txt`, `<name>.glb.txt`); the page tries the raw file first and then the text copy.
+
 ## Sources and authenticity
 
 Every station has a **Sources and authenticity** panel (in the story panel). Each claim behind the station's story, narration and in-scene text is listed with its reference, a link, a note, and a grade:

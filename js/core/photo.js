@@ -71,11 +71,19 @@
 
   /* ---------- HDRI skies ---------- */
   const hdrs = new Map();
+  /* Binary assets. Some hosts serve only web media types, so every .hdr and .glb may also be
+     published as base64 text beside it (<name>.txt); the raw file is tried first. */
+  const startsWith = (buf, magic) => { const a = new Uint8Array(buf, 0, Math.min(magic.length, buf.byteLength)); for (let i = 0; i < magic.length; i++) if (a[i] !== magic.charCodeAt(i)) return false; return true; };
+  function bin(url, magic) {
+    const raw = fetch(url).then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); }).then(b => { if (!startsWith(b, magic)) throw new Error('not ' + magic); return b; });
+    return raw.catch(() => fetch(url + '.txt').then(r => { if (!r.ok) throw new Error(url + ' ' + r.status); return r.text(); }).then(t => {
+      const s = atob(t.trim()), n = s.length, a = new Uint8Array(n); for (let i = 0; i < n; i++) a[i] = s.charCodeAt(i);
+      if (!startsWith(a.buffer, magic)) throw new Error(url + ' is not ' + magic); return a.buffer; }));
+  }
   function hdr(id) {
-    if (!hdrs.has(id)) hdrs.set(id, new Promise((res, rej) => {
-      if (!T.RGBELoader) return rej(new Error('no RGBELoader'));
-      new T.RGBELoader().setDataType(T.UnsignedByteType).load(`${P.base}sky/${id}.hdr`, (tex, data) => res({ tex, data }), undefined, rej);
-    }));
+    if (!hdrs.has(id)) hdrs.set(id, T.RGBELoader
+      ? bin(`${P.base}sky/${id}.hdr`, '#?').then(buf => ({ tex: null, data: new T.RGBELoader().setDataType(T.UnsignedByteType).parse(buf) }))
+      : Promise.reject(new Error('no RGBELoader')));
     return hdrs.get(id);
   }
   // brightest region of an RGBE image → direction of the sun or moon, in three.js's equirect convention
@@ -176,7 +184,8 @@
   function gltf(id) {
     if (!gltfs.has(id)) gltfs.set(id, new Promise((res, rej) => {
       if (!P.enabled || !T.GLTFLoader) return rej(new Error('models unavailable'));
-      new T.GLTFLoader().load(`${P.base}models/${id}.glb`, res, undefined, rej);  // id may end in '.lod'
+      const url = `${P.base}models/${id}.glb`;  // id may end in '.lod'
+      bin(url, 'glTF').then(buf => new T.GLTFLoader().parse(buf, url.slice(0, url.lastIndexOf('/') + 1), res, rej)).catch(rej);
     }));
     return gltfs.get(id);
   }
